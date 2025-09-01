@@ -1,0 +1,17 @@
+{
+  "name": "prop-tech-test",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "prisma": "prisma",
+    "seed": "node --loader ts-node/esm prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.13.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.13.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.3"
+  }
+}
