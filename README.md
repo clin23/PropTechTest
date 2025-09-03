@@ -19,5 +19,16 @@ Alternatively, use the provided Makefile:
 ```bash
 make db-create
 make db-drop
+make migrate-dev
+make seed
+make reset
+```
+
+## Development
+
+Type-check the TypeScript sources:
+
+```bash
+npm test
 ```
 

@@ -123,6 +123,8 @@ model User {
   messages       Message[]
   notifications  Notification[]
   documents      Document[] @relation("UploadedDocuments")
+  created_jobs   MaintenanceJob[] @relation("UserCreatedJobs")
+  notificationSettings UserNotificationSetting[]
 }
 
 model Role {
@@ -159,7 +161,6 @@ model Property {
   tenancies     Tenancy[]
   jobs          MaintenanceJob[]
   complianceItems ComplianceItem[]
-  documents     Document[] @relation("PropertyDocuments")
 }
 
 model Tenant {
@@ -190,7 +191,6 @@ model Tenancy {
   payments         Payment[]
   ledgerEntries    LedgerEntry[]
   jobs             MaintenanceJob[]
-  messages         Message[]    @relation("TenancyMessages")
 }
 
 model Lease {
@@ -237,7 +237,7 @@ model MaintenanceJob {
   propertyId     String   @db.Uuid
   tenancy        Tenancy? @relation(fields: [tenancyId], references: [id], onDelete: SetNull)
   tenancyId      String?  @db.Uuid
-  created_by     User     @relation(fields: [createdByUserId], references: [id])
+  created_by     User     @relation("UserCreatedJobs", fields: [createdByUserId], references: [id])
   createdByUserId String  @db.Uuid
   title          String
   description    String?
@@ -246,7 +246,6 @@ model MaintenanceJob {
   spend_cap      Decimal?    @db.Decimal(12,2)
   due_date       DateTime?   @db.Date
   quotes         MaintenanceQuote[]
-  messages       Message[]   @relation("JobMessages")
 }
 
 model Vendor {
@@ -282,8 +281,6 @@ model Message {
   sent_at       DateTime @default(now()) @db.Timestamptz(6)
   channel       MessageChannel
   has_attachments Boolean? @default(false)
-  tenancy       Tenancy?  @relation("TenancyMessages", fields: [thread_id], references: [id])
-  job           MaintenanceJob? @relation("JobMessages", fields: [thread_id], references: [id])
 }
 
 model Document {
