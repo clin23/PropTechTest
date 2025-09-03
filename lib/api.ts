@@ -13,8 +13,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 // Inspections
-export const getInspections = (propertyId: string) => api(`/properties/${propertyId}/inspections`);
-export const createInspection = (payload: any) => api('/inspections', { method: 'POST', body: JSON.stringify(payload) });
+export const getInspections = () => api('/inspections');
+export const createInspection = (payload: any) =>
+  api('/inspections', { method: 'POST', body: JSON.stringify(payload) });
 
 // Applications
 export const listApplications = () => api('/applications');
