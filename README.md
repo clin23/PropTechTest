@@ -32,3 +32,20 @@ Type-check the TypeScript sources:
 npm test
 ```
 
+### Next.js app
+
+Install dependencies and start the development server with mocked APIs:
+
+```bash
+npm install
+npm run dev
+```
+
+The app uses `NEXT_PUBLIC_API_BASE` to talk to the backend. By default it points to the local API routes under `app/api/*`. To connect to a real Phase‑1 backend set:
+
+```bash
+export NEXT_PUBLIC_API_BASE=http://localhost:3001
+```
+
+and restart the dev server.
+
