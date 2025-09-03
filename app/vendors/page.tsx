@@ -6,7 +6,7 @@ import { listVendors, createVendor, updateVendor } from '../../lib/api';
 
 export default function VendorsPage() {
   const queryClient = useQueryClient();
-  const { data: vendors } = useQuery({
+  const { data: vendors = [] } = useQuery<any[]>({
     queryKey: ['vendors'],
     queryFn: listVendors,
   });
