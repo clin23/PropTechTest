@@ -1,3 +1,5 @@
+import type { ApplicationRow } from '../components/ApplicationsTable';
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
@@ -22,7 +24,8 @@ export const postInspectionItems = (id: string, payload: any) =>
   api(`/inspections/${id}/items`, { method: 'POST', body: JSON.stringify(payload) });
 
 // Applications
-export const listApplications = () => api('/applications');
+export const listApplications = () =>
+  api<ApplicationRow[]>('/applications');
 export const getApplication = (id: string) => api(`/applications/${id}`);
 export const updateApplication = (id: string, payload: any) => api(`/applications/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 export const postScore = (id: string, payload: any) =>
