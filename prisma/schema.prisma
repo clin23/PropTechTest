@@ -1,0 +1,333 @@
+// Prisma schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum RoleCode {
+  OWNER
+  CO_OWNER
+  ACCOUNTANT
+  TENANT
+  TRADIE
+}
+
+enum ScopeType {
+  GLOBAL
+  PROPERTY
+  TENANCY
+  JOB
+}
+
+enum TenancyStatus {
+  ACTIVE
+  ENDED
+}
+
+enum RentFrequency {
+  WEEKLY
+  FORTNIGHTLY
+  MONTHLY
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CARD
+  CASH
+}
+
+enum LedgerEntryType {
+  RENT
+  ARREARS
+  ADJUSTMENT
+  FEE
+}
+
+enum JobPriority {
+  LOW
+  NORMAL
+  URGENT
+}
+
+enum JobStatus {
+  SUBMITTED
+  APPROVED
+  IN_PROGRESS
+  DONE
+}
+
+enum QuoteStatus {
+  REQUESTED
+  RECEIVED
+  APPROVED
+  REJECTED
+}
+
+enum MessageThreadType {
+  TENANCY
+  JOB
+}
+
+enum MessageChannel {
+  IN_APP
+  EMAIL
+  SMS
+}
+
+enum DocumentOwnerType {
+  PROPERTY
+  TENANCY
+  LEASE
+  JOB
+}
+
+enum ComplianceType {
+  SMOKE_ALARM
+  ROUTINE_INSPECTION
+  INSURANCE_RENEWAL
+  POOL_CERT
+}
+
+enum ComplianceStatus {
+  DUE
+  OK
+  OVERDUE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  READ
+}
+
+model User {
+  id             String    @id @default(uuid()) @db.Uuid
+  name           String
+  email          String    @unique
+  phone          String?
+  auth_provider  String?
+  status         String?
+  properties     Property[] @relation("OwnerProperties")
+  roles          UserRole[]
+  messages       Message[]
+  notifications  Notification[]
+  documents      Document[] @relation("UploadedDocuments")
+  created_jobs   MaintenanceJob[] @relation("UserCreatedJobs")
+  notificationSettings UserNotificationSetting[]
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        RoleCode @unique
+  description String?
+  users       UserRole[]
+}
+
+model UserRole {
+  id        String    @id @default(uuid()) @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String    @db.Uuid
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId    String    @db.Uuid
+  scopeType ScopeType
+  scopeId   String?   @db.Uuid
+
+  @@unique([userId, roleId, scopeType, scopeId])
+}
+
+model Property {
+  id            String     @id @default(uuid()) @db.Uuid
+  owner         User       @relation("OwnerProperties", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  ownerUserId   String     @db.Uuid
+  address_line1 String?
+  suburb        String?
+  state         String?
+  postcode      String?
+  bedrooms      Int?
+  bathrooms     Int?
+  parking       Int?
+  notes         String?
+  tenancies     Tenancy[]
+  jobs          MaintenanceJob[]
+  complianceItems ComplianceItem[]
+}
+
+model Tenant {
+  id              String   @id @default(uuid()) @db.Uuid
+  first_name      String
+  last_name       String
+  email           String?
+  phone           String?
+  emergency_contact String?
+  bank_ref        String?
+  tenancies       Tenancy[] @relation("TenantTenancies")
+}
+
+model Tenancy {
+  id               String     @id @default(uuid()) @db.Uuid
+  property         Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId       String     @db.Uuid
+  primaryTenant    Tenant     @relation("TenantTenancies", fields: [primaryTenantId], references: [id], onDelete: Cascade)
+  primaryTenantId  String     @db.Uuid
+  start_date       DateTime   @db.Date
+  end_date         DateTime?  @db.Date
+  rent_amount      Decimal    @db.Decimal(12,2)
+  rent_frequency   RentFrequency
+  bond_amount      Decimal?   @db.Decimal(12,2)
+  payment_day_of_week Int?
+  status           TenancyStatus @default(ACTIVE)
+  leases           Lease[]
+  payments         Payment[]
+  ledgerEntries    LedgerEntry[]
+  jobs             MaintenanceJob[]
+}
+
+model Lease {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenancy        Tenancy  @relation(fields: [tenancyId], references: [id], onDelete: Cascade)
+  tenancyId      String   @db.Uuid
+  start_date     DateTime @db.Date
+  end_date       DateTime? @db.Date
+  terms_url      String?
+  bond_lodged    Boolean  @default(false)
+  bond_number    String?
+  rent_review_date DateTime? @db.Date
+}
+
+model Payment {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenancy       Tenancy   @relation(fields: [tenancyId], references: [id], onDelete: Cascade)
+  tenancyId     String    @db.Uuid
+  date_received DateTime  @db.Date
+  amount        Decimal   @db.Decimal(12,2)
+  method        PaymentMethod
+  reference     String?
+  external_txn_id String?
+  notes         String?
+  ledgerEntries LedgerEntry[]
+}
+
+model LedgerEntry {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenancy          Tenancy   @relation(fields: [tenancyId], references: [id], onDelete: Cascade)
+  tenancyId        String    @db.Uuid
+  entry_date       DateTime  @db.Date
+  type             LedgerEntryType
+  amount_debit     Decimal?  @db.Decimal(12,2)
+  amount_credit    Decimal?  @db.Decimal(12,2)
+  balance_after    Decimal   @db.Decimal(12,2)
+  payment          Payment?  @relation(fields: [linked_payment_id], references: [id])
+  linked_payment_id String?  @db.Uuid
+}
+
+model MaintenanceJob {
+  id             String   @id @default(uuid()) @db.Uuid
+  property       Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId     String   @db.Uuid
+  tenancy        Tenancy? @relation(fields: [tenancyId], references: [id], onDelete: SetNull)
+  tenancyId      String?  @db.Uuid
+  created_by     User     @relation("UserCreatedJobs", fields: [createdByUserId], references: [id])
+  createdByUserId String  @db.Uuid
+  title          String
+  description    String?
+  priority       JobPriority @default(NORMAL)
+  status         JobStatus   @default(SUBMITTED)
+  spend_cap      Decimal?    @db.Decimal(12,2)
+  due_date       DateTime?   @db.Date
+  quotes         MaintenanceQuote[]
+}
+
+model Vendor {
+  id             String   @id @default(uuid()) @db.Uuid
+  business_name  String
+  contact_name   String?
+  email          String?
+  phone          String?
+  abn            String?
+  license_no     String?
+  insurance_expiry DateTime? @db.Date
+  quotes         MaintenanceQuote[]
+}
+
+model MaintenanceQuote {
+  id        String   @id @default(uuid()) @db.Uuid
+  job       MaintenanceJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId     String   @db.Uuid
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendorId  String   @db.Uuid
+  amount    Decimal  @db.Decimal(12,2)
+  notes     String?
+  status    QuoteStatus @default(REQUESTED)
+}
+
+model Message {
+  id            String   @id @default(uuid()) @db.Uuid
+  thread_type   MessageThreadType
+  thread_id     String   @db.Uuid
+  sender        User     @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+  senderUserId  String   @db.Uuid
+  body          String
+  sent_at       DateTime @default(now()) @db.Timestamptz(6)
+  channel       MessageChannel
+  has_attachments Boolean? @default(false)
+}
+
+model Document {
+  id           String   @id @default(uuid()) @db.Uuid
+  owner_type   DocumentOwnerType
+  owner_id     String   @db.Uuid
+  name         String
+  file_url     String
+  file_type    String?
+  uploaded_by  User?    @relation("UploadedDocuments", fields: [uploadedBy], references: [id])
+  uploadedBy   String?  @db.Uuid
+  uploaded_at  DateTime @default(now()) @db.Timestamptz(6)
+  compliance_items ComplianceItem[]
+}
+
+model ComplianceItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId  String   @db.Uuid
+  type        ComplianceType
+  due_date    DateTime @db.Date
+  status      ComplianceStatus @default(DUE)
+  document    Document? @relation(fields: [documentId], references: [id])
+  documentId  String?  @db.Uuid
+}
+
+model Notification {
+  id         String   @id @default(uuid()) @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String   @db.Uuid
+  type       String
+  payload_json Json?
+  channel    NotificationChannel
+  status     NotificationStatus @default(PENDING)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model UserNotificationSetting {
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String @db.Uuid
+  type       String
+  email      Boolean? @default(true)
+  push       Boolean? @default(true)
+  sms        Boolean? @default(false)
+  quiet_hours_start DateTime? @db.Time
+  quiet_hours_end   DateTime? @db.Time
+
+  @@id([userId, type])
+}
+
