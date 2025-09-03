@@ -49,3 +49,11 @@ export NEXT_PUBLIC_API_BASE=http://localhost:3001
 
 and restart the dev server.
 
+### Mock API store
+
+During Phase‑2 development the routes under `app/api` use an in‑memory store
+defined in [`app/api/store.ts`](app/api/store.ts). The data resets whenever the
+Next.js server restarts or when `resetStore()` is called. Once a real backend
+is available, point `NEXT_PUBLIC_API_BASE` to it and remove or replace the
+mock API routes to disable the in‑memory store.
+
