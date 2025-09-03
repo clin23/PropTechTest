@@ -4,8 +4,6 @@
   "type": "module",
   "scripts": {
     "prisma": "prisma",
-    "seed": "node --loader ts-node/esm prisma/seed.ts",
-    "test": "echo \"No tests\""
   },
   "dependencies": {
     "@prisma/client": "^5.13.0"
