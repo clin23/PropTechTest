@@ -1,5 +1,6 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { getInspections, createInspection } from "../../lib/api";
 
 export default function InspectionsPage() {
@@ -28,12 +29,14 @@ export default function InspectionsPage() {
       </div>
       <ul className="space-y-2">
         {data?.map((insp: any) => (
-          <li
-            key={insp.id}
-            className="p-4 bg-white rounded border flex justify-between"
-          >
-            <span>Property {insp.propertyId}</span>
-            <span className="text-sm text-gray-500">{insp.status}</span>
+          <li key={insp.id} className="p-4 bg-white rounded border">
+            <Link
+              href={`/inspections/${insp.id}`}
+              className="flex justify-between"
+            >
+              <span>Property {insp.propertyId}</span>
+              <span className="text-sm text-gray-500">{insp.status}</span>
+            </Link>
           </li>
         ))}
       </ul>

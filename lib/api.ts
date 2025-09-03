@@ -16,6 +16,10 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 export const getInspections = () => api('/inspections');
 export const createInspection = (payload: any) =>
   api('/inspections', { method: 'POST', body: JSON.stringify(payload) });
+export const patchInspection = (id: string, payload: any) =>
+  api(`/inspections/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+export const postInspectionItems = (id: string, payload: any) =>
+  api(`/inspections/${id}/items`, { method: 'POST', body: JSON.stringify(payload) });
 
 // Applications
 export const listApplications = () => api('/applications');
