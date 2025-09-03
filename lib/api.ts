@@ -1,5 +1,13 @@
 import type { ApplicationRow } from '../components/ApplicationsTable';
 
+export interface Inspection {
+  id: string;
+  propertyId: string;
+  type: string;
+  status: string;
+  date: string;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
@@ -15,7 +23,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 // Inspections
-export const getInspections = () => api('/inspections');
+export const getInspections = () => api<Inspection[]>('/inspections');
 export const createInspection = (payload: any) =>
   api('/inspections', { method: 'POST', body: JSON.stringify(payload) });
 export const patchInspection = (id: string, payload: any) =>
