@@ -1,14 +1,21 @@
-import ApplicationsTable from '../../components/ApplicationsTable';
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import ApplicationsTable, {
+  ApplicationRow,
+} from "../../components/ApplicationsTable";
+import { listApplications } from "../../lib/api";
 
 export default function ApplicationsPage() {
-  const rows = [
-    { id: '1', applicant: 'John Doe', property: '123 Main St', status: 'New' },
-    { id: '2', applicant: 'Jane Smith', property: '456 Oak Ave', status: 'In Review' },
-  ];
+  const { data: rows } = useQuery<ApplicationRow[]>({
+    queryKey: ["applications"],
+    queryFn: listApplications,
+  });
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-4">Applications</h1>
-      <ApplicationsTable rows={rows} />
+      <ApplicationsTable rows={rows || []} />
     </div>
   );
 }

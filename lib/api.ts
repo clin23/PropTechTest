@@ -25,6 +25,11 @@ export const postInspectionItems = (id: string, payload: any) =>
 export const listApplications = () => api('/applications');
 export const getApplication = (id: string) => api(`/applications/${id}`);
 export const updateApplication = (id: string, payload: any) => api(`/applications/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+export const postScore = (id: string, payload: any) =>
+  api(`/applications/${id}/score`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 
 // Listings
 export const createListing = (payload: any) => api('/listings', { method: 'POST', body: JSON.stringify(payload) });
