@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { Application } from "../lib/api";
 
-export default function ApplicantTabs({ application }: { application: any }) {
+export default function ApplicantTabs({ application }: { application?: Application }) {
   const [tab, setTab] = useState("profile");
 
   return (
