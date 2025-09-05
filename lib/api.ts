@@ -17,6 +17,12 @@ export interface Vendor {
   documents?: string[];
 }
 
+export interface PnLPoint {
+  month: string;
+  income: number;
+  expenses: number;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
@@ -62,7 +68,7 @@ export const postRentReview = (tenancyId: string, payload: any) => api(`/tenanci
 // Expenses & PnL
 export const listExpenses = (propertyId: string) => api<ExpenseRow[]>(`/properties/${propertyId}/expenses`);
 export const createExpense = (propertyId: string, payload: any) => api(`/properties/${propertyId}/expenses`, { method: 'POST', body: JSON.stringify(payload) });
-export const getPnL = (propertyId: string) => api<any[]>(`/properties/${propertyId}/pnl`);
+export const getPnL = (propertyId: string) => api<PnLPoint[]>(`/properties/${propertyId}/pnl`);
 
 // Vendors
 export const listVendors = () => api<Vendor[]>('/vendors');
