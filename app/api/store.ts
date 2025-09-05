@@ -82,6 +82,8 @@ export const listings: Listing[] = [];
 
 export const rentReviews: any[] = [];
 
+export const uploads: string[] = [];
+
 // Helper to reset all data back to its initial state
 export function resetStore() {
   properties.splice(0, properties.length, ...initialProperties);
@@ -92,4 +94,5 @@ export function resetStore() {
   expenses.splice(0, expenses.length, ...initialExpenses);
   listings.splice(0, listings.length);
   rentReviews.splice(0, rentReviews.length);
+  uploads.splice(0, uploads.length);
 }
