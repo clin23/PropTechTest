@@ -49,7 +49,7 @@ export const postInspectionItems = (id: string, payload: any) =>
 // Applications
 export const listApplications = () =>
   api<ApplicationRow[]>('/applications');
-export const getApplication = (id: string) => api(`/applications/${id}`);
+export const getApplication = (id: string) => api<Application>(`/applications/${id}`);
 export const updateApplication = (id: string, payload: any) => api(`/applications/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 export const postScore = (id: string, payload: any) =>
   api(`/applications/${id}/score`, {
@@ -78,5 +78,10 @@ export const updateVendor = (id: string, payload: Partial<Vendor>) =>
   api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
 // Notification settings
-export const getNotificationSettings = () => api('/me/notification-settings');
-export const updateNotificationSettings = (payload: any) => api('/me/notification-settings', { method: 'PATCH', body: JSON.stringify(payload) });
+export const getNotificationSettings = () =>
+  api<NotificationSettings>('/me/notification-settings');
+export const updateNotificationSettings = (payload: NotificationSettings) =>
+  api('/me/notification-settings', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });

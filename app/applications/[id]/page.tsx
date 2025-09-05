@@ -7,10 +7,11 @@ import {
   updateApplication,
   postScore,
 } from "../../../lib/api";
+import type { Application } from "../../../lib/api";
 
 export default function ApplicationDetail({ params }: { params: { id: string } }) {
   const queryClient = useQueryClient();
-  const { data: application } = useQuery({
+  const { data: application } = useQuery<Application>({
     queryKey: ["application", params.id],
     queryFn: () => getApplication(params.id),
   });

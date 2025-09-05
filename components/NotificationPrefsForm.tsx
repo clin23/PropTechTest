@@ -2,7 +2,11 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getNotificationSettings, updateNotificationSettings } from "../lib/api";
+import {
+  getNotificationSettings,
+  updateNotificationSettings,
+  NotificationSettings,
+} from "../lib/api";
 import { z } from "zod";
 import { Input } from "./ui/input";
 import { Switch } from "./ui/switch";
@@ -21,20 +25,21 @@ export default function NotificationPrefsForm() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data } = useQuery({
+  const { data } = useQuery<NotificationSettings>({
     queryKey: ["notificationSettings"],
     queryFn: getNotificationSettings,
   });
 
   const mutation = useMutation({
-    mutationFn: updateNotificationSettings,
+    mutationFn: (payload: NotificationSettings) =>
+      updateNotificationSettings(payload),
     onSuccess: () => {
       toast({ title: "Settings saved" });
       queryClient.invalidateQueries({ queryKey: ["notificationSettings"] });
     },
   });
 
-  const [values, setValues] = useState<z.infer<typeof formSchema>>({
+  const [values, setValues] = useState<NotificationSettings>({
     email: false,
     sms: false,
     inApp: false,
@@ -61,7 +66,7 @@ export default function NotificationPrefsForm() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     try {
-      const parsed = formSchema.parse(values);
+      const parsed = formSchema.parse(values) as NotificationSettings;
       mutation.mutate(parsed);
     } catch (err) {
       if (err instanceof z.ZodError) {
