@@ -3,9 +3,16 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { listLeases, computeRentIncrease, generateNotice, Lease } from '../../lib/api';
+import PageHeader from '../../components/PageHeader';
+import Skeleton from '../../components/Skeleton';
+import ErrorState from '../../components/ErrorState';
 
 export default function RentReviewPage() {
-  const { data: leases = [] } = useQuery({ queryKey: ['leases'], queryFn: listLeases });
+  const {
+    data: leases = [],
+    isLoading,
+    error,
+  } = useQuery({ queryKey: ['leases'], queryFn: listLeases });
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState<Lease | null>(null);
   const [currentRent, setCurrentRent] = useState('');
@@ -41,47 +48,53 @@ export default function RentReviewPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">Rent Reviews</h1>
+      <PageHeader title="Rent Reviews" />
       <input
         placeholder="Filter by address"
         className="border p-1 mb-4"
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
       />
-      <table className="w-full border">
-        <thead>
-          <tr className="text-left">
-            <th className="p-2 border">Property</th>
-            <th className="p-2 border">Current Rent</th>
-            <th className="p-2 border">Next Review</th>
-            <th className="p-2 border"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((l) => (
-            <tr key={l.id}>
-              <td className="p-2 border">{l.address}</td>
-              <td className="p-2 border">{l.currentRent}</td>
-              <td className="p-2 border">{l.nextReview}</td>
-              <td className="p-2 border">
-                <button
-                  className="px-2 py-1 bg-blue-500 text-white"
-                  onClick={() => {
-                    setSelected(l);
-                    setCurrentRent(String(l.currentRent));
-                    setCpi('');
-                    setPercent('');
-                    setAmount('');
-                    setNewRent(null);
-                  }}
-                >
-                  Review
-                </button>
-              </td>
+      {isLoading ? (
+        <Skeleton className="h-32" />
+      ) : error ? (
+        <ErrorState message={(error as Error).message} />
+      ) : (
+        <table className="w-full border">
+          <thead>
+            <tr className="text-left">
+              <th className="p-2 border">Property</th>
+              <th className="p-2 border">Current Rent</th>
+              <th className="p-2 border">Next Review</th>
+              <th className="p-2 border"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filtered.map((l) => (
+              <tr key={l.id}>
+                <td className="p-2 border">{l.address}</td>
+                <td className="p-2 border">{l.currentRent}</td>
+                <td className="p-2 border">{l.nextReview}</td>
+                <td className="p-2 border">
+                  <button
+                    className="px-2 py-1 bg-blue-500 text-white"
+                    onClick={() => {
+                      setSelected(l);
+                      setCurrentRent(String(l.currentRent));
+                      setCpi('');
+                      setPercent('');
+                      setAmount('');
+                      setNewRent(null);
+                    }}
+                  >
+                    Review
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {selected && (
         <div className="fixed inset-0 bg-black/30 flex justify-end">
@@ -146,7 +159,7 @@ export default function RentReviewPage() {
               <p className="text-green-600">Notice generated</p>
             )}
             {generate.error && (
-              <p className="text-red-600">{(generate.error as Error).message}</p>
+              <ErrorState message={(generate.error as Error).message} />
             )}
           </div>
         </div>
