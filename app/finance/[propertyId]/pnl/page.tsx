@@ -1,12 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import PnLChart from "../../../components/PnLChart";
-import { getPnLSummary, type PnLSummary } from "../../../lib/api";
+import { useParams } from "next/navigation";
+import PnLChart from "../../../../components/PnLChart";
+import { getPnLSummary, type PnLSummary } from "../../../../lib/api";
 
 export default function PnLPage() {
-  // TODO: replace hard-coded property ID with route param when available
-  const propertyId = "1";
+  const { propertyId } = useParams<{ propertyId: string }>();
   const { data } = useQuery<PnLSummary>({
     queryKey: ["pnl", propertyId],
     queryFn: () => getPnLSummary(propertyId),

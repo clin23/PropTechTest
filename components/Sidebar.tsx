@@ -2,21 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
-
-const links = [
-  { href: "/", label: "Dashboard" },
-  { href: "/inspections", label: "Inspections" },
-  { href: "/applications", label: "Applications" },
-  { href: "/listings", label: "Listings" },
-  { href: "/rent-review", label: "Rent Review" },
-  { href: "/finance", label: "Finance (Expenses/P&L)" },
-  { href: "/vendors", label: "Vendors" },
-  { href: "/settings", label: "Settings" }
-];
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const match = pathname.match(/finance\/([^/]+)/);
+  const propertyId = match ? match[1] : "1";
+  const links = [
+    { href: "/", label: "Dashboard" },
+    { href: "/inspections", label: "Inspections" },
+    { href: "/applications", label: "Applications" },
+    { href: "/listings", label: "Listings" },
+    { href: "/rent-review", label: "Rent Review" },
+    { href: `/finance/${propertyId}/expenses`, label: "Expenses" },
+    { href: `/finance/${propertyId}/pnl`, label: "P&L" },
+    { href: "/vendors", label: "Vendors" },
+    { href: "/settings", label: "Settings" }
+  ];
 
   return (
     <>

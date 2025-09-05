@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import { listExpenses } from "../lib/api";
 
 export interface ExpenseRow {
@@ -15,7 +16,8 @@ export interface ExpenseRow {
   receiptUrl?: string;
 }
 
-export default function ExpensesTable({ propertyId }: { propertyId: string }) {
+export default function ExpensesTable() {
+  const { propertyId } = useParams<{ propertyId: string }>();
   const { data = [] } = useQuery<ExpenseRow[]>({
     queryKey: ["expenses", propertyId],
     queryFn: () => listExpenses(propertyId),
