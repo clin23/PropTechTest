@@ -40,6 +40,8 @@ export interface NotificationSettings {
   inApp: boolean;
   quietHoursStart?: string;
   quietHoursEnd?: string;
+  critical: boolean;
+  normal: boolean;
 }
 
 export interface Lease {

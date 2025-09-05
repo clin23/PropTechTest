@@ -19,6 +19,8 @@ const formSchema = z.object({
   inApp: z.boolean(),
   quietHoursStart: z.string(),
   quietHoursEnd: z.string(),
+  critical: z.boolean(),
+  normal: z.boolean(),
 });
 
 export default function NotificationPrefsForm() {
@@ -45,6 +47,8 @@ export default function NotificationPrefsForm() {
     inApp: false,
     quietHoursStart: "",
     quietHoursEnd: "",
+    critical: false,
+    normal: false,
   });
 
   useEffect(() => {
@@ -55,6 +59,8 @@ export default function NotificationPrefsForm() {
         inApp: !!data.inApp,
         quietHoursStart: data.quietHoursStart || "",
         quietHoursEnd: data.quietHoursEnd || "",
+        critical: !!data.critical,
+        normal: !!data.normal,
       });
     }
   }, [data]);
@@ -75,49 +81,44 @@ export default function NotificationPrefsForm() {
     }
   };
 
-  const preview = (channel: string) => {
-    toast({ title: `${channel} preview`, description: `This is a sample ${channel.toLowerCase()} notification.` });
-  };
+  const previewMessages: string[] = [];
+  if (values.email) {
+    if (values.critical) previewMessages.push("Email - Critical: This is a critical email notification.");
+    if (values.normal) previewMessages.push("Email - Normal: This is a normal email notification.");
+  }
+  if (values.sms) {
+    if (values.critical) previewMessages.push("SMS - Critical: This is a critical SMS notification.");
+    if (values.normal) previewMessages.push("SMS - Normal: This is a normal SMS notification.");
+  }
+  if (values.inApp) {
+    if (values.critical) previewMessages.push("In-app - Critical: This is a critical in-app notification.");
+    if (values.normal) previewMessages.push("In-app - Normal: This is a normal in-app notification.");
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <label className="font-medium">Email</label>
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={values.email}
-            onCheckedChange={(v) => handleChange("email", v)}
-          />
-          <Button type="button" onClick={() => preview("Email")}>
-            Preview
-          </Button>
-        </div>
+        <Switch
+          checked={values.email}
+          onCheckedChange={(v) => handleChange("email", v)}
+        />
       </div>
 
       <div className="flex items-center justify-between">
         <label className="font-medium">SMS</label>
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={values.sms}
-            onCheckedChange={(v) => handleChange("sms", v)}
-          />
-          <Button type="button" onClick={() => preview("SMS")}>
-            Preview
-          </Button>
-        </div>
+        <Switch
+          checked={values.sms}
+          onCheckedChange={(v) => handleChange("sms", v)}
+        />
       </div>
 
       <div className="flex items-center justify-between">
         <label className="font-medium">In-app</label>
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={values.inApp}
-            onCheckedChange={(v) => handleChange("inApp", v)}
-          />
-          <Button type="button" onClick={() => preview("In-app")}>
-            Preview
-          </Button>
-        </div>
+        <Switch
+          checked={values.inApp}
+          onCheckedChange={(v) => handleChange("inApp", v)}
+        />
       </div>
 
       <div className="space-y-2">
@@ -133,6 +134,45 @@ export default function NotificationPrefsForm() {
             value={values.quietHoursEnd}
             onChange={(e) => handleChange("quietHoursEnd", e.target.value)}
           />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="font-medium">Severity</label>
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={values.critical}
+              onCheckedChange={(v) => handleChange("critical", v)}
+            />
+            <span>Critical</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={values.normal}
+              onCheckedChange={(v) => handleChange("normal", v)}
+            />
+            <span>Normal</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="font-medium">Preview</label>
+        <div className="p-2 border rounded min-h-[4rem]">
+          {previewMessages.length ? (
+            <ul className="list-disc ml-4 space-y-1">
+              {previewMessages.map((msg, i) => (
+                <li key={i} className="text-sm">
+                  {msg}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">
+              Toggle channels and severities to see preview messages.
+            </p>
+          )}
         </div>
       </div>
 
