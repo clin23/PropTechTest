@@ -3,11 +3,18 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import VendorCard from '../../components/VendorCard';
 import VendorForm from '../../components/VendorForm';
+import PageHeader from '../../components/PageHeader';
+import ErrorState from '../../components/ErrorState';
+import Skeleton from '../../components/Skeleton';
 import { listVendors, updateVendor, type Vendor } from '../../lib/api';
 
 export default function VendorsPage() {
   const queryClient = useQueryClient();
-  const { data: vendors = [] } = useQuery<Vendor[]>({
+  const {
+    data: vendors = [],
+    isLoading,
+    error,
+  } = useQuery<Vendor[]>({
     queryKey: ['vendors'],
     queryFn: listVendors,
   });
@@ -24,8 +31,7 @@ export default function VendorsPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold">Vendors</h1>
+      <PageHeader title="Vendors">
         <button
           className="px-3 py-1 rounded bg-blue-600 text-white"
           onClick={() => {
@@ -35,22 +41,28 @@ export default function VendorsPage() {
         >
           New Vendor
         </button>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {vendors?.map((vendor) => (
-          <VendorCard
-            key={vendor.id}
-            vendor={vendor}
-            onEdit={() => {
-              setEditing(vendor);
-              setDrawerOpen(true);
-            }}
-            onToggleFavourite={(fav) =>
-              update.mutate({ id: vendor.id!, data: { favourite: fav } })
-            }
-          />
-        ))}
-      </div>
+      </PageHeader>
+      {isLoading ? (
+        <Skeleton className="h-24" />
+      ) : error ? (
+        <ErrorState message={(error as Error).message} />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {vendors?.map((vendor) => (
+            <VendorCard
+              key={vendor.id}
+              vendor={vendor}
+              onEdit={() => {
+                setEditing(vendor);
+                setDrawerOpen(true);
+              }}
+              onToggleFavourite={(fav) =>
+                update.mutate({ id: vendor.id!, data: { favourite: fav } })
+              }
+            />
+          ))}
+        </div>
+      )}
       {drawerOpen && (
         <div className="fixed inset-0 bg-black/50 flex justify-end">
           <VendorForm

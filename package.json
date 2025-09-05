@@ -10,7 +10,7 @@
     "start": "next start",
     "deploy": "bash -ac 'source .env && npx prisma migrate deploy && npx prisma db seed && next start'",
     "test": "playwright test",
-    "test:unit": "vitest"
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@prisma/client": "^5.13.0",
@@ -28,9 +28,8 @@
     "postcss": "^8.4.31",
     "autoprefixer": "^10.4.16",
     "@playwright/test": "^1.44.0",
-    "@testing-library/jest-dom": "^6.1.6",
-    "@testing-library/react": "^14.1.2",
-    "jsdom": "^24.0.0",
-    "vitest": "^1.4.0"
+    "vitest": "^1.4.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.1.3"
   }
 }

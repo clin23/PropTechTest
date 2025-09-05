@@ -4,6 +4,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { getInspections, type Inspection } from "../../lib/api";
 import InspectionCreateModal from "../../components/InspectionCreateModal";
+import PageHeader from "../../components/PageHeader";
+import Skeleton from "../../components/Skeleton";
+import ErrorState from "../../components/ErrorState";
 
 export default function InspectionsPage() {
   const queryClient = useQueryClient();
@@ -12,22 +15,25 @@ export default function InspectionsPage() {
   const [status, setStatus] = useState("");
   const [open, setOpen] = useState(false);
 
-  const { data } = useQuery<Inspection[]>({
+  const {
+    data,
+    isLoading,
+    error,
+  } = useQuery<Inspection[]>({
     queryKey: ["inspections", { property, type, status }],
     queryFn: () => getInspections({ propertyId: property, type, status }),
   });
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Inspections</h1>
+      <PageHeader title="Inspections">
         <button
           className="px-3 py-1 rounded bg-blue-600 text-white"
           onClick={() => setOpen(true)}
         >
           New Inspection
         </button>
-      </div>
+      </PageHeader>
       <div className="flex gap-2">
         <input
           placeholder="Property"
@@ -55,19 +61,25 @@ export default function InspectionsPage() {
           <option value="Completed">Completed</option>
         </select>
       </div>
-      <ul className="space-y-2">
-        {data?.map((insp: Inspection) => (
-          <li key={insp.id} className="p-4 bg-white rounded border">
-            <Link
-              href={`/inspections/${insp.id}`}
-              className="flex justify-between"
-            >
-              <span>Property {insp.propertyId}</span>
-              <span className="text-sm text-gray-500">{insp.status}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {isLoading ? (
+        <Skeleton className="h-32" />
+      ) : error ? (
+        <ErrorState message={(error as Error).message} />
+      ) : (
+        <ul className="space-y-2">
+          {data?.map((insp: Inspection) => (
+            <li key={insp.id} className="p-4 bg-white rounded border">
+              <Link
+                href={`/inspections/${insp.id}`}
+                className="flex justify-between"
+              >
+                <span>Property {insp.propertyId}</span>
+                <span className="text-sm text-gray-500">{insp.status}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
       <InspectionCreateModal
         open={open}
         onClose={() => setOpen(false)}

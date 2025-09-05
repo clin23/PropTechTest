@@ -5,9 +5,16 @@ import { useState, useMemo } from "react";
 import ApplicationsTable from "../../components/ApplicationsTable";
 import { listApplications } from "../../lib/api";
 import type { ApplicationRow } from "../../types/application";
+import PageHeader from "../../components/PageHeader";
+import Skeleton from "../../components/Skeleton";
+import ErrorState from "../../components/ErrorState";
 
 export default function ApplicationsPage() {
-  const { data: rows } = useQuery<ApplicationRow[]>({
+  const {
+    data: rows,
+    isLoading,
+    error,
+  } = useQuery<ApplicationRow[]>({
     queryKey: ["applications"],
     queryFn: listApplications,
   });
@@ -35,7 +42,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">Applications</h1>
+      <PageHeader title="Applications" />
       <div className="flex space-x-4 mb-4">
         <select
           className="border p-2"
@@ -62,7 +69,13 @@ export default function ApplicationsPage() {
           ))}
         </select>
       </div>
-      <ApplicationsTable rows={filteredRows} />
+      {isLoading ? (
+        <Skeleton className="h-32" />
+      ) : error ? (
+        <ErrorState message={(error as Error).message} />
+      ) : (
+        <ApplicationsTable rows={filteredRows} />
+      )}
     </div>
   );
 }
