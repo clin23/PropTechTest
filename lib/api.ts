@@ -1,4 +1,5 @@
 import type { ApplicationRow } from '../components/ApplicationsTable';
+import type { ExpenseRow } from '../components/ExpensesTable';
 
 export interface Inspection {
   id: string;
@@ -59,7 +60,7 @@ export const getRentReview = (tenancyId: string) => api(`/tenancies/${tenancyId}
 export const postRentReview = (tenancyId: string, payload: any) => api(`/tenancies/${tenancyId}/rent-review`, { method: 'POST', body: JSON.stringify(payload) });
 
 // Expenses & PnL
-export const listExpenses = (propertyId: string) => api(`/properties/${propertyId}/expenses`);
+export const listExpenses = (propertyId: string) => api<ExpenseRow[]>(`/properties/${propertyId}/expenses`);
 export const createExpense = (propertyId: string, payload: any) => api(`/properties/${propertyId}/expenses`, { method: 'POST', body: JSON.stringify(payload) });
 export const getPnL = (propertyId: string) => api(`/properties/${propertyId}/pnl`);
 
