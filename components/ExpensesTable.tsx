@@ -4,17 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { listExpenses } from "../lib/api";
-
-export interface ExpenseRow {
-  id: string;
-  date: string;
-  category: string;
-  vendor: string;
-  amount: number;
-  gst: number;
-  notes?: string;
-  receiptUrl?: string;
-}
+import type { ExpenseRow } from "../types/expense";
 
 export default function ExpensesTable() {
   const { propertyId } = useParams<{ propertyId: string }>();

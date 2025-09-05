@@ -1,13 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-export interface ApplicationRow {
-  id: string;
-  applicant: string;
-  property: string;
-  status: string;
-}
+import type { ApplicationRow } from "../types/application";
 
 export default function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) {
   const router = useRouter();
