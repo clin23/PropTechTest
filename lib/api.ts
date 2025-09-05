@@ -31,6 +31,14 @@ export interface PnLPoint {
   expenses: number;
 }
 
+export interface NotificationSettings {
+  email: boolean;
+  sms: boolean;
+  inApp: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
