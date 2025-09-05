@@ -1,12 +1,14 @@
-import { expenses } from '../../../store';
+import { randomUUID } from 'crypto';
+import { prisma } from '../../../../../lib/prisma';
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
-  return Response.json(expenses.filter((e) => e.propertyId === params.id));
+  const rows = await prisma.mockData.findMany({ where: { type: 'expense' } });
+  return Response.json(rows.map((r) => r.data).filter((e: any) => e.propertyId === params.id));
 }
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const body = await req.json();
-  const exp = { id: String(expenses.length + 1), propertyId: params.id, ...body };
-  expenses.push(exp);
+  const exp = { id: randomUUID(), propertyId: params.id, ...body };
+  await prisma.mockData.create({ data: { id: exp.id, type: 'expense', data: exp } });
   return Response.json(exp);
 }

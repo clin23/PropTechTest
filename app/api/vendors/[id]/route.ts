@@ -1,19 +1,20 @@
-import { vendors } from '../../store';
+import { prisma } from '../../../../lib/prisma';
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const vendor = vendors.find((v) => v.id === params.id);
-  return Response.json(vendor);
+  const row = await prisma.mockData.findUnique({ where: { id: params.id } });
+  return Response.json(row?.data);
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const body = await req.json();
-  const vendor = vendors.find((v) => v.id === params.id);
-  if (vendor) Object.assign(vendor, body);
-  return Response.json(vendor);
+  const row = await prisma.mockData.findUnique({ where: { id: params.id } });
+  if (!row) return Response.json(null);
+  const data = { ...row.data, ...body } as any;
+  await prisma.mockData.update({ where: { id: params.id }, data: { data } });
+  return Response.json(data);
 }
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const idx = vendors.findIndex((v) => v.id === params.id);
-  if (idx !== -1) vendors.splice(idx, 1);
+  await prisma.mockData.delete({ where: { id: params.id } }).catch(() => null);
   return new Response(null, { status: 204 });
 }

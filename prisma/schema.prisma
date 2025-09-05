@@ -331,3 +331,10 @@ model UserNotificationSetting {
   @@id([userId, type])
 }
 
+// Generic storage for mock API data during development
+model MockData {
+  id   String @id @default(uuid()) @db.Uuid
+  type String
+  data Json
+}
+
