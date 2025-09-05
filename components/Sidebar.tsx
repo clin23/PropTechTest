@@ -2,22 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-  const match = pathname.match(/finance\/([^/]+)/);
-  const propertyId = match ? match[1] : "1";
+  const [showActions, setShowActions] = useState(false);
+
   const links = [
     { href: "/", label: "Dashboard" },
+    { href: "/properties", label: "Properties" },
+    { href: "/finance", label: "Finance" },
+    { href: "/documents", label: "Documents" }
+  ];
+
+  const actions = [
     { href: "/inspections", label: "Inspections" },
     { href: "/applications", label: "Applications" },
     { href: "/listings", label: "Listings" },
     { href: "/rent-review", label: "Rent Review" },
-    { href: `/finance/${propertyId}/expenses`, label: "Expenses" },
-    { href: `/finance/${propertyId}/pnl`, label: "P&L" },
     { href: "/vendors", label: "Vendors" },
     { href: "/settings", label: "Settings" }
   ];
@@ -41,6 +43,26 @@ export default function Sidebar() {
               {link.label}
             </Link>
           ))}
+          <button
+            className="block w-full text-left px-4 py-2 rounded hover:bg-gray-100"
+            onClick={() => setShowActions(a => !a)}
+          >
+            Actions
+          </button>
+          {showActions && (
+            <div className="ml-4 space-y-2">
+              {actions.map(link => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block px-4 py-2 rounded hover:bg-gray-100"
+                  onClick={() => setOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       {open && (
