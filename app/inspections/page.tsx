@@ -1,19 +1,20 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { getInspections, createInspection, type Inspection } from "../../lib/api";
+import { getInspections, type Inspection } from "../../lib/api";
+import InspectionCreateModal from "../../components/InspectionCreateModal";
 
 export default function InspectionsPage() {
   const queryClient = useQueryClient();
-  const { data } = useQuery<Inspection[]>({
-    queryKey: ["inspections"],
-    queryFn: getInspections,
-  });
+  const [property, setProperty] = useState("");
+  const [type, setType] = useState("");
+  const [status, setStatus] = useState("");
+  const [open, setOpen] = useState(false);
 
-  const create = useMutation({
-    mutationFn: () =>
-      createInspection({ propertyId: "1", type: "Entry", status: "Scheduled" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["inspections"] }),
+  const { data } = useQuery<Inspection[]>({
+    queryKey: ["inspections", { property, type, status }],
+    queryFn: () => getInspections({ propertyId: property, type, status }),
   });
 
   return (
@@ -22,10 +23,37 @@ export default function InspectionsPage() {
         <h1 className="text-2xl font-semibold">Inspections</h1>
         <button
           className="px-3 py-1 rounded bg-blue-600 text-white"
-          onClick={() => create.mutate()}
+          onClick={() => setOpen(true)}
         >
           New Inspection
         </button>
+      </div>
+      <div className="flex gap-2">
+        <input
+          placeholder="Property"
+          className="border p-1"
+          value={property}
+          onChange={(e) => setProperty(e.target.value)}
+        />
+        <select
+          className="border p-1"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+        >
+          <option value="">All Types</option>
+          <option value="Entry">Entry</option>
+          <option value="Routine">Routine</option>
+          <option value="Exit">Exit</option>
+        </select>
+        <select
+          className="border p-1"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
+          <option value="">All Statuses</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="Completed">Completed</option>
+        </select>
       </div>
       <ul className="space-y-2">
         {data?.map((insp: Inspection) => (
@@ -40,6 +68,12 @@ export default function InspectionsPage() {
           </li>
         ))}
       </ul>
+      <InspectionCreateModal
+        open={open}
+        onClose={() => setOpen(false)}
+        onCreated={() => queryClient.invalidateQueries({ queryKey: ["inspections"] })}
+      />
     </div>
   );
 }
+
