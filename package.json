@@ -8,7 +8,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "echo \"No tests\""
+    "test": "node --loader ts-node/esm --test"
   },
   "dependencies": {
     "@prisma/client": "^5.13.0",
