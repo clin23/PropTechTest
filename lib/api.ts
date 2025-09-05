@@ -53,7 +53,8 @@ export interface Lease {
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
+  const base = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
+  const res = await fetch(base + path, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -88,7 +89,7 @@ export const postInspectionItems = (id: string, payload: any) =>
   api(`/inspections/${id}/items`, { method: 'POST', body: JSON.stringify(payload) });
 export const getInspectionReport = async (id: string) => {
   const res = await fetch(
-    (process.env.NEXT_PUBLIC_API_BASE || '') + `/inspections/${id}/report`,
+    (process.env.NEXT_PUBLIC_API_BASE ?? '/api') + `/inspections/${id}/report`,
     {
       headers: {
         Authorization: `Bearer ${
@@ -124,7 +125,7 @@ export const generateListingCopy = (features: string) =>
     body: JSON.stringify({ features }),
   });
 export const exportListingPack = async (id: string) => {
-  const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || "") + `/listings/${id}/export`, {
+  const res = await fetch((process.env.NEXT_PUBLIC_API_BASE ?? '/api') + `/listings/${id}/export`, {
     headers: {
       Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""}`,
     },
