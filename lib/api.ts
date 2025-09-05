@@ -224,6 +224,44 @@ export const updateIncome = (
 export const deleteIncome = (propertyId: string, id: string) =>
   api(`/properties/${propertyId}/income/${id}`, { method: 'DELETE' });
 
+// Documents
+export interface DocumentRecord {
+  id: string;
+  name: string;
+  property: string;
+  tag: string;
+  url: string;
+}
+
+export const listDocuments = (params?: {
+  search?: string;
+  property?: string;
+  tag?: string;
+}) => {
+  const query = params
+    ? new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v) as [string, string][]
+      ).toString()
+    : '';
+  const path = `/documents${query ? `?${query}` : ''}`;
+  return api<DocumentRecord[]>(path);
+};
+
+export const uploadDocument = (file: File, property: string, tag: string) => {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('property', property);
+  form.append('tag', tag);
+  return api<DocumentRecord>('/documents', {
+    method: 'POST',
+    body: form,
+    headers: {},
+  });
+};
+
+export const searchDocuments = (search: string) =>
+  listDocuments({ search });
+
 // Vendors
 export const listVendors = () => api<Vendor[]>('/vendors');
 export const createVendor = (payload: Vendor) =>
@@ -232,7 +270,7 @@ export const updateVendor = (id: string, payload: Partial<Vendor>) =>
   api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 export const deleteVendor = (id: string) =>
   api(`/vendors/${id}`, { method: 'DELETE' });
-export const uploadDocument = (file: File) => {
+export const uploadFile = (file: File) => {
   const form = new FormData();
   form.append('file', file);
   return api<{ url: string }>('/upload', { method: 'POST', body: form, headers: {} });
