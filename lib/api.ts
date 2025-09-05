@@ -17,6 +17,13 @@ export interface Vendor {
   documents?: string[];
 }
 
+export interface Application {
+  id: string;
+  applicant: string;
+  property: string;
+  status: string;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
@@ -43,7 +50,7 @@ export const postInspectionItems = (id: string, payload: any) =>
 // Applications
 export const listApplications = () =>
   api<ApplicationRow[]>('/applications');
-export const getApplication = (id: string) => api(`/applications/${id}`);
+export const getApplication = (id: string) => api<Application>(`/applications/${id}`);
 export const updateApplication = (id: string, payload: any) => api(`/applications/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 export const postScore = (id: string, payload: any) =>
   api(`/applications/${id}/score`, {
