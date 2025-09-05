@@ -1,9 +1,11 @@
+import type { Vendor } from '../lib/api';
+
 export default function VendorCard({
   vendor,
   onEdit,
   onToggleFavourite,
 }: {
-  vendor: any;
+  vendor: Vendor;
   onEdit: () => void;
   onToggleFavourite?: (fav: boolean) => void;
 }) {

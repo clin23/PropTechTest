@@ -9,11 +9,11 @@ export interface Inspection {
 }
 
 export interface Vendor {
-  id: string;
+  id?: string;
   name: string;
   tags: string[];
-  documents?: string[];
   favourite?: boolean;
+  documents?: string[];
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -65,8 +65,10 @@ export const getPnL = (propertyId: string) => api(`/properties/${propertyId}/pnl
 
 // Vendors
 export const listVendors = () => api<Vendor[]>('/vendors');
-export const createVendor = (payload: any) => api('/vendors', { method: 'POST', body: JSON.stringify(payload) });
-export const updateVendor = (id: string, payload: any) => api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+export const createVendor = (payload: Vendor) =>
+  api('/vendors', { method: 'POST', body: JSON.stringify(payload) });
+export const updateVendor = (id: string, payload: Partial<Vendor>) =>
+  api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
 // Notification settings
 export const getNotificationSettings = () => api('/me/notification-settings');
