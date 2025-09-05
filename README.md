@@ -33,6 +33,13 @@ make seed
 make reset
 ```
 
+To apply migrations and seed the database using Prisma, run:
+
+```bash
+npx prisma migrate deploy
+npx prisma db seed
+```
+
 ## Development
 
 ### Tests

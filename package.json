@@ -8,6 +8,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "deploy": "bash -ac 'source .env && npx prisma migrate deploy && npx prisma db seed && next start'",
     "test": "playwright test"
   },
   "dependencies": {
