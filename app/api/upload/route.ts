@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { uploads } from '../store';
+import { prisma } from '../../../lib/prisma';
 
 const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB) || 5;
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'File too large' }, { status: 400 });
     }
     const url = `/uploads/${randomUUID()}`;
-    uploads.push(url);
+    await prisma.mockData.create({ data: { id: randomUUID(), type: 'upload', data: { url } } });
     return Response.json({ url });
   } catch {
     return Response.json({ error: 'Invalid multipart payload' }, { status: 400 });

@@ -1,12 +1,18 @@
-import { tenancies, properties } from '../store';
+import { prisma } from '../../../lib/prisma';
 
 export async function GET() {
-  const leases = tenancies.map((t) => ({
-    id: t.id,
-    propertyId: t.propertyId,
-    currentRent: t.currentRent,
-    nextReview: t.nextReview,
-    address: properties.find((p) => p.id === t.propertyId)?.address || '',
-  }));
+  const tenancyRows = await prisma.mockData.findMany({ where: { type: 'tenancy' } });
+  const propertyRows = await prisma.mockData.findMany({ where: { type: 'property' } });
+  const leases = tenancyRows.map((t) => {
+    const tenancy: any = t.data;
+    const property = propertyRows.find((p) => p.id === tenancy.propertyId)?.data as any;
+    return {
+      id: t.id,
+      propertyId: tenancy.propertyId,
+      currentRent: tenancy.currentRent,
+      nextReview: tenancy.nextReview,
+      address: property?.address || '',
+    };
+  });
   return Response.json(leases);
 }
