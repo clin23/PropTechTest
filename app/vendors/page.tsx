@@ -2,35 +2,35 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import VendorCard from '../../components/VendorCard';
-import { listVendors, createVendor, updateVendor } from '../../lib/api';
+import { listVendors, createVendor, updateVendor, type Vendor } from '../../lib/api';
 
 export default function VendorsPage() {
   const queryClient = useQueryClient();
-  const { data: vendors = [] } = useQuery<any[]>({
+  const { data: vendors = [] } = useQuery<Vendor[]>({
     queryKey: ['vendors'],
     queryFn: listVendors,
   });
 
   const create = useMutation({
-    mutationFn: (payload: any) => createVendor(payload),
+    mutationFn: (payload: Vendor) => createVendor(payload),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['vendors'] }),
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
+    mutationFn: ({ id, data }: { id: string; data: Partial<Vendor> }) =>
       updateVendor(id, data),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['vendors'] }),
   });
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<Vendor | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const payload = {
+    const payload: Vendor = {
       name: formData.get('name') as string,
       tags: (formData.get('tags') as string || '')
         .split(',')
@@ -38,7 +38,7 @@ export default function VendorsPage() {
         .filter(Boolean),
     };
     if (editing) {
-      update.mutate({ id: editing.id, data: payload });
+      update.mutate({ id: editing.id!, data: payload });
     } else {
       create.mutate(payload);
     }
@@ -61,7 +61,7 @@ export default function VendorsPage() {
         </button>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {vendors?.map((vendor: any) => (
+        {vendors?.map((vendor) => (
           <VendorCard
             key={vendor.id}
             vendor={vendor}
@@ -70,7 +70,7 @@ export default function VendorsPage() {
               setDrawerOpen(true);
             }}
             onToggleFavourite={(fav) =>
-              update.mutate({ id: vendor.id, data: { favourite: fav } })
+              update.mutate({ id: vendor.id!, data: { favourite: fav } })
             }
           />
         ))}
