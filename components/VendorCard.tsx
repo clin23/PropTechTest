@@ -34,9 +34,9 @@ export default function VendorCard({
           ))}
         </div>
       )}
-      {vendor.documents?.length > 0 && (
+      {vendor.documents && vendor.documents.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {vendor.documents.map((doc: string) => (
+          {(vendor.documents ?? []).map((doc: string) => (
             <span
               key={doc}
               className="px-2 py-1 bg-blue-100 rounded text-xs"
