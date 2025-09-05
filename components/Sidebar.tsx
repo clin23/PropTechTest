@@ -10,7 +10,7 @@ const links = [
   { href: "/applications", label: "Applications" },
   { href: "/listings", label: "Listings" },
   { href: "/rent-review", label: "Rent Review" },
-  { href: "/finance", label: "Finance (Expenses/P&L)" },
+  { href: "/finance", label: "Finance" },
   { href: "/vendors", label: "Vendors" },
   { href: "/settings", label: "Settings" }
 ];
