@@ -79,5 +79,10 @@ export const updateVendor = (id: string, payload: Partial<Vendor>) =>
   api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
 // Notification settings
-export const getNotificationSettings = () => api('/me/notification-settings');
-export const updateNotificationSettings = (payload: any) => api('/me/notification-settings', { method: 'PATCH', body: JSON.stringify(payload) });
+export const getNotificationSettings = () =>
+  api<NotificationSettings>('/me/notification-settings');
+export const updateNotificationSettings = (payload: NotificationSettings) =>
+  api('/me/notification-settings', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
