@@ -13,10 +13,36 @@ export default function ExpensesTable() {
     queryKey: ["expenses", propertyId],
     queryFn: () => listExpenses(propertyId),
   });
-  const deleteMutation = useMutation({
+  const deleteMutation = useMutation<
+    unknown,
+    unknown,
+    string,
+    { previousExpenses?: ExpenseRow[] }
+  >({
     mutationFn: (id: string) => deleteExpense(propertyId, id),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["expenses", propertyId] }),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["expenses", propertyId] });
+      const previousExpenses = queryClient.getQueryData<ExpenseRow[]>([
+        "expenses",
+        propertyId,
+      ]);
+      queryClient.setQueryData<ExpenseRow[]>([
+        "expenses",
+        propertyId,
+      ], (old = []) => old.filter((e) => e.id !== id));
+      return { previousExpenses };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousExpenses) {
+        queryClient.setQueryData([
+          "expenses",
+          propertyId,
+        ], context.previousExpenses);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses", propertyId] });
+    },
   });
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
