@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
-import path from 'path';
-
-const uploadPath = path.resolve('tests/fixtures/upload.pdf');
+const samplePngBase64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+const samplePng = {
+  name: 'sample.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from(samplePngBase64, 'base64'),
+};
 
 test('Documents hub search, filter and upload', async ({ page }) => {
   await page.goto('/documents');
@@ -20,6 +24,6 @@ test('Documents hub search, filter and upload', async ({ page }) => {
 
   // upload
   await page.getByLabel('Property filter').selectOption('');
-  await page.setInputFiles('[data-testid="doc-upload"]', uploadPath);
-  await expect(page.getByText('upload.pdf')).toBeVisible();
+  await page.setInputFiles('[data-testid="doc-upload"]', samplePng);
+  await expect(page.getByText('sample.png')).toBeVisible();
 });
