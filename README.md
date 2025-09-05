@@ -1,5 +1,14 @@
 # PropTechTest
 
+## Environment variables
+
+Copy `.env.local.sample` to `.env.local` and adjust as needed.
+
+* `NEXT_PUBLIC_API_BASE` - Base URL for backend API.
+* `MOCK_MODE` - Enables mocked API responses when set to `true`.
+* `DATABASE_URL` - PostgreSQL connection string.
+* `MAX_UPLOAD_MB` - Maximum upload size in megabytes.
+
 ## Database Setup
 
 Ensure `DATABASE_URL` is set to your PostgreSQL connection string. To create the schema run:
@@ -26,9 +35,13 @@ make reset
 
 ## Development
 
-Type-check the TypeScript sources:
+### Tests
+
+Install Playwright browsers and run the end-to-end tests:
 
 ```bash
+npm install
+npx playwright install
 npm test
 ```
 

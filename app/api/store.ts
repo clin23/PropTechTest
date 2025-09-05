@@ -1,3 +1,5 @@
+import type { Listing } from '../../types/listing';
+
 // In-memory store for mock API routes during Phase-2 development.
 // Data resets when the server restarts. Use resetStore() to restore defaults
 // or replace these mocks with real persistence when a backend is available.
@@ -130,7 +132,7 @@ export const expenses: any[] = [...initialExpenses];
 
 export const notificationSettings = { email: true, sms: false, inApp: true };
 
-export const listings: any[] = [];
+export const listings: Listing[] = [];
 
 const initialRentReviews = [
   {
@@ -143,6 +145,8 @@ const initialRentReviews = [
   },
 ];
 export const rentReviews: any[] = [...initialRentReviews];
+
+export const uploads: string[] = [];
 
 // Helper to reset all data back to its initial state
 export function resetStore() {

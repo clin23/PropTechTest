@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { listListings } from '../../lib/api';
+import type { Listing } from '../../types/listing';
 
 export default function ListingsPage() {
-  const { data: listings } = useQuery({ queryKey: ['listings'], queryFn: listListings });
+  const { data: listings } = useQuery<Listing[]>({ queryKey: ['listings'], queryFn: listListings });
 
   return (
     <div className="p-6">

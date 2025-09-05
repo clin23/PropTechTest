@@ -8,6 +8,8 @@ import {
   postScore,
 } from "../../../lib/api";
 import type { Application } from "../../../lib/api";
+import { templates } from "../../../lib/templates";
+import { logEvent } from "../../../lib/log";
 
 export default function ApplicationDetail({ params }: { params: { id: string } }) {
   const queryClient = useQueryClient();
@@ -30,9 +32,11 @@ export default function ApplicationDetail({ params }: { params: { id: string } }
   });
 
   const handleDecision = (decision: "Accepted" | "Rejected") => {
-    const message = prompt("Optional message to applicant:") || undefined;
+    const tpl = decision === "Accepted" ? templates.accept : templates.reject;
+    const message = prompt("Optional message to applicant:", tpl.email) || undefined;
     update.mutate({ status: decision, message });
     score.mutate(decision);
+    logEvent("application_decision", { id: params.id, decision });
   };
 
   return (
