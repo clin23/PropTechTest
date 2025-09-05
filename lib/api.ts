@@ -8,6 +8,14 @@ export interface Inspection {
   date: string;
 }
 
+export interface Vendor {
+  id: string;
+  name: string;
+  tags: string[];
+  documents?: string[];
+  favourite?: boolean;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
@@ -56,7 +64,7 @@ export const createExpense = (propertyId: string, payload: any) => api(`/propert
 export const getPnL = (propertyId: string) => api(`/properties/${propertyId}/pnl`);
 
 // Vendors
-export const listVendors = () => api('/vendors');
+export const listVendors = () => api<Vendor[]>('/vendors');
 export const createVendor = (payload: any) => api('/vendors', { method: 'POST', body: JSON.stringify(payload) });
 export const updateVendor = (id: string, payload: any) => api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 

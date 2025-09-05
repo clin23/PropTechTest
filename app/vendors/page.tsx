@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import VendorCard from '../../components/VendorCard';
 import { listVendors, createVendor, updateVendor } from '../../lib/api';
+import type { Vendor } from '../../lib/api';
 
 export default function VendorsPage() {
   const queryClient = useQueryClient();
-  const { data: vendors = [] } = useQuery<any[]>({
+  const { data: vendors = [] } = useQuery<Vendor[]>({
     queryKey: ['vendors'],
     queryFn: listVendors,
   });
@@ -61,7 +62,7 @@ export default function VendorsPage() {
         </button>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {vendors?.map((vendor: any) => (
+        {vendors?.map((vendor: Vendor) => (
           <VendorCard
             key={vendor.id}
             vendor={vendor}
