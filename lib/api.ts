@@ -17,6 +17,14 @@ export interface Vendor {
   documents?: string[];
 }
 
+export interface Application {
+  id: string;
+  applicant: string;
+  property: string;
+  status: string;
+  // include any other fields returned by `/applications/{id}`
+}
+
 export interface PnLPoint {
   month: string;
   income: number;
