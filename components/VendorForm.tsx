@@ -7,7 +7,7 @@ import {
   createVendor,
   updateVendor,
   type Vendor,
-  uploadDocument,
+  uploadFile,
 } from '../lib/api';
 import { useToast } from './ui/use-toast';
 
@@ -51,7 +51,7 @@ export default function VendorForm({
   const handleUpload = async (files: File[]) => {
     const uploaded: string[] = [];
     for (const file of files) {
-      const res = await uploadDocument(file);
+      const res = await uploadFile(file);
       uploaded.push(res.url);
     }
     setDocuments((d) => [...d, ...uploaded]);

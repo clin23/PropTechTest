@@ -7,7 +7,7 @@ export default function SettingsPage() {
       <PageHeader title="Settings" />
       <ul className="list-disc pl-6 space-y-1">
         <li>
-          <Link href="/settings/notifications">Notifications</Link>
+          <Link href="/settings/notifications">Notification Preferences</Link>
         </li>
       </ul>
     </div>
