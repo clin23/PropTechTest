@@ -1,6 +1,7 @@
 import type { ApplicationRow } from '../components/ApplicationsTable';
 import type { ExpenseRow } from '../components/ExpensesTable';
 import type { Listing } from '../types/listing';
+import type { IncomeRow } from '../types/income';
 
 export interface Inspection {
   id: string;
@@ -155,6 +156,7 @@ export const generateNotice = (payload: any) =>
 
 // Expenses & PnL
 export interface Expense extends ExpenseRow {}
+export interface Income extends IncomeRow {}
 
 export interface PnLSummary {
   totalIncome: number;
@@ -197,6 +199,25 @@ export const uploadExpenseReceipt = (
 };
 export const getPnLSummary = (propertyId: string) =>
   api<PnLSummary>(`/properties/${propertyId}/pnl`);
+
+export const listIncome = (propertyId: string) =>
+  api<IncomeRow[]>(`/properties/${propertyId}/income`);
+export const createIncome = (propertyId: string, payload: any) =>
+  api(`/properties/${propertyId}/income`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+export const updateIncome = (
+  propertyId: string,
+  id: string,
+  payload: any
+) =>
+  api(`/properties/${propertyId}/income/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+export const deleteIncome = (propertyId: string, id: string) =>
+  api(`/properties/${propertyId}/income/${id}`, { method: 'DELETE' });
 
 // Vendors
 export const listVendors = () => api<Vendor[]>('/vendors');
