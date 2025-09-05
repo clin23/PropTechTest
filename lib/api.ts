@@ -54,13 +54,42 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 // Inspections
-export const getInspections = () => api<Inspection[]>('/inspections');
+export const getInspections = (params?: {
+  propertyId?: string;
+  type?: string;
+  status?: string;
+}) => {
+  const query = params
+    ? new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v) as [string, string][]
+      ).toString()
+    : "";
+  const path = `/inspections${query ? `?${query}` : ""}`;
+  return api<Inspection[]>(path);
+};
 export const createInspection = (payload: any) =>
   api('/inspections', { method: 'POST', body: JSON.stringify(payload) });
 export const patchInspection = (id: string, payload: any) =>
   api(`/inspections/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 export const postInspectionItems = (id: string, payload: any) =>
   api(`/inspections/${id}/items`, { method: 'POST', body: JSON.stringify(payload) });
+export const getInspectionReport = async (id: string) => {
+  const res = await fetch(
+    (process.env.NEXT_PUBLIC_API_BASE || '') + `/inspections/${id}/report`,
+    {
+      headers: {
+        Authorization: `Bearer ${
+          typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''
+        }`,
+      },
+      cache: 'no-store',
+    }
+  );
+  if (!res.ok) throw new Error(await res.text());
+  return res.blob();
+};
+export const shareInspectionReport = (id: string) =>
+  api(`/inspections/${id}/share`, { method: 'POST' });
 
 // Applications
 export const listApplications = () =>
