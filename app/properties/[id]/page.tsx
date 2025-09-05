@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import QuickActionsBar from "../components/QuickActionsBar";
-import ExpenseForm from "../components/ExpenseForm";
-import DocumentUploadModal from "../components/DocumentUploadModal";
-import MessageTenantModal from "../components/MessageTenantModal";
+import QuickActionsBar from "../../../components/QuickActionsBar";
+import ExpenseForm from "../../../components/ExpenseForm";
+import DocumentUploadModal from "../../../components/DocumentUploadModal";
+import MessageTenantModal from "../../../components/MessageTenantModal";
 
-export default function Page() {
+export default function PropertyPage() {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
@@ -25,7 +25,7 @@ export default function Page() {
       />
       <DocumentUploadModal open={docOpen} onClose={() => setDocOpen(false)} />
       <MessageTenantModal open={messageOpen} onClose={() => setMessageOpen(false)} />
-      <div>Welcome to PropTech Phase 2</div>
+      <div>Property Details</div>
     </div>
   );
 }
