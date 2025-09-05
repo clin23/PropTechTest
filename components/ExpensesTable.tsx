@@ -12,10 +12,10 @@ export interface ExpenseRow {
 }
 
 export default function ExpensesTable({ propertyId }: { propertyId: string }) {
-  const { data = [] } = useQuery<ExpenseRow[]>([
-    "expenses",
-    propertyId,
-  ], () => listExpenses(propertyId));
+  const { data = [] } = useQuery<ExpenseRow[]>({
+    queryKey: ["expenses", propertyId],
+    queryFn: () => listExpenses(propertyId),
+  });
   const [filter, setFilter] = useState("");
 
   const rows = data.filter((r) =>
