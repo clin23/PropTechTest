@@ -1,37 +1,41 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { getPnL, type PnLPoint } from "../lib/api";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { useEffect, useRef, useState } from "react";
+import Script from "next/script";
 
-export default function PnLChart({ propertyId }: { propertyId: string }) {
-  const { data = [] } = useQuery<PnLPoint[]>({
-    queryKey: ["pnl", propertyId],
-    queryFn: () => getPnL(propertyId),
-  });
+interface MonthlyNet {
+  month: string;
+  net: number;
+}
+
+export default function PnLChart({ data }: { data: MonthlyNet[] }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!ready || !canvasRef.current) return;
+    const Chart = (window as any).Chart;
+    const chart = new Chart(canvasRef.current, {
+      type: "line",
+      data: {
+        labels: data.map((d) => d.month),
+        datasets: [
+          {
+            label: "Net",
+            data: data.map((d) => d.net),
+            borderColor: "rgb(75, 192, 192)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+          },
+        ],
+      },
+    });
+    return () => chart.destroy();
+  }, [ready, data]);
 
   return (
     <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="income" stroke="#4ade80" />
-          <Line type="monotone" dataKey="expenses" stroke="#f87171" />
-        </LineChart>
-      </ResponsiveContainer>
+      <Script src="https://cdn.jsdelivr.net/npm/chart.js" onLoad={() => setReady(true)} />
+      <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
 }

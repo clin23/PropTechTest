@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { createExpense } from "../lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createExpense, uploadExpenseReceipt } from "../lib/api";
 
 export default function ExpenseForm({
   propertyId,
@@ -11,14 +11,37 @@ export default function ExpenseForm({
   propertyId: string;
   onCreated?: () => void;
 }) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ date: "", category: "", amount: "" });
+  const [form, setForm] = useState({
+    date: "",
+    category: "",
+    vendor: "",
+    amount: "",
+    gst: "",
+    notes: "",
+  });
+  const [receipt, setReceipt] = useState<File | null>(null);
 
   const mutation = useMutation({
-    mutationFn: (payload: any) => createExpense(propertyId, payload),
+    mutationFn: async (payload: any) => {
+      const created = await createExpense(propertyId, payload);
+      if (receipt) {
+        await uploadExpenseReceipt(propertyId, created.id, receipt);
+      }
+    },
     onSuccess: () => {
       setOpen(false);
-      setForm({ date: "", category: "", amount: "" });
+      setForm({
+        date: "",
+        category: "",
+        vendor: "",
+        amount: "",
+        gst: "",
+        notes: "",
+      });
+      setReceipt(null);
+      queryClient.invalidateQueries({ queryKey: ["expenses", propertyId] });
       onCreated?.();
     },
   });
@@ -33,15 +56,18 @@ export default function ExpenseForm({
       </button>
 
       {open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 flex justify-end">
           <form
-            className="bg-white p-4 rounded space-y-2"
+            className="bg-white w-96 h-full p-4 space-y-2 overflow-y-auto"
             onSubmit={(e) => {
               e.preventDefault();
               mutation.mutate({
                 date: form.date,
                 category: form.category,
+                vendor: form.vendor,
                 amount: parseFloat(form.amount),
+                gst: parseFloat(form.gst),
+                notes: form.notes,
               });
             }}
           >
@@ -63,12 +89,45 @@ export default function ExpenseForm({
               />
             </label>
             <label className="block">
+              Vendor
+              <input
+                className="border p-1 w-full"
+                value={form.vendor}
+                onChange={(e) => setForm({ ...form, vendor: e.target.value })}
+              />
+            </label>
+            <label className="block">
               Amount
               <input
                 type="number"
                 className="border p-1 w-full"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              />
+            </label>
+            <label className="block">
+              GST
+              <input
+                type="number"
+                className="border p-1 w-full"
+                value={form.gst}
+                onChange={(e) => setForm({ ...form, gst: e.target.value })}
+              />
+            </label>
+            <label className="block">
+              Notes
+              <textarea
+                className="border p-1 w-full"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              />
+            </label>
+            <label className="block">
+              Receipt
+              <input
+                type="file"
+                className="border p-1 w-full"
+                onChange={(e) => setReceipt(e.target.files?.[0] || null)}
               />
             </label>
             <div className="flex justify-end gap-2 pt-2">
