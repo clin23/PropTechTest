@@ -1,9 +1,6 @@
-export async function POST(req: Request) {
-  const type = req.headers.get('content-type') || '';
-  if (type.includes('multipart/form-data')) {
-    await req.formData();
-    return Response.json({ ok: true });
-  }
-  const body = await req.json();
-  return Response.json({ ok: true, ...body });
+import { prisma } from '../../../lib/prisma';
+
+export async function GET() {
+  const rows = await prisma.mockData.findMany({ where: { type: 'notification' } });
+  return Response.json(rows.map((r) => r.data));
 }

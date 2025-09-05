@@ -1,31 +1,11 @@
-"use client";
-
-import { useState } from "react";
-import QuickActionsBar from "../components/QuickActionsBar";
-import ExpenseForm from "../components/ExpenseForm";
-import DocumentUploadModal from "../components/DocumentUploadModal";
-import MessageTenantModal from "../components/MessageTenantModal";
+import UpcomingReminders from "../components/UpcomingReminders";
+import PropertyCard from "../components/PropertyCard";
 
 export default function Page() {
-  const [expenseOpen, setExpenseOpen] = useState(false);
-  const [docOpen, setDocOpen] = useState(false);
-  const [messageOpen, setMessageOpen] = useState(false);
-
   return (
-    <div className="p-6 space-y-4">
-      <QuickActionsBar
-        onLogExpense={() => setExpenseOpen(true)}
-        onUploadDocument={() => setDocOpen(true)}
-        onMessageTenant={() => setMessageOpen(true)}
-      />
-      <ExpenseForm
-        open={expenseOpen}
-        onOpenChange={setExpenseOpen}
-        showTrigger={false}
-      />
-      <DocumentUploadModal open={docOpen} onClose={() => setDocOpen(false)} />
-      <MessageTenantModal open={messageOpen} onClose={() => setMessageOpen(false)} />
-      <div>Welcome to PropTech Phase 2</div>
+    <div className="p-6 space-y-6">
+      <UpcomingReminders />
+      <PropertyCard propertyId="property1" address="10 Rose St" />
     </div>
   );
 }

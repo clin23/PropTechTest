@@ -51,6 +51,19 @@ export interface NotificationSettings {
   normal: boolean;
 }
 
+export interface Reminder {
+  id: string;
+  propertyId?: string;
+  message: string;
+}
+
+export interface Notification {
+  id: string;
+  propertyId?: string;
+  type?: string;
+  message: string;
+}
+
 export interface Lease {
   id: string;
   propertyId: string;
@@ -289,10 +302,6 @@ export const updateNotificationSettings = (payload: NotificationSettings) =>
     body: JSON.stringify(payload),
   });
 
-// Properties
-export const listProperties = () => api<PropertySummary[]>('/properties');
-export const getProperty = (id: string) => api<PropertySummary>(`/properties/${id}`);
-export const listLedger = (propertyId: string) =>
-  api<LedgerEntry[]>(`/properties/${propertyId}/ledger`);
-export const listPropertyDocuments = (propertyId: string) =>
-  api<PropertyDocument[]>(`/properties/${propertyId}/documents`);
+// Reminders & notifications
+export const listReminders = () => api<Reminder[]>('/reminders');
+export const listNotifications = () => api<Notification[]>('/notifications');
