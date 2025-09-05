@@ -14,9 +14,10 @@ import {
 } from "recharts";
 
 export default function PnLChart({ propertyId }: { propertyId: string }) {
-  const { data = [] } = useQuery<any[]>(["pnl", propertyId], () =>
-    getPnL(propertyId)
-  );
+  const { data = [] } = useQuery<any[]>({
+    queryKey: ["pnl", propertyId],
+    queryFn: () => getPnL(propertyId),
+  });
 
   return (
     <div className="h-64">
