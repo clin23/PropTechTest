@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import PnLChart from "../../../../components/PnLChart";
 import { getPnLSummary, type PnLSummary } from "../../../../lib/api";
+import { exportCSV, exportPDF } from "../../../../lib/export";
+import { logEvent } from "../../../../lib/log";
 
 export default function PnLPage() {
   const { propertyId } = useParams<{ propertyId: string }>();
@@ -18,30 +20,18 @@ export default function PnLPage() {
       ["Month", "Net"],
       ...data.monthly.map((m) => [m.month, m.net.toString()]),
     ];
-    const csv = rows.map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "pnl.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    exportCSV("pnl.csv", rows);
+    logEvent("export_csv", { propertyId });
   };
 
   const handleExportPDF = () => {
     if (!data) return;
-    const win = window.open("", "_blank");
-    if (win) {
-      const rows = data.monthly
-        .map((m) => `<tr><td>${m.month}</td><td>${m.net}</td></tr>`) // simple table
-        .join("");
-      win.document.write(
-        `<table border='1'><tr><th>Month</th><th>Net</th></tr>${rows}</table>`
-      );
-      win.document.close();
-      win.print();
-      win.close();
-    }
+    const rows = data.monthly
+      .map((m) => `<tr><td>${m.month}</td><td>${m.net}</td></tr>`)
+      .join("");
+    const html = `<table border='1'><tr><th>Month</th><th>Net</th></tr>${rows}</table>`;
+    exportPDF("pnl.pdf", html);
+    logEvent("export_pdf", { propertyId });
   };
 
   return (
