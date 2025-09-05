@@ -1,4 +1,5 @@
 import type { Vendor } from '../lib/api';
+import { openInviteModal } from '../lib/invite';
 
 export default function VendorCard({
   vendor,
@@ -34,6 +35,27 @@ export default function VendorCard({
           ))}
         </div>
       )}
+      <div className="flex flex-wrap gap-2">
+        <span
+          className={`px-2 py-1 rounded text-xs ${
+            vendor.insured ? 'bg-green-100' : 'bg-red-100'
+          }`}
+        >
+          {vendor.insured ? 'Insured' : 'No Insurance'}
+        </span>
+        <span
+          className={`px-2 py-1 rounded text-xs ${
+            vendor.licensed ? 'bg-green-100' : 'bg-red-100'
+          }`}
+        >
+          {vendor.licensed ? 'Licensed' : 'No Licence'}
+        </span>
+      </div>
+      {vendor.avgResponseTime !== undefined && (
+        <div className="text-xs text-gray-600">
+          Avg response: {vendor.avgResponseTime}h
+        </div>
+      )}
       {vendor.documents && vendor.documents.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {(vendor.documents ?? []).map((doc: string) => (
@@ -50,7 +72,10 @@ export default function VendorCard({
         <button className="px-2 py-1 border rounded text-sm" onClick={onEdit}>
           Edit
         </button>
-        <button className="px-2 py-1 border rounded text-sm">
+        <button
+          className="px-2 py-1 border rounded text-sm"
+          onClick={() => vendor.id && openInviteModal(vendor.id)}
+        >
           Invite to Quote
         </button>
       </div>
