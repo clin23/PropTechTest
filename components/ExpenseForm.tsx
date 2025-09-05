@@ -14,7 +14,8 @@ export default function ExpenseForm({
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ date: "", category: "", amount: "" });
 
-  const mutation = useMutation((payload: any) => createExpense(propertyId, payload), {
+  const mutation = useMutation({
+    mutationFn: (payload: any) => createExpense(propertyId, payload),
     onSuccess: () => {
       setOpen(false);
       setForm({ date: "", category: "", amount: "" });
