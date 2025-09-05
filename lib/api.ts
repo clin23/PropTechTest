@@ -14,6 +14,9 @@ export interface Vendor {
   name: string;
   tags: string[];
   favourite?: boolean;
+  insured?: boolean;
+  licensed?: boolean;
+  avgResponseTime?: number;
   documents?: string[];
 }
 
@@ -92,6 +95,13 @@ export const createVendor = (payload: Vendor) =>
   api('/vendors', { method: 'POST', body: JSON.stringify(payload) });
 export const updateVendor = (id: string, payload: Partial<Vendor>) =>
   api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+export const deleteVendor = (id: string) =>
+  api(`/vendors/${id}`, { method: 'DELETE' });
+export const uploadDocument = () => api<{ url: string }>('/upload', { method: 'POST' });
+export const addVendorDocument = (id: string, url: string) =>
+  api(`/vendors/${id}/documents`, { method: 'POST', body: JSON.stringify({ url }) });
+export const removeVendorDocument = (id: string, url: string) =>
+  api(`/vendors/${id}/documents`, { method: 'DELETE', body: JSON.stringify({ url }) });
 
 // Notification settings
 export const getNotificationSettings = () =>

@@ -35,9 +35,33 @@ export const applications: any[] = [...initialApplications];
 
 // --- Vendors ---
 const initialVendors = [
-  { id: '1', name: 'ACME Plumbing', tags: ['plumber'] },
-  { id: '2', name: 'Bright Electrics', tags: ['electrician'] },
-  { id: '3', name: 'Clean & Co', tags: ['cleaner'] },
+  {
+    id: '1',
+    name: 'ACME Plumbing',
+    tags: ['plumber'],
+    insured: true,
+    licensed: true,
+    avgResponseTime: 2,
+    documents: ['licence.pdf'],
+  },
+  {
+    id: '2',
+    name: 'Bright Electrics',
+    tags: ['electrician'],
+    insured: false,
+    licensed: true,
+    avgResponseTime: 5,
+    documents: ['insurance.pdf'],
+  },
+  {
+    id: '3',
+    name: 'Clean & Co',
+    tags: ['cleaner'],
+    insured: true,
+    licensed: false,
+    avgResponseTime: 8,
+    documents: [],
+  },
 ];
 export const vendors: any[] = [...initialVendors];
 
