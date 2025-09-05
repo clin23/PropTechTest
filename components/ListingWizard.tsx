@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import PhotoUpload from "./PhotoUpload";
-import { createListing } from "../lib/api";
+import { createListing, generateListingCopy, exportListingPack } from "../lib/api";
 
 interface FormState {
   property: string;
@@ -22,20 +22,43 @@ export default function ListingWizard() {
     rent: "",
     description: "",
   });
+  const [adCopy, setAdCopy] = useState("");
+  const [listingId, setListingId] = useState<string | null>(null);
 
-  const mutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: () =>
       createListing({
         property: form.property,
         photos: form.photos.map((f) => f.name),
         features: form.features,
         rent: parseFloat(form.rent),
-        description: form.description,
+        description: adCopy || form.description,
       }),
+    onSuccess: (data: any) => setListingId(data.id),
   });
 
-  const next = () => setStep((s) => Math.min(s + 1, 4));
+  const copyMutation = useMutation({
+    mutationFn: () => generateListingCopy(form.features),
+    onSuccess: (data) => setAdCopy(data.text),
+  });
+
+  const next = () => setStep((s) => Math.min(s + 1, 5));
   const back = () => setStep((s) => Math.max(s - 1, 0));
+
+  const handleDownload = async () => {
+    if (!listingId) return;
+    const blob = await exportListingPack(listingId);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `listing-${listingId}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopy = async () => {
+    if (adCopy) await navigator.clipboard.writeText(adCopy);
+  };
 
   return (
     <div className="p-4 space-y-4 border rounded">
@@ -90,54 +113,87 @@ export default function ListingWizard() {
             <textarea
               className="border p-1 w-full"
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
           </label>
+        </div>
+      )}
+
+      {step === 5 && (
+        <div className="space-y-2">
+          <p>
+            <strong>Property:</strong> {form.property}
+          </p>
+          <p>
+            <strong>Features:</strong> {form.features}
+          </p>
+          <p>
+            <strong>Rent:</strong> {form.rent}
+          </p>
+          <p>
+            <strong>Description:</strong> {form.description}
+          </p>
           <button
             type="button"
             className="px-2 py-1 bg-gray-200 rounded"
-            onClick={() =>
-              setForm({
-                ...form,
-                description: `Beautiful property with ${form.features}`,
-              })
-            }
+            onClick={() => copyMutation.mutate()}
           >
-            Generate Copy
+            Generate Ad Copy
           </button>
+          {adCopy && (
+            <textarea
+              className="border p-1 w-full mt-2"
+              value={adCopy}
+              onChange={(e) => setAdCopy(e.target.value)}
+            />
+          )}
         </div>
       )}
 
       <div className="flex justify-between">
-      {step > 0 && (
-        <button className="px-2 py-1 bg-gray-100" onClick={back}>
-          Back
-        </button>
-      )}
+        {step > 0 && (
+          <button className="px-2 py-1 bg-gray-100" onClick={back}>
+            Back
+          </button>
+        )}
 
-      {step < 4 && (
-        <button className="ml-auto px-2 py-1 bg-blue-500 text-white" onClick={next}>
-          Next
-        </button>
-      )}
+        {step < 5 && (
+          <button
+            className="ml-auto px-2 py-1 bg-blue-500 text-white"
+            onClick={next}
+          >
+            Next
+          </button>
+        )}
 
-      {step === 4 && (
-        <button
-          className="ml-auto px-2 py-1 bg-green-500 text-white"
-          onClick={() => mutation.mutate()}
-        >
-          Submit
-        </button>
-      )}
+        {step === 5 && (
+          <button
+            className="ml-auto px-2 py-1 bg-green-500 text-white"
+            onClick={() => createMutation.mutate()}
+          >
+            Submit
+          </button>
+        )}
       </div>
 
-      {mutation.isSuccess && (
-        <p className="text-green-600">Listing created</p>
+      {createMutation.isSuccess && (
+        <div className="space-x-2">
+          <button
+            className="px-2 py-1 bg-gray-200 rounded"
+            onClick={handleCopy}
+          >
+            Copy Ad Copy
+          </button>
+          <button
+            className="px-2 py-1 bg-gray-200 rounded"
+            onClick={handleDownload}
+          >
+            Download Pack
+          </button>
+        </div>
       )}
-      {mutation.error && (
-        <p className="text-red-600">{(mutation.error as Error).message}</p>
+      {createMutation.error && (
+        <p className="text-red-600">{(createMutation.error as Error).message}</p>
       )}
     </div>
   );
