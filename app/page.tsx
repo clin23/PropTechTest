@@ -1,26 +1,31 @@
 "use client";
-import { useEffect, useState } from "react";
-import CashflowTile from "../components/CashflowTile";
-import DashboardPropertyCard, { DashboardProperty } from "../components/DashboardPropertyCard";
-import UpcomingReminders from "../components/UpcomingReminders";
+
+import { useState } from "react";
 import QuickActionsBar from "../components/QuickActionsBar";
+import ExpenseForm from "../components/ExpenseForm";
+import DocumentUploadModal from "../components/DocumentUploadModal";
+import MessageTenantModal from "../components/MessageTenantModal";
 
 export default function Page() {
-  const [properties, setProperties] = useState<DashboardProperty[]>([]);
-  useEffect(() => {
-    fetch('/api/properties').then(res => res.json()).then((data: DashboardProperty[]) => setProperties(data.slice(0, 3)));
-  }, []);
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [docOpen, setDocOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
 
   return (
-    <div className="p-6 space-y-6">
-      <CashflowTile />
-      <div className="grid gap-4 md:grid-cols-3">
-        {properties.map((p) => (
-          <DashboardPropertyCard key={p.id} property={p} />
-        ))}
-      </div>
-      <UpcomingReminders />
-      <QuickActionsBar />
+    <div className="p-6 space-y-4">
+      <QuickActionsBar
+        onLogExpense={() => setExpenseOpen(true)}
+        onUploadDocument={() => setDocOpen(true)}
+        onMessageTenant={() => setMessageOpen(true)}
+      />
+      <ExpenseForm
+        open={expenseOpen}
+        onOpenChange={setExpenseOpen}
+        showTrigger={false}
+      />
+      <DocumentUploadModal open={docOpen} onClose={() => setDocOpen(false)} />
+      <MessageTenantModal open={messageOpen} onClose={() => setMessageOpen(false)} />
+      <div>Welcome to PropTech Phase 2</div>
     </div>
   );
 }

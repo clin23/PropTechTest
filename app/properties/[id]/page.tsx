@@ -1,25 +1,31 @@
-'use client';
+"use client";
 
-import { useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { getProperty } from '../../../lib/api';
-import PropertyDetailTabs from '../../../components/PropertyDetailTabs';
-import type { PropertySummary } from '../../../types/property';
+import { useState } from "react";
+import QuickActionsBar from "../../../components/QuickActionsBar";
+import ExpenseForm from "../../../components/ExpenseForm";
+import DocumentUploadModal from "../../../components/DocumentUploadModal";
+import MessageTenantModal from "../../../components/MessageTenantModal";
 
-export default function PropertyDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const { data } = useQuery<PropertySummary>({
-    queryKey: ['property', id],
-    queryFn: () => getProperty(id),
-  });
+export default function PropertyPage() {
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [docOpen, setDocOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Property Details</h1>
-      {data && (
-        <PropertyDetailTabs propertyId={data.id} events={data.events} />
-      )}
+      <QuickActionsBar
+        onLogExpense={() => setExpenseOpen(true)}
+        onUploadDocument={() => setDocOpen(true)}
+        onMessageTenant={() => setMessageOpen(true)}
+      />
+      <ExpenseForm
+        open={expenseOpen}
+        onOpenChange={setExpenseOpen}
+        showTrigger={false}
+      />
+      <DocumentUploadModal open={docOpen} onClose={() => setDocOpen(false)} />
+      <MessageTenantModal open={messageOpen} onClose={() => setMessageOpen(false)} />
+      <div>Property Details</div>
     </div>
   );
 }
-

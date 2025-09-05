@@ -5,17 +5,24 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createExpense, uploadExpenseReceipt } from "../lib/api";
 import { useToast } from "./ui/use-toast";
 
-interface ExpenseFormProps {
-  propertyId: string;
+interface Props {
   onCreated?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }
 
 export default function ExpenseForm({
-  propertyId,
   onCreated,
-}: ExpenseFormProps) {
+  open: controlledOpen,
+  onOpenChange,
+  showTrigger = true,
+}: Props) {
+  const { propertyId } = useParams<{ propertyId: string }>();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [form, setForm] = useState({
     date: "",
     category: "",
@@ -60,12 +67,14 @@ export default function ExpenseForm({
 
   return (
     <div>
-      <button
-        className="px-2 py-1 bg-blue-500 text-white"
-        onClick={() => setOpen(true)}
-      >
-        Add Expense
-      </button>
+      {showTrigger && (
+        <button
+          className="px-2 py-1 bg-blue-500 text-white"
+          onClick={() => setOpen(true)}
+        >
+          Add Expense
+        </button>
+      )}
 
       {open && (
         <div className="fixed inset-0 bg-black/50 flex justify-end">
