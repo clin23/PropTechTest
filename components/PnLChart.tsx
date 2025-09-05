@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Script from "next/script";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface MonthlyNet {
   month: string;
@@ -9,33 +15,29 @@ interface MonthlyNet {
 }
 
 export default function PnLChart({ data }: { data: MonthlyNet[] }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    if (!ready || !canvasRef.current) return;
-    const Chart = (window as any).Chart;
-    const chart = new Chart(canvasRef.current, {
-      type: "line",
-      data: {
-        labels: data.map((d) => d.month),
-        datasets: [
-          {
-            label: "Net",
-            data: data.map((d) => d.net),
-            borderColor: "rgb(75, 192, 192)",
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-          },
-        ],
-      },
-    });
-    return () => chart.destroy();
-  }, [ready, data]);
-
   return (
     <div className="h-64">
-      <Script src="https://cdn.jsdelivr.net/npm/chart.js" onLoad={() => setReady(true)} />
-      <canvas ref={canvasRef} className="w-full h-full" />
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <XAxis dataKey="month" stroke="currentColor" />
+          <YAxis stroke="currentColor" />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "var(--tooltip-bg, #ffffff)",
+              borderColor: "var(--tooltip-border, #e5e7eb)",
+              color: "var(--tooltip-text, #000000)",
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="net"
+            stroke="var(--color-net, rgb(75,192,192))"
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
+
