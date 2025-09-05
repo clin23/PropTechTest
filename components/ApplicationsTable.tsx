@@ -1,3 +1,7 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
 export interface ApplicationRow {
   id: string;
   applicant: string;
@@ -6,6 +10,7 @@ export interface ApplicationRow {
 }
 
 export default function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) {
+  const router = useRouter();
   return (
     <table className="min-w-full border">
       <thead>
@@ -17,7 +22,11 @@ export default function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) 
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={r.id} className="border-t">
+          <tr
+            key={r.id}
+            className="border-t cursor-pointer hover:bg-gray-50"
+            onClick={() => router.push(`/applications/${r.id}`)}
+          >
             <td className="p-2">{r.applicant}</td>
             <td className="p-2">{r.property}</td>
             <td className="p-2">{r.status}</td>

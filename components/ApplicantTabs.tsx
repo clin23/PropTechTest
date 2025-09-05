@@ -23,25 +23,33 @@ export default function ApplicantTabs({ application }: { application?: Applicati
           }`}
           onClick={() => setTab("docs")}
         >
-          Docs
+          Documents
         </button>
         <button
           className={`px-4 py-2 ${
-            tab === "checklist" ? "border-b-2 border-blue-500" : ""
+            tab === "criteria" ? "border-b-2 border-blue-500" : ""
           }`}
-          onClick={() => setTab("checklist")}
+          onClick={() => setTab("criteria")}
         >
-          Checklist
+          Criteria/Score
         </button>
       </div>
       {tab === "profile" && (
-        <div className="p-4">Applicant: {application?.applicant}</div>
+        <div className="p-4 space-y-2">
+          <div>Applicant: {application?.applicant}</div>
+          <div>Property: {application?.property}</div>
+          <div>Status: {application?.status}</div>
+        </div>
       )}
       {tab === "docs" && (
-        <div className="p-4">Documents tab placeholder</div>
+        <div className="p-4 space-y-2">
+          <div>ID Document</div>
+          <div>Payslips</div>
+          <div>References</div>
+        </div>
       )}
-      {tab === "checklist" && (
-        <div className="p-4">Checklist tab placeholder</div>
+      {tab === "criteria" && (
+        <div className="p-4">Criteria and score details placeholder</div>
       )}
     </div>
   );

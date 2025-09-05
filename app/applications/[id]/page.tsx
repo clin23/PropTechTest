@@ -17,10 +17,12 @@ export default function ApplicationDetail({ params }: { params: { id: string } }
   });
 
   const update = useMutation({
-    mutationFn: (status: string) =>
-      updateApplication(params.id, { status }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["application", params.id] }),
+    mutationFn: (payload: { status: string; message?: string }) =>
+      updateApplication(params.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["application", params.id] });
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    },
   });
 
   const score = useMutation({
@@ -28,7 +30,8 @@ export default function ApplicationDetail({ params }: { params: { id: string } }
   });
 
   const handleDecision = (decision: "Accepted" | "Rejected") => {
-    update.mutate(decision);
+    const message = prompt("Optional message to applicant:") || undefined;
+    update.mutate({ status: decision, message });
     score.mutate(decision);
   };
 
