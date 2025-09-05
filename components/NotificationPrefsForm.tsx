@@ -38,6 +38,13 @@ export default function NotificationPrefsForm() {
     onSuccess: () => {
       toast({ title: "Settings saved" });
       queryClient.invalidateQueries({ queryKey: ["notificationSettings"] });
+      setError(null);
+    },
+    onError: (err: any) => {
+      const message =
+        err instanceof Error ? err.message : "Failed to save settings";
+      setError(message);
+      toast({ title: "Failed to save settings", description: message });
     },
   });
 
@@ -50,6 +57,7 @@ export default function NotificationPrefsForm() {
     critical: false,
     normal: false,
   });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (data) {
@@ -71,12 +79,15 @@ export default function NotificationPrefsForm() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
     try {
       const parsed = formSchema.parse(values) as NotificationSettings;
       mutation.mutate(parsed);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        toast({ title: "Validation error", description: err.errors.map((e) => e.message).join(", ") });
+        const msg = err.errors.map((e) => e.message).join(", ");
+        setError(msg);
+        toast({ title: "Validation error", description: msg });
       }
     }
   };
@@ -176,6 +187,7 @@ export default function NotificationPrefsForm() {
         </div>
       </div>
 
+      {error && <p className="text-red-600 text-sm">{error}</p>}
       <Button type="submit" disabled={mutation.isPending}>
         Save
       </Button>

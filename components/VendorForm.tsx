@@ -9,6 +9,7 @@ import {
   type Vendor,
   uploadDocument,
 } from '../lib/api';
+import { useToast } from './ui/use-toast';
 
 export default function VendorForm({
   vendor,
@@ -26,6 +27,8 @@ export default function VendorForm({
     vendor?.avgResponseTime?.toString() ?? ''
   );
   const [documents, setDocuments] = useState<string[]>(vendor?.documents ?? []);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const mutation = useMutation({
     mutationFn: (payload: Vendor) =>
@@ -33,8 +36,15 @@ export default function VendorForm({
         ? updateVendor(vendor.id, payload)
         : createVendor(payload),
     onSuccess: () => {
+      toast({ title: vendor ? 'Vendor updated' : 'Vendor created' });
       queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      setError(null);
       onClose();
+    },
+    onError: (err: any) => {
+      const message = err instanceof Error ? err.message : 'Failed to save vendor';
+      setError(message);
+      toast({ title: 'Failed to save vendor', description: message });
     },
   });
 
@@ -51,6 +61,15 @@ export default function VendorForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        setError(null);
+        if (!name.trim()) {
+          setError('Name is required');
+          return;
+        }
+        if (avgResponseTime && isNaN(parseFloat(avgResponseTime))) {
+          setError('Average response time must be a number');
+          return;
+        }
         const payload: Vendor = {
           name,
           tags: tags
@@ -127,6 +146,7 @@ export default function VendorForm({
           </div>
         )}
       </div>
+      {error && <p className="text-red-600 text-sm">{error}</p>}
       <div className="flex justify-end gap-2 pt-2">
         <button type="button" className="px-3 py-1" onClick={onClose}>
           Cancel
