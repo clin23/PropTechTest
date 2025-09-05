@@ -1,16 +1,22 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { listExpenses } from "../lib/api";
+import { listExpenses, deleteExpense } from "../lib/api";
 import type { ExpenseRow } from "../types/expense";
 
 export default function ExpensesTable() {
   const { propertyId } = useParams<{ propertyId: string }>();
+  const queryClient = useQueryClient();
   const { data = [] } = useQuery<ExpenseRow[]>({
     queryKey: ["expenses", propertyId],
     queryFn: () => listExpenses(propertyId),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteExpense(propertyId, id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["expenses", propertyId] }),
   });
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -69,6 +75,7 @@ export default function ExpensesTable() {
             <th className="p-2 text-left">GST</th>
             <th className="p-2 text-left">Notes</th>
             <th className="p-2 text-left">Receipt</th>
+            <th className="p-2 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -91,6 +98,18 @@ export default function ExpensesTable() {
                     View
                   </a>
                 )}
+              </td>
+              <td className="p-2">
+                <button
+                  className="text-red-600 underline"
+                  onClick={() => {
+                    if (confirm("Delete this expense?")) {
+                      deleteMutation.mutate(r.id);
+                    }
+                  }}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
