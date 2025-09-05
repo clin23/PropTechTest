@@ -1,5 +1,6 @@
 import type { ApplicationRow } from '../components/ApplicationsTable';
 import type { ExpenseRow } from '../components/ExpensesTable';
+import type { Listing } from '../types/listing';
 
 export interface Inspection {
   id: string;
@@ -54,13 +55,21 @@ export interface Lease {
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const base = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
+
+  const headers = new Headers(init?.headers);
+  headers.set(
+    'Authorization',
+    `Bearer ${
+      typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''
+    }`
+  );
+  if (!(init?.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
   const res = await fetch(base + path, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers || {}),
-      Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-    },
+    headers,
     cache: 'no-store',
   });
   if (!res.ok) throw new Error(await res.text());
@@ -117,7 +126,8 @@ export const postScore = (id: string, payload: any) =>
   });
 
 // Listings
-export const createListing = (payload: any) => api('/listings', { method: 'POST', body: JSON.stringify(payload) });
+export const createListing = (payload: Omit<Listing, 'id'>) =>
+  api<Listing>('/listings', { method: 'POST', body: JSON.stringify(payload) });
 export const listListings = () => api<Listing[]>('/listings');
 export const generateListingCopy = (features: string) =>
   api<{ text: string }>("/ai/listing-copy", {
@@ -183,7 +193,6 @@ export const uploadExpenseReceipt = (
   return api(`/properties/${propertyId}/expenses/${id}/receipt`, {
     method: 'POST',
     body: form,
-    headers: {},
   });
 };
 export const getPnLSummary = (propertyId: string) =>

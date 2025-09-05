@@ -2,10 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import ApplicationsTable, {
-  ApplicationRow,
-} from "../../components/ApplicationsTable";
+import ApplicationsTable from "../../components/ApplicationsTable";
 import { listApplications } from "../../lib/api";
+import type { ApplicationRow } from "../../types/application";
 
 export default function ApplicationsPage() {
   const { data: rows } = useQuery<ApplicationRow[]>({
