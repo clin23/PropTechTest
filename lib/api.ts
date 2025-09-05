@@ -37,6 +37,8 @@ export interface NotificationSettings {
   inApp: boolean;
   quietHoursStart?: string;
   quietHoursEnd?: string;
+  critical: boolean;
+  normal: boolean;
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
