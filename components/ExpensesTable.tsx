@@ -2,12 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import { listExpenses, deleteExpense } from "../lib/api";
 import type { ExpenseRow } from "../types/expense";
 
-export default function ExpensesTable() {
-  const { propertyId } = useParams<{ propertyId: string }>();
+export default function ExpensesTable({
+  propertyId,
+}: {
+  propertyId: string;
+}) {
   const queryClient = useQueryClient();
   const { data = [] } = useQuery<ExpenseRow[]>({
     queryKey: ["expenses", propertyId],

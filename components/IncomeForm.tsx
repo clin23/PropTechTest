@@ -2,12 +2,18 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 import { createIncome } from "../lib/api";
 import { useToast } from "./ui/use-toast";
 
-export default function IncomeForm({ onCreated }: { onCreated?: () => void }) {
-  const { propertyId } = useParams<{ propertyId: string }>();
+interface IncomeFormProps {
+  propertyId: string;
+  onCreated?: () => void;
+}
+
+export default function IncomeForm({
+  propertyId,
+  onCreated,
+}: IncomeFormProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ date: "", source: "", amount: "", notes: "" });

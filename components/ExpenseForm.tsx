@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 import { createExpense, uploadExpenseReceipt } from "../lib/api";
 import { useToast } from "./ui/use-toast";
 

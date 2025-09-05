@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('user can add and delete an income', async ({ page }) => {
-  const propertyId = 'test-property';
-
-  await page.goto(`/finance/${propertyId}/pnl`);
+  await page.goto('/finance/reports');
 
   await page.getByRole('button', { name: 'Add Income' }).click();
   await page.getByLabel('Date').fill('2024-01-15');

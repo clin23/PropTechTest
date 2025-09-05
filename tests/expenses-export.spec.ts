@@ -1,10 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-test('user can add and delete an expense', async ({ page }) => {
-  // Navigate to the expenses page
+// Ensure expenses can be added, appear in the list, and exported
+test('expenses can be added, listed, and exported', async ({ page }) => {
   await page.goto('/finance/expenses');
 
-  // Add a new expense via the form
   await page.getByRole('button', { name: 'Add Expense' }).click();
   await page.getByLabel('Date').fill('2024-01-01');
   await page.getByLabel('Category').fill('Utilities');
@@ -14,13 +13,13 @@ test('user can add and delete an expense', async ({ page }) => {
   await page.getByLabel('Notes').fill('Test expense');
   await page.getByRole('button', { name: 'Save' }).click();
 
-  // Ensure the expense appears in the table
   const row = page.getByRole('row', { has: page.getByText('Acme Corp') });
   await expect(row).toBeVisible();
 
-  // Delete the expense
-  await row.getByRole('button', { name: 'Delete' }).click();
-
-  // Verify the expense no longer appears
-  await expect(page.getByRole('cell', { name: 'Acme Corp' })).toHaveCount(0);
+  await page.goto('/finance/reports');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Export CSV' }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('expenses.csv');
 });
