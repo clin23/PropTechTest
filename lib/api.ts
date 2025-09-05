@@ -46,6 +46,19 @@ export interface NotificationSettings {
   normal: boolean;
 }
 
+export interface Reminder {
+  id: string;
+  propertyId?: string;
+  message: string;
+}
+
+export interface Notification {
+  id: string;
+  propertyId?: string;
+  type?: string;
+  message: string;
+}
+
 export interface Lease {
   id: string;
   propertyId: string;
@@ -245,3 +258,7 @@ export const updateNotificationSettings = (payload: NotificationSettings) =>
     method: 'PATCH',
     body: JSON.stringify(payload),
   });
+
+// Reminders & notifications
+export const listReminders = () => api<Reminder[]>('/reminders');
+export const listNotifications = () => api<Notification[]>('/notifications');

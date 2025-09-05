@@ -14,5 +14,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   await prisma.mockData.create({
     data: { id: income.id, type: 'income', data: income },
   });
+  const notifications = await prisma.mockData.findMany({ where: { type: 'notification' } });
+  for (const n of notifications) {
+    const data: any = n.data;
+    if (data.propertyId === params.id && data.type === 'rentLate') {
+      await prisma.mockData.delete({ where: { id: n.id } });
+    }
+  }
   return Response.json(income);
 }

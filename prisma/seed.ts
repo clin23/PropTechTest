@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   const userId = randomUUID();
-  const propertyId = randomUUID();
+  const propertyId = 'property1';
   const tenantId = randomUUID();
   const tenancyId = randomUUID();
   const paymentId = randomUUID();
@@ -90,6 +90,23 @@ async function main() {
       due_date: new Date('2025-09-15'),
       status: 'DUE'
     }
+  });
+
+  // mock data for API
+  await prisma.mockData.create({
+    data: { id: propertyId, type: 'property', data: { id: propertyId, address: '10 Rose St' } }
+  });
+  await prisma.mockData.create({
+    data: { id: 'rem1', type: 'reminder', data: { id: 'rem1', propertyId, message: 'Lease expiring soon' } }
+  });
+  await prisma.mockData.create({
+    data: { id: 'rem2', type: 'reminder', data: { id: 'rem2', propertyId, message: 'Rent review due' } }
+  });
+  await prisma.mockData.create({
+    data: { id: 'rem3', type: 'reminder', data: { id: 'rem3', propertyId, message: 'Insurance renewal' } }
+  });
+  await prisma.mockData.create({
+    data: { id: 'notif1', type: 'notification', data: { id: 'notif1', propertyId, type: 'rentLate', message: 'Rent is late' } }
   });
 }
 
