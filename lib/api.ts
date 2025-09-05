@@ -82,9 +82,50 @@ export const getRentReview = (tenancyId: string) => api(`/tenancies/${tenancyId}
 export const postRentReview = (tenancyId: string, payload: any) => api(`/tenancies/${tenancyId}/rent-review`, { method: 'POST', body: JSON.stringify(payload) });
 
 // Expenses & PnL
-export const listExpenses = (propertyId: string) => api<ExpenseRow[]>(`/properties/${propertyId}/expenses`);
-export const createExpense = (propertyId: string, payload: any) => api(`/properties/${propertyId}/expenses`, { method: 'POST', body: JSON.stringify(payload) });
-export const getPnL = (propertyId: string) => api<PnLPoint[]>(`/properties/${propertyId}/pnl`);
+export interface Expense extends ExpenseRow {}
+
+export interface PnLSummary {
+  totalIncome: number;
+  totalExpenses: number;
+  net: number;
+  monthly: { month: string; net: number }[];
+}
+
+export const listExpenses = (propertyId: string) =>
+  api<ExpenseRow[]>(`/properties/${propertyId}/expenses`);
+export const getExpense = (propertyId: string, id: string) =>
+  api<Expense>(`/properties/${propertyId}/expenses/${id}`);
+export const createExpense = (propertyId: string, payload: any) =>
+  api(`/properties/${propertyId}/expenses`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+export const updateExpense = (
+  propertyId: string,
+  id: string,
+  payload: any
+) =>
+  api(`/properties/${propertyId}/expenses/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+export const deleteExpense = (propertyId: string, id: string) =>
+  api(`/properties/${propertyId}/expenses/${id}`, { method: 'DELETE' });
+export const uploadExpenseReceipt = (
+  propertyId: string,
+  id: string,
+  file: File
+) => {
+  const form = new FormData();
+  form.append('receipt', file);
+  return api(`/properties/${propertyId}/expenses/${id}/receipt`, {
+    method: 'POST',
+    body: form,
+    headers: {},
+  });
+};
+export const getPnLSummary = (propertyId: string) =>
+  api<PnLSummary>(`/properties/${propertyId}/pnl`);
 
 // Vendors
 export const listVendors = () => api<Vendor[]>('/vendors');
