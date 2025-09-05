@@ -35,9 +35,13 @@ make reset
 
 ## Development
 
-Type-check the TypeScript sources:
+### Tests
+
+Install Playwright browsers and run the end-to-end tests:
 
 ```bash
+npm install
+npx playwright install
 npm test
 ```
 
