@@ -23,15 +23,16 @@ export default function ListingWizard() {
     description: "",
   });
 
-  const mutation = useMutation(() =>
-    createListing({
-      property: form.property,
-      photos: form.photos.map((f) => f.name),
-      features: form.features,
-      rent: parseFloat(form.rent),
-      description: form.description,
-    })
-  );
+  const mutation = useMutation({
+    mutationFn: () =>
+      createListing({
+        property: form.property,
+        photos: form.photos.map((f) => f.name),
+        features: form.features,
+        rent: parseFloat(form.rent),
+        description: form.description,
+      }),
+  });
 
   const next = () => setStep((s) => Math.min(s + 1, 4));
   const back = () => setStep((s) => Math.max(s - 1, 0));
