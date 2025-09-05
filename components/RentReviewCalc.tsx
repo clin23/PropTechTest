@@ -15,15 +15,16 @@ export default function RentReviewCalc() {
     ? parseFloat(currentRent || "0") * (1 + parseFloat(targetPercent || "0") / 100)
     : parseFloat(currentRent || "0") + parseFloat(targetAmount || "0");
 
-  const mutation = useMutation(() =>
-    postRentReview(tenancyId, {
-      currentRent: parseFloat(currentRent),
-      cpiPercent: parseFloat(cpi),
-      targetPercent: parseFloat(targetPercent),
-      targetAmount: parseFloat(targetAmount),
-      newRent,
-    })
-  );
+  const mutation = useMutation({
+    mutationFn: () =>
+      postRentReview(tenancyId, {
+        currentRent: parseFloat(currentRent),
+        cpiPercent: parseFloat(cpi),
+        targetPercent: parseFloat(targetPercent),
+        targetAmount: parseFloat(targetAmount),
+        newRent,
+      }),
+  });
 
   return (
     <div className="p-4 space-y-2 border rounded">
