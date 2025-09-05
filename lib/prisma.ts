@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import * as store from '../app/api/store';
 
+let prisma: PrismaClient | { mockData: typeof mockData };
+
 if (process.env.MOCK_MODE === 'true') {
   const collections: Record<string, any[]> = {
     property: store.properties,
@@ -59,13 +61,15 @@ if (process.env.MOCK_MODE === 'true') {
       return mockData.create({ data: create });
     },
   };
-  export const prisma = { mockData } as any;
+  prisma = { mockData } as any;
 } else {
   const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
-  export const prisma =
+  prisma =
     globalForPrisma.prisma ||
     new PrismaClient({
       log: ['error'],
     });
   if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 }
+
+export { prisma };
