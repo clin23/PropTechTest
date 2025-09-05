@@ -39,6 +39,14 @@ export interface NotificationSettings {
   quietHoursEnd?: string;
 }
 
+export interface Lease {
+  id: string;
+  propertyId: string;
+  address: string;
+  currentRent: number;
+  nextReview: string;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
@@ -80,6 +88,11 @@ export const getListingExport = (id: string) => api(`/listings/${id}/export`);
 // Rent review
 export const getRentReview = (tenancyId: string) => api(`/tenancies/${tenancyId}/rent-review`);
 export const postRentReview = (tenancyId: string, payload: any) => api(`/tenancies/${tenancyId}/rent-review`, { method: 'POST', body: JSON.stringify(payload) });
+export const listLeases = () => api<Lease[]>('/leases');
+export const computeRentIncrease = (payload: any) =>
+  api<{ newRent: number }>('/rent-review/calc', { method: 'POST', body: JSON.stringify(payload) });
+export const generateNotice = (payload: any) =>
+  api('/rent-review/notice', { method: 'POST', body: JSON.stringify(payload) });
 
 // Expenses & PnL
 export const listExpenses = (propertyId: string) => api<ExpenseRow[]>(`/properties/${propertyId}/expenses`);

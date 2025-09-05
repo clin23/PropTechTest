@@ -11,9 +11,9 @@ const initialProperties = [
 export const properties: any[] = [...initialProperties];
 
 const initialTenancies = [
-  { id: '1', propertyId: '1', currentRent: 500 },
-  { id: '2', propertyId: '2', currentRent: 650 },
-  { id: '3', propertyId: '3', currentRent: 550 },
+  { id: '1', propertyId: '1', currentRent: 500, nextReview: '2024-07-01' },
+  { id: '2', propertyId: '2', currentRent: 650, nextReview: '2024-08-15' },
+  { id: '3', propertyId: '3', currentRent: 550, nextReview: '2024-09-30' },
 ];
 export const tenancies: any[] = [...initialTenancies];
 
