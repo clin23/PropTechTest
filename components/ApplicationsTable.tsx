@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import EmptyState from "./EmptyState";
 
 export interface ApplicationRow {
   id: string;
@@ -11,6 +12,13 @@ export interface ApplicationRow {
 
 export default function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) {
   const router = useRouter();
+
+  if (!rows.length) {
+    return <EmptyState message="No applications found." />;
+  }
+
+  const openDetails = (id: string) => router.push(`/applications/${id}`);
+
   return (
     <table className="min-w-full border">
       <thead>
@@ -25,11 +33,22 @@ export default function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) 
           <tr
             key={r.id}
             className="border-t cursor-pointer hover:bg-gray-50"
-            onClick={() => router.push(`/applications/${r.id}`)}
+            role="button"
+            tabIndex={0}
+            onClick={() => openDetails(r.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openDetails(r.id);
+              }
+            }}
           >
             <td className="p-2">{r.applicant}</td>
             <td className="p-2">{r.property}</td>
-            <td className="p-2">{r.status}</td>
+            <td className="p-2">
+              {r.status}
+              <span className="sr-only">Open application details</span>
+            </td>
           </tr>
         ))}
       </tbody>
