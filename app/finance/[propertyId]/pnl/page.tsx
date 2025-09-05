@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import PnLChart from "../../../../components/PnLChart";
+import IncomeForm from "../../../../components/IncomeForm";
+import IncomesTable from "../../../../components/IncomesTable";
 import { getPnLSummary, type PnLSummary } from "../../../../lib/api";
 import { exportCSV, exportPDF } from "../../../../lib/export";
 import { logEvent } from "../../../../lib/log";
@@ -70,6 +72,8 @@ export default function PnLPage() {
           Export PDF
         </button>
       </div>
+      <IncomeForm />
+      <IncomesTable />
     </div>
   );
 }
