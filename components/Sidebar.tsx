@@ -12,6 +12,7 @@ export default function Sidebar() {
   const propertyId = match ? match[1] : "1";
   const links = [
     { href: "/", label: "Dashboard" },
+    { href: "/properties", label: "Properties" },
     { href: "/inspections", label: "Inspections" },
     { href: "/applications", label: "Applications" },
     { href: "/listings", label: "Listings" },

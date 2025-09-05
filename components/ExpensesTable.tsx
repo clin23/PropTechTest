@@ -7,7 +7,9 @@ import { listExpenses, deleteExpense } from "../lib/api";
 import type { ExpenseRow } from "../types/expense";
 
 export default function ExpensesTable() {
-  const { propertyId } = useParams<{ propertyId: string }>();
+  // Support routes using either `propertyId` or a generic `id` param
+  const params = useParams<{ propertyId?: string; id?: string }>();
+  const propertyId = params.propertyId ?? params.id ?? "";
   const queryClient = useQueryClient();
   const { data = [] } = useQuery<ExpenseRow[]>({
     queryKey: ["expenses", propertyId],

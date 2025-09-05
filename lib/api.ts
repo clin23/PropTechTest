@@ -2,6 +2,11 @@ import type { ApplicationRow } from '../components/ApplicationsTable';
 import type { ExpenseRow } from '../components/ExpensesTable';
 import type { Listing } from '../types/listing';
 import type { IncomeRow } from '../types/income';
+import type {
+  PropertySummary,
+  LedgerEntry,
+  PropertyDocument,
+} from "../types/property";
 
 export interface Inspection {
   id: string;
@@ -245,3 +250,11 @@ export const updateNotificationSettings = (payload: NotificationSettings) =>
     method: 'PATCH',
     body: JSON.stringify(payload),
   });
+
+// Properties
+export const listProperties = () => api<PropertySummary[]>('/properties');
+export const getProperty = (id: string) => api<PropertySummary>(`/properties/${id}`);
+export const listLedger = (propertyId: string) =>
+  api<LedgerEntry[]>(`/properties/${propertyId}/ledger`);
+export const listPropertyDocuments = (propertyId: string) =>
+  api<PropertyDocument[]>(`/properties/${propertyId}/documents`);
