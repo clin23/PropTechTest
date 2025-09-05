@@ -1,5 +1,30 @@
 # PropTechTest
 
+PropTechTest is a lightweight, dashboard-first property management prototype for landlords. It provides a simple overview of a portfolio and quick access to day-to-day workflows.
+
+## Feature overview
+
+- **Dashboard** highlighting key portfolio metrics.
+- **Finance** pages to record expenses and view profit & loss with CSV/PDF export.
+- **Vendors** management and invitations.
+- **Listings & Applications** with generated listing copy and applicant scoring.
+- **Inspections** with room checklists and shareable reports.
+- **Rent review** calculator and notice generation.
+- **Settings** for notification preferences.
+
+## Navigation
+
+A collapsible sidebar links to:
+
+- Dashboard
+- Inspections
+- Applications
+- Listings
+- Rent Review
+- Finance (Expenses & P&L)
+- Vendors
+- Settings
+
 ## Environment variables
 
 Copy `.env.local.sample` to `.env.local` and adjust as needed.
@@ -9,7 +34,11 @@ Copy `.env.local.sample` to `.env.local` and adjust as needed.
 * `DATABASE_URL` - PostgreSQL connection string.
 * `MAX_UPLOAD_MB` - Maximum upload size in megabytes.
 
-## Database Setup
+### Mock API setup
+
+When `MOCK_MODE=true` or no `NEXT_PUBLIC_API_BASE` is provided, the app serves routes under `app/api/*` using an in-memory store defined in [`app/api/store.ts`](app/api/store.ts). Data resets whenever the Next.js server restarts or when `resetStore()` is invoked. To connect to a real backend, set `NEXT_PUBLIC_API_BASE` and unset `MOCK_MODE`.
+
+## Database setup
 
 Ensure `DATABASE_URL` is set to your PostgreSQL connection string. To create the schema run:
 
@@ -33,11 +62,13 @@ make seed
 make reset
 ```
 
-To apply migrations and seed the database using Prisma, run:
+### Seeding demo data
+
+Populate the database with demo data:
 
 ```bash
 npx prisma migrate deploy
-npx prisma db seed
+npm run seed
 ```
 
 ## Development
@@ -69,11 +100,7 @@ export NEXT_PUBLIC_API_BASE=http://localhost:3001
 
 and restart the dev server.
 
-### Mock API store
+### Exporting finance reports
 
-During Phase‑2 development the routes under `app/api` use an in‑memory store
-defined in [`app/api/store.ts`](app/api/store.ts). The data resets whenever the
-Next.js server restarts or when `resetStore()` is called. Once a real backend
-is available, point `NEXT_PUBLIC_API_BASE` to it and remove or replace the
-mock API routes to disable the in‑memory store.
+From the finance pages (`/finance/[propertyId]/pnl` or `/finance/[propertyId]/expenses`) use the **Export** buttons to download CSV or PDF reports.
 
