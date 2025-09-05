@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { createExpense, uploadExpenseReceipt } from "../lib/api";
+import { useToast } from "./ui/use-toast";
 
 export default function ExpenseForm({ onCreated }: { onCreated?: () => void }) {
   const { propertyId } = useParams<{ propertyId: string }>();
@@ -18,6 +19,8 @@ export default function ExpenseForm({ onCreated }: { onCreated?: () => void }) {
     notes: "",
   });
   const [receipt, setReceipt] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const mutation = useMutation({
     mutationFn: async (payload: any) => {
@@ -27,6 +30,7 @@ export default function ExpenseForm({ onCreated }: { onCreated?: () => void }) {
       }
     },
     onSuccess: () => {
+      toast({ title: "Expense saved" });
       setOpen(false);
       setForm({
         date: "",
@@ -37,8 +41,14 @@ export default function ExpenseForm({ onCreated }: { onCreated?: () => void }) {
         notes: "",
       });
       setReceipt(null);
+      setError(null);
       queryClient.invalidateQueries({ queryKey: ["expenses", propertyId] });
       onCreated?.();
+    },
+    onError: (err: any) => {
+      const message = err instanceof Error ? err.message : "Failed to save expense";
+      setError(message);
+      toast({ title: "Failed to save expense", description: message });
     },
   });
 
@@ -57,6 +67,15 @@ export default function ExpenseForm({ onCreated }: { onCreated?: () => void }) {
             className="bg-white w-96 h-full p-4 space-y-2 overflow-y-auto"
             onSubmit={(e) => {
               e.preventDefault();
+              setError(null);
+              if (!form.date || !form.category || !form.vendor || !form.amount) {
+                setError("Please fill in all required fields");
+                return;
+              }
+              if (isNaN(parseFloat(form.amount))) {
+                setError("Amount must be a number");
+                return;
+              }
               mutation.mutate({
                 date: form.date,
                 category: form.category,
@@ -126,6 +145,7 @@ export default function ExpenseForm({ onCreated }: { onCreated?: () => void }) {
                 onChange={(e) => setReceipt(e.target.files?.[0] || null)}
               />
             </label>
+            {error && <p className="text-red-600 text-sm">{error}</p>}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
