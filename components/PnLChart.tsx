@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getPnL } from "../lib/api";
+import { getPnL, type PnLPoint } from "../lib/api";
 import {
   LineChart,
   Line,
@@ -14,7 +14,7 @@ import {
 } from "recharts";
 
 export default function PnLChart({ propertyId }: { propertyId: string }) {
-  const { data = [] } = useQuery<any[]>({
+  const { data = [] } = useQuery<PnLPoint[]>({
     queryKey: ["pnl", propertyId],
     queryFn: () => getPnL(propertyId),
   });
