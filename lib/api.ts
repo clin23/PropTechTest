@@ -197,7 +197,11 @@ export const updateVendor = (id: string, payload: Partial<Vendor>) =>
   api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 export const deleteVendor = (id: string) =>
   api(`/vendors/${id}`, { method: 'DELETE' });
-export const uploadDocument = () => api<{ url: string }>('/upload', { method: 'POST' });
+export const uploadDocument = (file: File) => {
+  const form = new FormData();
+  form.append('file', file);
+  return api<{ url: string }>('/upload', { method: 'POST', body: form, headers: {} });
+};
 export const addVendorDocument = (id: string, url: string) =>
   api(`/vendors/${id}/documents`, { method: 'POST', body: JSON.stringify({ url }) });
 export const removeVendorDocument = (id: string, url: string) =>

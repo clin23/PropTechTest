@@ -50,8 +50,8 @@ export default function VendorForm({
 
   const handleUpload = async (files: File[]) => {
     const uploaded: string[] = [];
-    for (const _ of files) {
-      const res = await uploadDocument();
+    for (const file of files) {
+      const res = await uploadDocument(file);
       uploaded.push(res.url);
     }
     setDocuments((d) => [...d, ...uploaded]);
