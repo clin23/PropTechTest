@@ -1,5 +1,5 @@
-import type { ApplicationRow } from '../components/ApplicationsTable';
-import type { ExpenseRow } from '../components/ExpensesTable';
+import type { ApplicationRow } from '../types/application';
+import type { ExpenseRow } from '../types/expense';
 
 export interface Inspection {
   id: string;
