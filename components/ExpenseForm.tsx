@@ -2,15 +2,11 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 import { createExpense, uploadExpenseReceipt } from "../lib/api";
 
-export default function ExpenseForm({
-  propertyId,
-  onCreated,
-}: {
-  propertyId: string;
-  onCreated?: () => void;
-}) {
+export default function ExpenseForm({ onCreated }: { onCreated?: () => void }) {
+  const { propertyId } = useParams<{ propertyId: string }>();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
