@@ -39,6 +39,15 @@ export interface NotificationSettings {
   quietHoursEnd?: string;
 }
 
+export interface Listing {
+  id: string;
+  property: string;
+  photos: string[];
+  features: string;
+  rent: number;
+  description: string;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
@@ -104,7 +113,21 @@ export const postScore = (id: string, payload: any) =>
 
 // Listings
 export const createListing = (payload: any) => api('/listings', { method: 'POST', body: JSON.stringify(payload) });
-export const getListingExport = (id: string) => api(`/listings/${id}/export`);
+export const listListings = () => api<Listing[]>('/listings');
+export const generateListingCopy = (features: string) =>
+  api<{ text: string }>("/ai/listing-copy", {
+    method: "POST",
+    body: JSON.stringify({ features }),
+  });
+export const exportListingPack = async (id: string) => {
+  const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || "") + `/listings/${id}/export`, {
+    headers: {
+      Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""}`,
+    },
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.blob();
+};
 
 // Rent review
 export const getRentReview = (tenancyId: string) => api(`/tenancies/${tenancyId}/rent-review`);
