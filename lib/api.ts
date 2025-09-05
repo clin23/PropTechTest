@@ -17,6 +17,14 @@ export interface Vendor {
   documents?: string[];
 }
 
+export interface NotificationSettings {
+  email: boolean;
+  sms: boolean;
+  inApp: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch((process.env.NEXT_PUBLIC_API_BASE || '') + path, {
     ...init,
@@ -72,5 +80,10 @@ export const updateVendor = (id: string, payload: Partial<Vendor>) =>
   api(`/vendors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
 // Notification settings
-export const getNotificationSettings = () => api('/me/notification-settings');
-export const updateNotificationSettings = (payload: any) => api('/me/notification-settings', { method: 'PATCH', body: JSON.stringify(payload) });
+export const getNotificationSettings = () =>
+  api<NotificationSettings>('/me/notification-settings');
+export const updateNotificationSettings = (payload: NotificationSettings) =>
+  api('/me/notification-settings', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
