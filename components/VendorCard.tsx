@@ -22,7 +22,7 @@ export default function VendorCard({
           {vendor.favourite ? '★' : '☆'}
         </button>
       </div>
-      {vendor.tags?.length > 0 && (
+      {vendor.tags.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {vendor.tags.map((tag: string) => (
             <span
