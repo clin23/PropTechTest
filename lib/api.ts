@@ -1,5 +1,6 @@
-import type { ApplicationRow } from '../types/application';
-import type { ExpenseRow } from '../types/expense';
+import type { ApplicationRow } from '../components/ApplicationsTable';
+import type { ExpenseRow } from '../components/ExpensesTable';
+import type { Listing } from '../types/listing';
 
 export interface Inspection {
   id: string;
@@ -117,7 +118,8 @@ export const postScore = (id: string, payload: any) =>
   });
 
 // Listings
-export const createListing = (payload: any) => api('/listings', { method: 'POST', body: JSON.stringify(payload) });
+export const createListing = (payload: Omit<Listing, 'id'>) =>
+  api<Listing>('/listings', { method: 'POST', body: JSON.stringify(payload) });
 export const listListings = () => api<Listing[]>('/listings');
 export const generateListingCopy = (features: string) =>
   api<{ text: string }>("/ai/listing-copy", {

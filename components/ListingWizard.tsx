@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import PhotoUpload from "./PhotoUpload";
 import { createListing, generateListingCopy, exportListingPack } from "../lib/api";
+import type { Listing } from "../types/listing";
 
 interface FormState {
   property: string;
@@ -25,7 +26,7 @@ export default function ListingWizard() {
   const [adCopy, setAdCopy] = useState("");
   const [listingId, setListingId] = useState<string | null>(null);
 
-  const createMutation = useMutation({
+  const createMutation = useMutation<Listing>({
     mutationFn: () =>
       createListing({
         property: form.property,
@@ -34,7 +35,7 @@ export default function ListingWizard() {
         rent: parseFloat(form.rent),
         description: adCopy || form.description,
       }),
-    onSuccess: (data: any) => setListingId(data.id),
+    onSuccess: (data) => setListingId(data.id),
   });
 
   const copyMutation = useMutation({
