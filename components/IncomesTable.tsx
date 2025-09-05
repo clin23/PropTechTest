@@ -13,10 +13,33 @@ export default function IncomesTable() {
     queryKey: ["income", propertyId],
     queryFn: () => listIncome(propertyId),
   });
-  const deleteMutation = useMutation({
+  const deleteMutation = useMutation<
+    unknown,
+    unknown,
+    string,
+    { previousIncome?: IncomeRow[] }
+  >({
     mutationFn: (id: string) => deleteIncome(propertyId, id),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["income", propertyId] }),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["income", propertyId] });
+      const previousIncome = queryClient.getQueryData<IncomeRow[]>([
+        "income",
+        propertyId,
+      ]);
+      queryClient.setQueryData<IncomeRow[]>([
+        "income",
+        propertyId,
+      ], (old = []) => old.filter((i) => i.id !== id));
+      return { previousIncome };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousIncome) {
+        queryClient.setQueryData(["income", propertyId], context.previousIncome);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["income", propertyId] });
+    },
   });
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
