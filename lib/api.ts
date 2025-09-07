@@ -238,6 +238,22 @@ export const uploadExpenseReceipt = (id: string, file: File) => {
 export const getPnLSummary = (propertyId: string) =>
   api<PnLSummary>(`/properties/${propertyId}/pnl`);
 
+export interface PnL {
+  income: number;
+  expenses: number;
+  net: number;
+  series: { month: string; income: number; expenses: number; net: number }[];
+}
+
+export const getPnL = (params: {
+  propertyId: string;
+  from: string;
+  to: string;
+}) => {
+  const query = new URLSearchParams(params).toString();
+  return api<PnL>(`/pnl?${query}`);
+};
+
 export const listIncome = (propertyId: string) =>
   api<IncomeRow[]>(`/properties/${propertyId}/income`);
 export const createIncome = (propertyId: string, payload: any) =>
