@@ -23,7 +23,7 @@ export default function CashflowTile() {
       .then(setData)
       .catch(() => toast({ title: "Failed to load cashflow" }))
       .finally(() => setLoading(false));
-  }, [toast]);
+  }, []);
 
   if (loading) {
     return (
