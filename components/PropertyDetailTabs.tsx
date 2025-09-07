@@ -5,10 +5,10 @@ import ExpensesTable from "./ExpensesTable";
 import RentLedgerTable from "./RentLedgerTable";
 import PropertyDocumentsTable from "./PropertyDocumentsTable";
 import TenantCRM from "./TenantCRM";
+import UpcomingReminders from "./UpcomingReminders";
 
 interface Props {
   propertyId: string;
-  events: { date: string; title: string }[];
 }
 
 const tabs = [
@@ -19,7 +19,7 @@ const tabs = [
   { id: "tenant-crm", label: "Tenant CRM" },
 ] as const;
 
-export default function PropertyDetailTabs({ propertyId, events }: Props) {
+export default function PropertyDetailTabs({ propertyId }: Props) {
   const [active, setActive] = useState<string>(tabs[0].id);
 
   useEffect(() => {
@@ -54,17 +54,7 @@ export default function PropertyDetailTabs({ propertyId, events }: Props) {
       {active === "rent-ledger" && <RentLedgerTable propertyId={propertyId} />}
       {active === "expenses" && <ExpensesTable propertyId={propertyId} />}
       {active === "documents" && <PropertyDocumentsTable propertyId={propertyId} />}
-      {active === "key-dates" && (
-        <ul className="space-y-1">
-          {events.map((e, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="text-sm text-gray-600">{e.date}</span>
-              <span>{e.title}</span>
-            </li>
-          ))}
-          {events.length === 0 && <li>No upcoming dates</li>}
-        </ul>
-      )}
+      {active === "key-dates" && <UpcomingReminders propertyId={propertyId} />}
       {active === "tenant-crm" && <TenantCRM propertyId={propertyId} />}
     </div>
   );

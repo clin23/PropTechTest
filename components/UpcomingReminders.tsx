@@ -38,7 +38,7 @@ function ReminderColumn({
                 className={`block p-2 border-l-4 rounded hover:bg-gray-50 ${
                   r.severity === "high"
                     ? "border-red-500"
-                    : r.severity === "medium"
+                    : r.severity === "med"
                     ? "border-yellow-500"
                     : "border-gray-300"
                 }`}
@@ -59,30 +59,50 @@ function ReminderColumn({
   );
 }
 
-export default function UpcomingReminders() {
+interface Props {
+  propertyId?: string;
+  showViewAll?: boolean;
+}
+
+export default function UpcomingReminders({
+  propertyId,
+  showViewAll,
+}: Props) {
   const { data, isLoading } = useQuery<Reminder[]>({
-    queryKey: ["reminders"],
-    queryFn: listReminders,
+    queryKey: ["reminders", propertyId],
+    queryFn: () => listReminders(propertyId ? { propertyId } : undefined),
   });
 
   const reminders = data ?? [];
   const { overdue, thisMonth, later } = bucketReminders(reminders);
+  const gridCols = propertyId ? "" : "md:grid-cols-3";
 
   return (
     <div className="space-y-4" data-testid="reminders">
-      <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
+        {showViewAll && (
+          <Link href="/reminders" className="text-sm text-blue-600">
+            View all
+          </Link>
+        )}
+      </div>
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className={`grid gap-4 ${gridCols}`}>
           <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+          {!propertyId && (
+            <>
+              <Skeleton className="h-24" />
+              <Skeleton className="h-24" />
+            </>
+          )}
         </div>
       ) : reminders.length === 0 ? (
         <div className="p-4 text-center text-gray-500">
-          No upcoming reminders
+          Nothing urgent 🎉
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className={`grid gap-4 ${gridCols}`}>
           <ReminderColumn title="Overdue" items={overdue} />
           <ReminderColumn title="This Month" items={thisMonth} />
           <ReminderColumn title="Later" items={later} />

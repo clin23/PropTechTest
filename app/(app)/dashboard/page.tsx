@@ -52,7 +52,7 @@ export default function DashboardPage() {
         )}
       </div>
       <AlertsPanel />
-      <UpcomingReminders />
+      <UpcomingReminders showViewAll />
       <QuickActionsBar />
     </div>
   );

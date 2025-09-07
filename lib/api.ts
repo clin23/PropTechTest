@@ -45,7 +45,7 @@ export interface Reminder {
   type: 'lease_expiry' | 'rent_review' | 'insurance_renewal' | 'inspection_due' | 'custom';
   title: string;
   dueDate: string;
-  severity: 'high' | 'medium' | 'low';
+  severity: 'high' | 'med' | 'low';
 }
 
 export interface TenantNote {
@@ -339,7 +339,10 @@ export const updateNotificationSettings = (payload: NotificationSettings) =>
   });
 
 // Reminders & notifications
-export const listReminders = () => api<Reminder[]>('/reminders');
+export const listReminders = (params?: { propertyId?: string }) => {
+  const query = params?.propertyId ? `?propertyId=${params.propertyId}` : '';
+  return api<Reminder[]>(`/reminders${query}`);
+};
 export const listNotifications = () => api<Notification[]>('/notifications');
 export const getPnlSummary = (
   period: 'last6m' | 'last12m',

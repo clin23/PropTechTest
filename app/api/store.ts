@@ -35,7 +35,7 @@ export type ReminderType =
   | 'insurance_renewal'
   | 'inspection_due'
   | 'custom';
-export type ReminderSeverity = 'high' | 'medium' | 'low';
+export type ReminderSeverity = 'high' | 'med' | 'low';
 export type Reminder = {
   id: string;
   propertyId: string;
@@ -80,11 +80,12 @@ const initialProperties: Property[] = [
   },
   {
     id: '3',
-    address: '101 Vacant St',
+    address: '10 Rose St',
     tenant: '',
     leaseStart: '',
     leaseEnd: '',
     rent: 0,
+    archived: true,
   },
 ];
 
@@ -188,7 +189,7 @@ const initialReminders: Reminder[] = [
     type: 'rent_review',
     title: 'Rent review',
     dueDate: '2025-09-20',
-    severity: 'medium',
+    severity: 'med',
   },
   {
     id: 'rem3',
