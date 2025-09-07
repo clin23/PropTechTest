@@ -10,7 +10,7 @@ if (process.env.MOCK_MODE === 'true') {
     expense: store.expenses,
     document: store.documents,
     reminder: store.reminders,
-    income: store.rentLedger,
+    income: store.incomes,
     rent: store.rentLedger,
     rentLedger: store.rentLedger,
     notification: store.notifications,

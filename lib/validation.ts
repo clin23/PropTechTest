@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EXPENSE_CATEGORY_OPTIONS, INCOME_CATEGORY_OPTIONS } from './categories';
 
 export const inspectionSchema = z.object({
   propertyId: z.string(),
@@ -7,22 +8,35 @@ export const inspectionSchema = z.object({
   templateId: z.string().optional(),
 });
 
-export const expenseSchema = z.object({
+export const zExpenseCategory = z.enum(
+  [...EXPENSE_CATEGORY_OPTIONS] as [string, ...string[]]
+);
+export const zIncomeCategory = z.enum(
+  [...INCOME_CATEGORY_OPTIONS] as [string, ...string[]]
+);
+
+export const zExpense = z.object({
+  id: z.string().optional(),
   propertyId: z.string(),
   date: z.string(),
-  category: z.string(),
-  vendor: z.string(),
-  amount: z.number(),
-  gst: z.number().default(0),
+  category: zExpenseCategory,
+  vendor: z.string().optional(),
+  amount: z.number().nonnegative(),
+  gst: z.number().optional(),
   notes: z.string().optional(),
   receiptUrl: z.string().optional(),
+  label: z.string().optional(),
 });
 
-export const incomeSchema = z.object({
-  amount: z.number(),
-  source: z.string(),
+export const zIncome = z.object({
+  id: z.string().optional(),
+  propertyId: z.string(),
+  tenantId: z.string().optional(),
   date: z.string(),
+  category: zIncomeCategory,
+  amount: z.number().nonnegative(),
   notes: z.string().optional(),
+  label: z.string().optional(),
 });
 
 export const vendorSchema = z.object({
@@ -66,6 +80,6 @@ export const zReminder = z.object({
 export const zReminders = z.array(zReminder);
 
 export type InspectionInput = z.infer<typeof inspectionSchema>;
-export type ExpenseInput = z.infer<typeof expenseSchema>;
+export type ExpenseInput = z.infer<typeof zExpense>;
 export type VendorInput = z.infer<typeof vendorSchema>;
-export type IncomeInput = z.infer<typeof incomeSchema>;
+export type IncomeInput = z.infer<typeof zIncome>;

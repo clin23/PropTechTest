@@ -18,6 +18,17 @@ export type Expense = {
   gst: number;
   notes?: string;
   receiptUrl?: string;
+  label?: string;
+};
+export type Income = {
+  id: string;
+  propertyId: string;
+  tenantId?: string;
+  date: string;
+  category: string;
+  amount: number;
+  notes?: string;
+  label?: string;
 };
 import { DocumentTag } from '../../types/document';
 
@@ -99,47 +110,65 @@ const initialExpenses: Expense[] = [
     id: 'exp1',
     propertyId: '1',
     date: '2024-01-05',
-    category: 'Repairs',
-    vendor: 'Plumber Co',
-    amount: 150,
-    gst: 20,
-    notes: 'Leak fix',
+    category: 'Council rates',
+    vendor: 'City Council',
+    amount: 1000,
+    gst: 0,
   },
   {
     id: 'exp2',
     propertyId: '1',
     date: '2024-02-10',
-    category: 'Gardening',
-    vendor: 'Gardeners Ltd',
-    amount: 80,
-    gst: 12,
+    category: 'Landlord insurance',
+    vendor: 'Insurance Co',
+    amount: 500,
+    gst: 0,
   },
   {
     id: 'exp3',
-    propertyId: '2',
+    propertyId: '1',
     date: '2024-03-15',
-    category: 'Painting',
-    vendor: 'Paint Pros',
-    amount: 200,
-    gst: 30,
+    category: 'Plumbing',
+    vendor: 'Plumber Co',
+    amount: 150,
+    gst: 20,
   },
   {
     id: 'exp4',
     propertyId: '2',
-    date: '2024-04-12',
-    category: 'Electrical',
-    vendor: 'Sparkies',
-    amount: 120,
-    gst: 18,
+    date: '2024-04-01',
+    category: 'General repairs',
+    vendor: 'Handyman',
+    amount: 200,
+    gst: 30,
   },
   {
     id: 'exp5',
-    propertyId: '3',
-    date: '2024-05-20',
-    category: 'Inspection',
-    vendor: 'Roof Inspect',
-    amount: 90,
-    gst: 13,
+    propertyId: '2',
+    date: '2024-05-01',
+    category: 'End-of-lease clean',
+    vendor: 'Cleaners Ltd',
+    amount: 300,
+    gst: 45,
+  },
+];
+
+const initialIncomes: Income[] = [
+  {
+    id: 'inc1',
+    propertyId: '1',
+    tenantId: 'tenant1',
+    date: '2024-01-01',
+    category: 'Base rent',
+    amount: 1200,
+  },
+  {
+    id: 'inc2',
+    propertyId: '1',
+    tenantId: 'tenant1',
+    date: '2024-01-15',
+    category: 'Utilities reimbursement',
+    amount: 50,
   },
 ];
 
@@ -245,6 +274,7 @@ const initialNotifications: Notification[] = [
 export let properties: Property[] = [];
 export let tenants: Tenant[] = [];
 export let expenses: Expense[] = [];
+export let incomes: Income[] = [];
 export let documents: Document[] = [];
 export let reminders: Reminder[] = [];
 export let rentLedger: RentEntry[] = [];
@@ -258,6 +288,7 @@ export function seedIfEmpty() {
   properties = [...initialProperties];
   tenants = [...initialTenants];
   expenses = [...initialExpenses];
+  incomes = [...initialIncomes];
   documents = [...initialDocuments];
   reminders = [...initialReminders];
   rentLedger = [...initialRentLedger];
@@ -281,6 +312,7 @@ export const resetStore = () => {
   properties = [];
   tenants = [];
   expenses = [];
+  incomes = [];
   documents = [];
   reminders = [];
   rentLedger = [];
@@ -295,6 +327,7 @@ export default {
   get properties() { return properties; },
   get tenants() { return tenants; },
   get expenses() { return expenses; },
+  get incomes() { return incomes; },
   get documents() { return documents; },
   get reminders() { return reminders; },
   get rentLedger() { return rentLedger; },

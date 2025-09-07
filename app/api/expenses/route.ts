@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { expenses, properties, isActiveProperty } from '../store';
-import { expenseSchema } from '../../../lib/validation';
+import { zExpense } from '../../../lib/validation';
 import { prisma } from '../../../lib/prisma';
 import { randomUUID } from 'crypto';
 
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const parsed = expenseSchema.parse(body);
+    const parsed = zExpense.parse(body);
     const newExpense = { id: randomUUID(), ...parsed };
     if (process.env.MOCK_MODE === 'true') {
       expenses.push(newExpense);

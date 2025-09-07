@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createIncome } from "../lib/api";
 import { useToast } from "./ui/use-toast";
+import { INCOME_CATEGORIES } from "../lib/categories";
 
 interface IncomeFormProps {
   propertyId: string;
@@ -16,7 +17,7 @@ export default function IncomeForm({
 }: IncomeFormProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ date: "", source: "", amount: "", notes: "" });
+  const [form, setForm] = useState({ date: "", category: "", amount: "", notes: "", label: "" });
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -25,7 +26,7 @@ export default function IncomeForm({
     onSuccess: () => {
       toast({ title: "Income saved" });
       setOpen(false);
-      setForm({ date: "", source: "", amount: "", notes: "" });
+      setForm({ date: "", category: "", amount: "", notes: "", label: "" });
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["income", propertyId] });
       queryClient.invalidateQueries({ queryKey: ["pnl", propertyId] });
@@ -51,7 +52,7 @@ export default function IncomeForm({
             onSubmit={(e) => {
               e.preventDefault();
               setError(null);
-              if (!form.date || !form.source || !form.amount) {
+              if (!form.date || !form.category || !form.amount) {
                 setError("Please fill in all required fields");
                 return;
               }
@@ -61,9 +62,10 @@ export default function IncomeForm({
               }
               mutation.mutate({
                 date: form.date,
-                source: form.source,
+                category: form.category,
                 amount: parseFloat(form.amount),
                 notes: form.notes,
+                label: form.label,
               });
             }}
           >
@@ -77,12 +79,26 @@ export default function IncomeForm({
               />
             </label>
             <label className="block">
-              Source
-              <input
+              Category
+              <select
                 className="border p-1 w-full"
-                value={form.source}
-                onChange={(e) => setForm({ ...form, source: e.target.value })}
-              />
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
+                <option value="">Select category</option>
+                {Object.entries(INCOME_CATEGORIES).map(([group, items]) => (
+                  <optgroup
+                    key={group}
+                    label={group.replace(/([A-Z])/g, " $1").trim()}
+                  >
+                    {items.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </label>
             <label className="block">
               Amount
@@ -91,6 +107,14 @@ export default function IncomeForm({
                 className="border p-1 w-full"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              />
+            </label>
+            <label className="block">
+              Custom label
+              <input
+                className="border p-1 w-full"
+                value={form.label}
+                onChange={(e) => setForm({ ...form, label: e.target.value })}
               />
             </label>
             <label className="block">

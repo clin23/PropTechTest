@@ -6,7 +6,7 @@ test('expenses can be added and filtered', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Add Expense' }).click();
   await page.getByLabel('Date').fill('2024-01-01');
-  await page.getByLabel('Category').fill('Utilities');
+  await page.getByLabel('Category').selectOption('General repairs');
   await page.getByLabel('Vendor').fill('Acme Corp');
   await page.getByLabel('Amount').fill('100');
   await page.getByLabel('GST').fill('10');

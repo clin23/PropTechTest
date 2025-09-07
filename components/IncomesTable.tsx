@@ -45,15 +45,15 @@ export default function IncomesTable({
   });
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [source, setSource] = useState("");
+  const [category, setCategory] = useState("");
 
   const rows = data.filter((r) => {
     const afterFrom = from ? new Date(r.date) >= new Date(from) : true;
     const beforeTo = to ? new Date(r.date) <= new Date(to) : true;
-    const sourceMatch = source
-      ? r.source.toLowerCase().includes(source.toLowerCase())
+    const categoryMatch = category
+      ? r.category.toLowerCase().includes(category.toLowerCase())
       : true;
-    return afterFrom && beforeTo && sourceMatch;
+    return afterFrom && beforeTo && categoryMatch;
   });
 
   return (
@@ -75,16 +75,16 @@ export default function IncomesTable({
         />
         <input
           className="border p-1"
-          placeholder="Source"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
+          placeholder="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
         />
       </div>
       <table className="min-w-full border">
         <thead>
           <tr className="bg-gray-100">
             <th className="p-2 text-left">Date</th>
-            <th className="p-2 text-left">Source</th>
+            <th className="p-2 text-left">Category</th>
             <th className="p-2 text-left">Amount</th>
             <th className="p-2 text-left">Notes</th>
             <th className="p-2 text-left">Actions</th>
@@ -94,7 +94,7 @@ export default function IncomesTable({
           {rows.map((r) => (
             <tr key={r.id} className="border-t">
               <td className="p-2">{r.date}</td>
-              <td className="p-2">{r.source}</td>
+              <td className="p-2">{r.category}</td>
               <td className="p-2">{r.amount}</td>
               <td className="p-2">{r.notes}</td>
               <td className="p-2">
