@@ -1,6 +1,16 @@
 export type Property = { id: string; address: string };
 export type Tenant = { id: string; name: string; propertyId: string };
-export type Expense = { id: string; propertyId: string; description: string; amount: number; date: string; receiptUrl: string };
+export type Expense = {
+  id: string;
+  propertyId: string;
+  date: string;
+  category: string;
+  vendor: string;
+  amount: number;
+  gst: number;
+  notes?: string;
+  receiptUrl?: string;
+};
 export type Document = { id: string; propertyId?: string; tenantId?: string; name: string; url: string };
 export type Reminder = { id: string; propertyId: string; note: string; due: string };
 export type RentEntry = { id: string; propertyId: string; tenantId: string; amount: number; dueDate: string; status: 'paid' | 'late'; paidDate?: string };
@@ -18,11 +28,52 @@ const initialTenants: Tenant[] = [
 ];
 
 const initialExpenses: Expense[] = [
-  { id: 'exp1', propertyId: 'prop1', description: 'Plumbing repair', amount: 150, date: '2024-01-05', receiptUrl: '/receipts/exp1.jpg' },
-  { id: 'exp2', propertyId: 'prop1', description: 'Garden service', amount: 80, date: '2024-02-10', receiptUrl: '/receipts/exp2.jpg' },
-  { id: 'exp3', propertyId: 'prop2', description: 'Painting', amount: 200, date: '2024-03-15', receiptUrl: '/receipts/exp3.jpg' },
-  { id: 'exp4', propertyId: 'prop2', description: 'Electrical work', amount: 120, date: '2024-04-12', receiptUrl: '/receipts/exp4.jpg' },
-  { id: 'exp5', propertyId: 'prop3', description: 'Roof inspection', amount: 90, date: '2024-05-20', receiptUrl: '/receipts/exp5.jpg' },
+  {
+    id: 'exp1',
+    propertyId: 'prop1',
+    date: '2024-01-05',
+    category: 'Repairs',
+    vendor: 'Plumber Co',
+    amount: 150,
+    gst: 20,
+    notes: 'Leak fix',
+  },
+  {
+    id: 'exp2',
+    propertyId: 'prop1',
+    date: '2024-02-10',
+    category: 'Gardening',
+    vendor: 'Gardeners Ltd',
+    amount: 80,
+    gst: 12,
+  },
+  {
+    id: 'exp3',
+    propertyId: 'prop2',
+    date: '2024-03-15',
+    category: 'Painting',
+    vendor: 'Paint Pros',
+    amount: 200,
+    gst: 30,
+  },
+  {
+    id: 'exp4',
+    propertyId: 'prop2',
+    date: '2024-04-12',
+    category: 'Electrical',
+    vendor: 'Sparkies',
+    amount: 120,
+    gst: 18,
+  },
+  {
+    id: 'exp5',
+    propertyId: 'prop3',
+    date: '2024-05-20',
+    category: 'Inspection',
+    vendor: 'Roof Inspect',
+    amount: 90,
+    gst: 13,
+  },
 ];
 
 const initialDocuments: Document[] = [

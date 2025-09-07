@@ -1,15 +1,46 @@
-let expenses = [
-  { id: 'e1', propertyId: '1', amount: 500, date: '2024-05-01', description: 'Repairs' },
-  { id: 'e2', propertyId: '2', amount: 300, date: '2024-05-10', description: 'Maintenance' }
-];
+import { NextResponse } from 'next/server';
+import { expenses } from '../store';
+import { expenseSchema } from '../../../lib/validation';
 
-export async function GET() {
-  return Response.json(expenses);
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  let results = expenses;
+  const propertyId = searchParams.get('propertyId');
+  const from = searchParams.get('from');
+  const to = searchParams.get('to');
+  const category = searchParams.get('category');
+  const vendor = searchParams.get('vendor');
+
+  if (propertyId) {
+    results = results.filter((e) => e.propertyId === propertyId);
+  }
+  if (from) {
+    results = results.filter((e) => new Date(e.date) >= new Date(from));
+  }
+  if (to) {
+    results = results.filter((e) => new Date(e.date) <= new Date(to));
+  }
+  if (category) {
+    results = results.filter((e) =>
+      e.category.toLowerCase().includes(category.toLowerCase())
+    );
+  }
+  if (vendor) {
+    results = results.filter((e) =>
+      e.vendor.toLowerCase().includes(vendor.toLowerCase())
+    );
+  }
+  return NextResponse.json(results);
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const newExpense = { id: `e${expenses.length + 1}`, ...body };
-  expenses.push(newExpense);
-  return Response.json(newExpense);
+  try {
+    const body = await req.json();
+    const parsed = expenseSchema.parse(body);
+    const newExpense = { id: `exp${expenses.length + 1}`, ...parsed };
+    expenses.push(newExpense);
+    return NextResponse.json(newExpense, { status: 201 });
+  } catch (err: any) {
+    return new NextResponse(err.message, { status: 400 });
+  }
 }

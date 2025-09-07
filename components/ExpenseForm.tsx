@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createExpense, uploadExpenseReceipt } from "../lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createExpense, listProperties } from "../lib/api";
 import { useToast } from "./ui/use-toast";
+import type { PropertySummary } from "../types/property";
 
 interface Props {
+  propertyId?: string;
   onCreated?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -13,17 +15,18 @@ interface Props {
 }
 
 export default function ExpenseForm({
+  propertyId,
   onCreated,
   open: controlledOpen,
   onOpenChange,
   showTrigger = true,
 }: Props) {
-  const { propertyId } = useParams<{ propertyId: string }>();
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
   const [form, setForm] = useState({
+    propertyId: propertyId ?? "",
     date: "",
     category: "",
     vendor: "",
@@ -31,21 +34,21 @@ export default function ExpenseForm({
     gst: "",
     notes: "",
   });
-  const [receipt, setReceipt] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const { data: properties = [] } = useQuery<PropertySummary[]>({
+    queryKey: ["properties"],
+    queryFn: listProperties,
+  });
+
   const mutation = useMutation({
-    mutationFn: async (payload: any) => {
-      const created = await createExpense(propertyId, payload);
-      if (receipt) {
-        await uploadExpenseReceipt(propertyId, created.id, receipt);
-      }
-    },
+    mutationFn: (payload: any) => createExpense(payload),
     onSuccess: () => {
       toast({ title: "Expense saved" });
       setOpen(false);
       setForm({
+        propertyId: propertyId ?? "",
         date: "",
         category: "",
         vendor: "",
@@ -53,9 +56,8 @@ export default function ExpenseForm({
         gst: "",
         notes: "",
       });
-      setReceipt(null);
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ["expenses", propertyId] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
     },
     onError: (err: any) => {
@@ -83,7 +85,13 @@ export default function ExpenseForm({
             onSubmit={(e) => {
               e.preventDefault();
               setError(null);
-              if (!form.date || !form.category || !form.vendor || !form.amount) {
+              if (
+                !form.propertyId ||
+                !form.date ||
+                !form.category ||
+                !form.vendor ||
+                !form.amount
+              ) {
                 setError("Please fill in all required fields");
                 return;
               }
@@ -92,15 +100,35 @@ export default function ExpenseForm({
                 return;
               }
               mutation.mutate({
+                propertyId: form.propertyId,
                 date: form.date,
                 category: form.category,
                 vendor: form.vendor,
                 amount: parseFloat(form.amount),
-                gst: parseFloat(form.gst),
+                gst: form.gst ? parseFloat(form.gst) : 0,
                 notes: form.notes,
               });
             }}
           >
+            {!propertyId && (
+              <label className="block">
+                Property
+                <select
+                  className="border p-1 w-full"
+                  value={form.propertyId}
+                  onChange={(e) =>
+                    setForm({ ...form, propertyId: e.target.value })
+                  }
+                >
+                  <option value="">Select property</option>
+                  {properties.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.address}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="block">
               Date
               <input
@@ -150,14 +178,6 @@ export default function ExpenseForm({
                 className="border p-1 w-full"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
-            </label>
-            <label className="block">
-              Receipt
-              <input
-                type="file"
-                className="border p-1 w-full"
-                onChange={(e) => setReceipt(e.target.files?.[0] || null)}
               />
             </label>
             {error && <p className="text-red-600 text-sm">{error}</p>}

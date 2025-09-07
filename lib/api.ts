@@ -1,5 +1,5 @@
 import type { ApplicationRow } from '../components/ApplicationsTable';
-import type { ExpenseRow } from '../components/ExpensesTable';
+import type { ExpenseRow } from '../types/expense';
 import type { Listing } from '../types/listing';
 import type { IncomeRow } from '../types/income';
 import type {
@@ -95,6 +95,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export const listProperties = () => api<PropertySummary[]>('/properties');
+
 // Inspections
 export const getInspections = (params?: {
   propertyId?: string;
@@ -183,34 +185,32 @@ export interface PnLSummary {
   monthly: { month: string; net: number }[];
 }
 
-export const listExpenses = (propertyId: string) =>
-  api<ExpenseRow[]>(`/properties/${propertyId}/expenses`);
-export const getExpense = (propertyId: string, id: string) =>
-  api<Expense>(`/properties/${propertyId}/expenses/${id}`);
-export const createExpense = (propertyId: string, payload: any) =>
-  api(`/properties/${propertyId}/expenses`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-export const updateExpense = (
-  propertyId: string,
-  id: string,
-  payload: any
-) =>
-  api(`/properties/${propertyId}/expenses/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  });
-export const deleteExpense = (propertyId: string, id: string) =>
-  api(`/properties/${propertyId}/expenses/${id}`, { method: 'DELETE' });
-export const uploadExpenseReceipt = (
-  propertyId: string,
-  id: string,
-  file: File
-) => {
+export const listExpenses = (params?: {
+  propertyId?: string;
+  from?: string;
+  to?: string;
+  category?: string;
+  vendor?: string;
+}) => {
+  const query = params
+    ? new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v) as [string, string][]
+      ).toString()
+    : '';
+  const path = `/expenses${query ? `?${query}` : ''}`;
+  return api<ExpenseRow[]>(path);
+};
+export const getExpense = (id: string) => api<Expense>(`/expenses/${id}`);
+export const createExpense = (payload: any) =>
+  api('/expenses', { method: 'POST', body: JSON.stringify(payload) });
+export const updateExpense = (id: string, payload: any) =>
+  api(`/expenses/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+export const deleteExpense = (id: string) =>
+  api(`/expenses/${id}`, { method: 'DELETE' });
+export const uploadExpenseReceipt = (id: string, file: File) => {
   const form = new FormData();
   form.append('receipt', file);
-  return api(`/properties/${propertyId}/expenses/${id}/receipt`, {
+  return api(`/expenses/${id}/receipt`, {
     method: 'POST',
     body: form,
   });

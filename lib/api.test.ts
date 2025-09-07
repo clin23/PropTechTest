@@ -33,5 +33,5 @@ test('api omits Content-Type for FormData uploads', async () => {
   };
 
   const file = new File(['hello'], 'receipt.txt', { type: 'text/plain' });
-  await uploadExpenseReceipt('p1', 'e1', file);
+  await uploadExpenseReceipt('e1', file);
 });

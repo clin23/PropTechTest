@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import QuickActionsBar from "../../../components/QuickActionsBar";
 import ExpenseForm from "../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../components/DocumentUploadModal";
@@ -10,6 +11,7 @@ export default function PropertyPage() {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
+  const { id } = useParams<{ id: string }>();
 
   return (
     <div className="p-6 space-y-4">
@@ -19,6 +21,7 @@ export default function PropertyPage() {
         onMessageTenant={() => setMessageOpen(true)}
       />
       <ExpenseForm
+        propertyId={id}
         open={expenseOpen}
         onOpenChange={setExpenseOpen}
         showTrigger={false}
