@@ -32,7 +32,7 @@ export default function PropertyDetailTabs({ propertyId, events }: Props) {
         ))}
       </div>
       {active === "Rent Ledger" && <RentLedgerTable propertyId={propertyId} />}
-      {active === "Expenses" && <ExpensesTable />}
+      {active === "Expenses" && <ExpensesTable propertyId={propertyId} />}
       {active === "Documents" && <PropertyDocumentsTable propertyId={propertyId} />}
       {active === "Key Dates" && (
         <ul className="space-y-1">

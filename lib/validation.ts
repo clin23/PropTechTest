@@ -8,10 +8,12 @@ export const inspectionSchema = z.object({
 });
 
 export const expenseSchema = z.object({
-  amount: z.number(),
-  category: z.string(),
+  propertyId: z.string(),
   date: z.string(),
-  vendor: z.string().optional(),
+  category: z.string(),
+  vendor: z.string(),
+  amount: z.number(),
+  gst: z.number().default(0),
   notes: z.string().optional(),
   receiptUrl: z.string().optional(),
 });

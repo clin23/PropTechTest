@@ -19,7 +19,7 @@ export default function ReportsPage() {
 
   const { data: expenses = [] } = useQuery<ExpenseRow[]>({
     queryKey: ["expenses", propertyId],
-    queryFn: () => listExpenses(propertyId),
+    queryFn: () => listExpenses({ propertyId }),
   });
 
   const handleExportCSV = () => {
