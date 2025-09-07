@@ -1,16 +1,24 @@
 import { prisma } from '../../../../lib/prisma';
 
+const defaults = {
+  arrears: { email: false, sms: false, inApp: false },
+  maintenance: { email: false, sms: false, inApp: false },
+  compliance: { email: false, sms: false, inApp: false },
+  quietHoursStart: '',
+  quietHoursEnd: '',
+};
+
 export async function GET() {
   const row = await prisma.mockData.findUnique({
     where: { id: 'notificationSettings' },
   });
-  return Response.json(row?.data ?? {});
+  return Response.json(row?.data ?? defaults);
 }
 
 export async function PATCH(req: Request) {
   const body = await req.json();
   const row = await prisma.mockData.findUnique({ where: { id: 'notificationSettings' } });
-  const data = { ...(row?.data as any), ...body };
+  const data = { ...defaults, ...(row?.data as any), ...body };
   await prisma.mockData.upsert({
     where: { id: 'notificationSettings' },
     create: { id: 'notificationSettings', type: 'notification', data },

@@ -1,4 +1,4 @@
-import NotificationPrefsForm from '../../../components/NotificationPrefsForm';
+import NotificationPrefsForm from '../../../../components/NotificationPrefsForm';
 
 export default function NotificationSettingsPage() {
   return (

@@ -13,14 +13,18 @@ import { Switch } from "./ui/switch";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 
-const formSchema = z.object({
+const channelSchema = z.object({
   email: z.boolean(),
   sms: z.boolean(),
   inApp: z.boolean(),
+});
+
+const formSchema = z.object({
+  arrears: channelSchema,
+  maintenance: channelSchema,
+  compliance: channelSchema,
   quietHoursStart: z.string(),
   quietHoursEnd: z.string(),
-  critical: z.boolean(),
-  normal: z.boolean(),
 });
 
 export default function NotificationPrefsForm() {
@@ -49,31 +53,53 @@ export default function NotificationPrefsForm() {
   });
 
   const [values, setValues] = useState<NotificationSettings>({
-    email: false,
-    sms: false,
-    inApp: false,
+    arrears: { email: false, sms: false, inApp: false },
+    maintenance: { email: false, sms: false, inApp: false },
+    compliance: { email: false, sms: false, inApp: false },
     quietHoursStart: "",
     quietHoursEnd: "",
-    critical: false,
-    normal: false,
   });
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (data) {
       setValues({
-        email: !!data.email,
-        sms: !!data.sms,
-        inApp: !!data.inApp,
+        arrears: {
+          email: !!data.arrears?.email,
+          sms: !!data.arrears?.sms,
+          inApp: !!data.arrears?.inApp,
+        },
+        maintenance: {
+          email: !!data.maintenance?.email,
+          sms: !!data.maintenance?.sms,
+          inApp: !!data.maintenance?.inApp,
+        },
+        compliance: {
+          email: !!data.compliance?.email,
+          sms: !!data.compliance?.sms,
+          inApp: !!data.compliance?.inApp,
+        },
         quietHoursStart: data.quietHoursStart || "",
         quietHoursEnd: data.quietHoursEnd || "",
-        critical: !!data.critical,
-        normal: !!data.normal,
       });
     }
   }, [data]);
 
-  const handleChange = <K extends keyof typeof values>(key: K, value: typeof values[K]) => {
+  const handleToggle = (
+    category: "arrears" | "maintenance" | "compliance",
+    channel: "email" | "sms" | "inApp",
+    value: boolean,
+  ) => {
+    setValues((v) => ({
+      ...v,
+      [category]: { ...v[category], [channel]: value },
+    }));
+  };
+
+  const handleFieldChange = <K extends "quietHoursStart" | "quietHoursEnd">(
+    key: K,
+    value: string,
+  ) => {
     setValues((v) => ({ ...v, [key]: value }));
   };
 
@@ -92,44 +118,80 @@ export default function NotificationPrefsForm() {
     }
   };
 
+  const categoryLabels = {
+    arrears: "Arrears",
+    maintenance: "Maintenance",
+    compliance: "Compliance",
+  } as const;
+  const channelLabels = { email: "Email", sms: "SMS", inApp: "In-app" } as const;
+
+  const isQuiet = (() => {
+    if (!values.quietHoursStart || !values.quietHoursEnd) return false;
+    const [sh, sm] = values.quietHoursStart.split(":").map(Number);
+    const [eh, em] = values.quietHoursEnd.split(":").map(Number);
+    const now = new Date();
+    const start = new Date();
+    start.setHours(sh, sm, 0, 0);
+    const end = new Date();
+    end.setHours(eh, em, 0, 0);
+    if (start < end) {
+      return now >= start && now <= end;
+    }
+    return now >= start || now <= end;
+  })();
+
   const previewMessages: string[] = [];
-  if (values.email) {
-    if (values.critical) previewMessages.push("Email - Critical: This is a critical email notification.");
-    if (values.normal) previewMessages.push("Email - Normal: This is a normal email notification.");
-  }
-  if (values.sms) {
-    if (values.critical) previewMessages.push("SMS - Critical: This is a critical SMS notification.");
-    if (values.normal) previewMessages.push("SMS - Normal: This is a normal SMS notification.");
-  }
-  if (values.inApp) {
-    if (values.critical) previewMessages.push("In-app - Critical: This is a critical in-app notification.");
-    if (values.normal) previewMessages.push("In-app - Normal: This is a normal in-app notification.");
+  if (!isQuiet) {
+    (Object.keys(categoryLabels) as Array<keyof typeof categoryLabels>).forEach(
+      (cat) => {
+        (Object.keys(channelLabels) as Array<keyof typeof channelLabels>).forEach(
+          (ch) => {
+            if (values[cat][ch]) {
+              previewMessages.push(
+                `${channelLabels[ch]} - ${categoryLabels[cat]} notification.`,
+              );
+            }
+          },
+        );
+      },
+    );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <label className="font-medium">Email</label>
-        <Switch
-          checked={values.email}
-          onCheckedChange={(v) => handleChange("email", v)}
-        />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <label className="font-medium">SMS</label>
-        <Switch
-          checked={values.sms}
-          onCheckedChange={(v) => handleChange("sms", v)}
-        />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <label className="font-medium">In-app</label>
-        <Switch
-          checked={values.inApp}
-          onCheckedChange={(v) => handleChange("inApp", v)}
-        />
+      <div className="space-y-2">
+        <label className="font-medium">Notification Channels</label>
+        <table className="w-full text-left border">
+          <thead>
+            <tr>
+              <th className="p-2"></th>
+              {(Object.keys(channelLabels) as Array<
+                keyof typeof channelLabels
+              >).map((ch) => (
+                <th key={ch} className="p-2">{channelLabels[ch]}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {(Object.keys(categoryLabels) as Array<
+              keyof typeof categoryLabels
+            >).map((cat) => (
+              <tr key={cat} className="border-t">
+                <td className="p-2">{categoryLabels[cat]}</td>
+                {(Object.keys(channelLabels) as Array<
+                  keyof typeof channelLabels
+                >).map((ch) => (
+                  <td key={ch} className="p-2 text-center">
+                    <Switch
+                      checked={values[cat][ch]}
+                      onCheckedChange={(v) => handleToggle(cat, ch, v)}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div className="space-y-2">
@@ -138,50 +200,32 @@ export default function NotificationPrefsForm() {
           <Input
             type="time"
             value={values.quietHoursStart}
-            onChange={(e) => handleChange("quietHoursStart", e.target.value)}
+            onChange={(e) => handleFieldChange("quietHoursStart", e.target.value)}
           />
           <Input
             type="time"
             value={values.quietHoursEnd}
-            onChange={(e) => handleChange("quietHoursEnd", e.target.value)}
+            onChange={(e) => handleFieldChange("quietHoursEnd", e.target.value)}
           />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="font-medium">Severity</label>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={values.critical}
-              onCheckedChange={(v) => handleChange("critical", v)}
-            />
-            <span>Critical</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={values.normal}
-              onCheckedChange={(v) => handleChange("normal", v)}
-            />
-            <span>Normal</span>
-          </div>
         </div>
       </div>
 
       <div className="space-y-2">
         <label className="font-medium">Preview</label>
         <div className="p-2 border rounded min-h-[4rem]">
-          {previewMessages.length ? (
+          {isQuiet ? (
+            <p className="text-sm text-gray-500">
+              Quiet hours active. Notifications are suppressed.
+            </p>
+          ) : previewMessages.length ? (
             <ul className="list-disc ml-4 space-y-1">
               {previewMessages.map((msg, i) => (
-                <li key={i} className="text-sm">
-                  {msg}
-                </li>
+                <li key={i} className="text-sm">{msg}</li>
               ))}
             </ul>
           ) : (
             <p className="text-sm text-gray-500">
-              Toggle channels and severities to see preview messages.
+              Toggle channels to see preview messages.
             </p>
           )}
         </div>
