@@ -1,6 +1,5 @@
-import { prisma } from '../../../lib/prisma';
+import { reminders } from '../store';
 
 export async function GET() {
-  const rows = await prisma.mockData.findMany({ where: { type: 'reminder' } });
-  return Response.json(rows.map((r) => r.data));
+  return Response.json(reminders);
 }

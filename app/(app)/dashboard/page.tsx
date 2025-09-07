@@ -4,6 +4,7 @@ import CashflowTile from "../../../components/CashflowTile";
 import DashboardPropertyCard from "../../../components/DashboardPropertyCard";
 import QuickActionsBar from "../../../components/QuickActionsBar";
 import Skeleton from "../../../components/Skeleton";
+import UpcomingReminders from "../../../components/UpcomingReminders";
 import { useToast } from "../../../components/ui/use-toast";
 import { z } from "zod";
 import type { PropertySummary } from "../../../types/summary";
@@ -47,6 +48,7 @@ export default function DashboardPage() {
           ))
         )}
       </div>
+      <UpcomingReminders />
       <QuickActionsBar />
     </div>
   );

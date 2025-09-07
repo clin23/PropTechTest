@@ -21,7 +21,21 @@ export type Document = {
   url: string;
   tag: DocumentTag;
 };
-export type Reminder = { id: string; propertyId: string; note: string; due: string };
+export type ReminderType =
+  | 'lease_expiry'
+  | 'rent_review'
+  | 'insurance_renewal'
+  | 'inspection_due'
+  | 'custom';
+export type ReminderSeverity = 'high' | 'medium' | 'low';
+export type Reminder = {
+  id: string;
+  propertyId: string;
+  type: ReminderType;
+  title: string;
+  dueDate: string;
+  severity: ReminderSeverity;
+};
 export type RentEntry = { id: string; propertyId: string; tenantId: string; amount: number; dueDate: string; status: 'paid' | 'late'; paidDate?: string };
 export type Notification = { id: string; [key: string]: any };
 
@@ -110,8 +124,38 @@ const initialDocuments: Document[] = [
 ];
 
 const initialReminders: Reminder[] = [
-  { id: 'rem1', propertyId: '1', note: 'Renew insurance', due: '2024-07-01' },
-  { id: 'rem2', propertyId: '2', note: 'Schedule inspection', due: '2024-06-15' },
+  {
+    id: 'rem1',
+    propertyId: '1',
+    type: 'lease_expiry',
+    title: 'Lease expires',
+    dueDate: '2025-08-01',
+    severity: 'high',
+  },
+  {
+    id: 'rem2',
+    propertyId: '2',
+    type: 'rent_review',
+    title: 'Rent review',
+    dueDate: '2025-09-20',
+    severity: 'medium',
+  },
+  {
+    id: 'rem3',
+    propertyId: '3',
+    type: 'insurance_renewal',
+    title: 'Insurance renewal',
+    dueDate: '2025-10-10',
+    severity: 'low',
+  },
+  {
+    id: 'rem4',
+    propertyId: '1',
+    type: 'inspection_due',
+    title: 'Inspection due',
+    dueDate: '2025-11-05',
+    severity: 'low',
+  },
 ];
 
 const initialRentLedger: RentEntry[] = [
