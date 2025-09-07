@@ -5,6 +5,8 @@
   "scripts": {
     "prisma": "prisma",
     "seed": "node --loader ts-node/esm prisma/seed.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

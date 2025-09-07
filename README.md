@@ -62,6 +62,17 @@ make seed
 make reset
 ```
 
+### Persistence mode
+
+To use Prisma with PostgreSQL instead of the in-memory mock store, set `MOCK_MODE=false` and ensure `DATABASE_URL` points to a running database. Apply migrations and seed demo data with:
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+Setting `MOCK_MODE=true` switches back to the in-memory store.
+
 ### Seeding demo data
 
 Populate the database with demo data:
