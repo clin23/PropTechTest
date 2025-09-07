@@ -53,8 +53,11 @@ export interface NotificationSettings {
 
 export interface Reminder {
   id: string;
-  propertyId?: string;
-  message: string;
+  propertyId: string;
+  type: 'lease_expiry' | 'rent_review' | 'insurance_renewal' | 'inspection_due' | 'custom';
+  title: string;
+  dueDate: string;
+  severity: 'high' | 'medium' | 'low';
 }
 
 export interface Notification {

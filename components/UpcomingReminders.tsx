@@ -1,34 +1,95 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { listReminders, listNotifications, Reminder, Notification } from "../lib/api";
+import { listReminders, Reminder } from "../lib/api";
+import Skeleton from "./Skeleton";
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function ReminderColumn({
+  title,
+  items,
+}: {
+  title: string;
+  items: Reminder[];
+}) {
+  return (
+    <div>
+      <h3 className="font-semibold mb-2">{title}</h3>
+      {items.length === 0 ? (
+        <div className="text-sm text-gray-500">None</div>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((r) => (
+            <li key={r.id}>
+              <Link
+                href={`/properties/${r.propertyId}#key-dates`}
+                className={`block p-2 border-l-4 rounded hover:bg-gray-50 ${
+                  r.severity === "high"
+                    ? "border-red-500"
+                    : r.severity === "medium"
+                    ? "border-yellow-500"
+                    : "border-gray-300"
+                }`}
+              >
+                <div className="text-sm font-medium">{r.title}</div>
+                <div className="text-xs text-gray-500">{formatDate(r.dueDate)}</div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function UpcomingReminders() {
-  const { data: reminders } = useQuery<Reminder[]>({
+  const { data, isLoading } = useQuery<Reminder[]>({
     queryKey: ["reminders"],
     queryFn: listReminders,
   });
-  const { data: notifications } = useQuery<Notification[]>({
-    queryKey: ["notifications"],
-    queryFn: listNotifications,
+
+  const reminders = data ?? [];
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+
+  const overdue = reminders.filter((r) => new Date(r.dueDate) < now);
+  const thisMonth = reminders.filter((r) => {
+    const d = new Date(r.dueDate);
+    return (
+      d >= now && d.getMonth() === month && d.getFullYear() === year
+    );
+  });
+  const later = reminders.filter((r) => {
+    const d = new Date(r.dueDate);
+    return d > now && (d.getMonth() !== month || d.getFullYear() !== year);
   });
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4" data-testid="reminders">
       <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
-      <ul className="list-disc pl-6 space-y-1">
-        {reminders?.map((r) => (
-          <li key={r.id}>{r.message}</li>
-        ))}
-      </ul>
-      {notifications && notifications.length > 0 && (
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">Notifications</h3>
-          <ul className="list-disc pl-6 space-y-1">
-            {notifications.map((n) => (
-              <li key={n.id}>{n.message}</li>
-            ))}
-          </ul>
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      ) : reminders.length === 0 ? (
+        <div className="p-4 text-center text-gray-500">
+          No upcoming reminders
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-3">
+          <ReminderColumn title="Overdue" items={overdue} />
+          <ReminderColumn title="This Month" items={thisMonth} />
+          <ReminderColumn title="Later" items={later} />
         </div>
       )}
     </div>
