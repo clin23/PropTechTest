@@ -6,7 +6,6 @@ import { Button } from "./ui/button";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
-  const [showActions, setShowActions] = useState(false);
 
   const links = [
     { href: "/", label: "Dashboard" },
@@ -34,26 +33,6 @@ export default function Sidebar() {
               {link.label}
             </Link>
           ))}
-          <button
-            className="block w-full text-left px-4 py-2 rounded hover:bg-gray-100"
-            onClick={() => setShowActions(a => !a)}
-          >
-            Actions
-          </button>
-          {showActions && (
-            <div className="ml-4 space-y-2">
-              {actions.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block px-4 py-2 rounded hover:bg-gray-100"
-                  onClick={() => setOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       </div>
       {open && (

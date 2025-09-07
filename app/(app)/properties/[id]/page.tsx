@@ -82,7 +82,7 @@ export default function PropertyPage() {
       <MessageTenantModal open={messageOpen} onClose={() => setMessageOpen(false)} />
       <h1 className="text-2xl font-semibold">Property Details</h1>
       <PropertyOverviewCard property={property} />
-      <PropertyDetailTabs propertyId={id} events={property.events} />
+      <PropertyDetailTabs propertyId={id} />
     </div>
   );
 }

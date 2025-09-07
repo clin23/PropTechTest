@@ -60,8 +60,10 @@ export const zReminder = z.object({
   ]),
   title: z.string(),
   dueDate: z.string(),
-  severity: z.enum(['low', 'medium', 'high']),
+  severity: z.enum(['low', 'med', 'high']),
 });
+
+export const zReminders = z.array(zReminder);
 
 export type InspectionInput = z.infer<typeof inspectionSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
