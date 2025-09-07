@@ -1,16 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createExpense, listProperties } from "../lib/api";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
+type FormState = {
+  propertyId: string;
+  date: string;
+  category: string;
+  vendor: string;
+  amount: string;
+  gst: string;
+  notes: string;
+};
+
 
 interface Props {
   propertyId?: string;
   onCreated?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  defaults?: Partial<FormState>;
   showTrigger?: boolean;
 }
 
@@ -19,23 +30,30 @@ export default function ExpenseForm({
   onCreated,
   open: controlledOpen,
   onOpenChange,
+  defaults,
   showTrigger = true,
 }: Props) {
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
-  const [form, setForm] = useState({
-    propertyId: propertyId ?? "",
-    date: "",
-    category: "",
-    vendor: "",
-    amount: "",
-    gst: "",
-    notes: "",
-  });
+const getInitialForm = (): FormState => ({
+  propertyId: propertyId ?? (defaults?.propertyId ?? ""),
+  date: defaults?.date ?? "",
+  category: defaults?.category ?? "",
+  vendor: defaults?.vendor ?? "",
+  amount: defaults?.amount !== undefined ? String(defaults.amount) : "",
+  gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
+  notes: defaults?.notes ?? "",
+});
+
+  const [form, setForm] = useState<FormState>(getInitialForm());
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  useEffect(() => {
+    setForm(getInitialForm());
+  }, [propertyId, defaults, open]);
+
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
@@ -47,15 +65,7 @@ export default function ExpenseForm({
     onSuccess: () => {
       toast({ title: "Expense saved" });
       setOpen(false);
-      setForm({
-        propertyId: propertyId ?? "",
-        date: "",
-        category: "",
-        vendor: "",
-        amount: "",
-        gst: "",
-        notes: "",
-      });
+      setForm(getInitialForm());
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();

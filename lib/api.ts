@@ -290,6 +290,15 @@ export const uploadFile = (file: File) => {
   form.append('file', file);
   return api<{ url: string }>('/upload', { method: 'POST', body: form, headers: {} });
 };
+export const scanReceipt = (file: File) => {
+  const form = new FormData();
+  form.append("file", file);
+  return api<{ date: string; amount: number; category: string; vendor: string; notes: string }>("/ai/doc-scan", {
+    method: "POST",
+    body: form,
+    headers: {},
+  });
+};
 export const addVendorDocument = (id: string, url: string) =>
   api(`/vendors/${id}/documents`, { method: 'POST', body: JSON.stringify({ url }) });
 export const removeVendorDocument = (id: string, url: string) =>
