@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { documents } from '../store';
+import { logEvent } from '../../../lib/log';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
     }
     const doc = { id: randomUUID(), url, title, tag: tag || 'Other', propertyId };
     documents.push(doc as any);
+    logEvent('document_upload', { propertyId, tag, title });
     return NextResponse.json(doc, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { listReminders, Reminder } from "../lib/api";
+import { bucketReminders } from "../lib/reminders";
 import Skeleton from "./Skeleton";
 
 function formatDate(dateStr: string) {
@@ -60,21 +61,7 @@ export default function UpcomingReminders() {
   });
 
   const reminders = data ?? [];
-  const now = new Date();
-  const month = now.getMonth();
-  const year = now.getFullYear();
-
-  const overdue = reminders.filter((r) => new Date(r.dueDate) < now);
-  const thisMonth = reminders.filter((r) => {
-    const d = new Date(r.dueDate);
-    return (
-      d >= now && d.getMonth() === month && d.getFullYear() === year
-    );
-  });
-  const later = reminders.filter((r) => {
-    const d = new Date(r.dueDate);
-    return d > now && (d.getMonth() !== month || d.getFullYear() !== year);
-  });
+  const { overdue, thisMonth, later } = bucketReminders(reminders);
 
   return (
     <div className="space-y-4" data-testid="reminders">

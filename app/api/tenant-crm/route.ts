@@ -1,4 +1,5 @@
 import { tenantNotes } from '../store';
+import { logEvent } from '../../../lib/log';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -18,5 +19,6 @@ export async function POST(req: Request) {
     createdAt: new Date().toISOString(),
   };
   tenantNotes.push(note);
+  logEvent('note_add', { propertyId });
   return Response.json(note);
 }

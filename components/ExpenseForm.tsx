@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createExpense, listProperties } from "../lib/api";
+import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
 type FormState = {
@@ -69,6 +70,10 @@ const getInitialForm = (): FormState => ({
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
+      logEvent("expense_create", {
+        propertyId: form.propertyId,
+        amount: parseFloat(form.amount),
+      });
     },
     onError: (err: any) => {
       const message = err instanceof Error ? err.message : "Failed to save expense";

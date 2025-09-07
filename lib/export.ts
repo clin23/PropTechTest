@@ -1,14 +1,26 @@
 import type { ExpenseRow } from "../types/expense";
+import { logEvent } from "./log";
+
+export function toCSV(rows: string[][]) {
+  return rows
+    .map((r) =>
+      r
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
+    )
+    .join("\n");
+}
 
 export function exportCSV(filename: string, rows: string[][]) {
-  const csv = rows.map((r) => r.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
+  const csv = toCSV(rows);
+  const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+  logEvent("export_csv", { filename });
 }
 
 export function exportPDF(filename: string, html: string) {
@@ -35,6 +47,7 @@ export function exportExpensesCSV(
       e.notes ?? "",
     ]),
   ];
+  logEvent("export_expenses_csv", { count: expenses.length });
   exportCSV(filename, rows);
 }
 
@@ -49,5 +62,6 @@ export function exportExpensesPDF(
     )
     .join("");
   const html = `<table border='1'><tr><th>Date</th><th>Category</th><th>Vendor</th><th>Amount</th><th>GST</th><th>Notes</th></tr>${rows}</table>`;
+  logEvent("export_expenses_pdf", { count: expenses.length });
   exportPDF(filename, html);
 }
