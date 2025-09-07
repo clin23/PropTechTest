@@ -240,16 +240,16 @@ export const deleteIncome = (propertyId: string, id: string) =>
 // Documents
 export interface DocumentRecord {
   id: string;
-  name: string;
-  property: string;
+  title: string;
+  propertyId?: string;
   tag: string;
   url: string;
 }
 
 export const listDocuments = (params?: {
-  search?: string;
-  property?: string;
+  propertyId?: string;
   tag?: string;
+  query?: string;
 }) => {
   const query = params
     ? new URLSearchParams(
@@ -260,20 +260,19 @@ export const listDocuments = (params?: {
   return api<DocumentRecord[]>(path);
 };
 
-export const uploadDocument = (file: File, property: string, tag: string) => {
-  const form = new FormData();
-  form.append('file', file);
-  form.append('property', property);
-  form.append('tag', tag);
-  return api<DocumentRecord>('/documents', {
+export const createDocument = (payload: {
+  url: string;
+  title: string;
+  tag: string;
+  propertyId?: string;
+}) =>
+  api<DocumentRecord>('/documents', {
     method: 'POST',
-    body: form,
-    headers: {},
+    body: JSON.stringify(payload),
   });
-};
 
 export const searchDocuments = (search: string) =>
-  listDocuments({ search });
+  listDocuments({ query: search });
 
 // Vendors
 export const listVendors = () => api<Vendor[]>('/vendors');
