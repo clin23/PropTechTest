@@ -60,6 +60,13 @@ export interface Reminder {
   severity: 'high' | 'medium' | 'low';
 }
 
+export interface TenantNote {
+  id: string;
+  propertyId: string;
+  text: string;
+  createdAt: string;
+}
+
 export interface Notification {
   id: string;
   propertyId?: string;
@@ -99,6 +106,16 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const listProperties = () => api<PropertySummary[]>('/properties');
+export const getProperty = (id: string) => api<PropertySummary>(`/properties/${id}`);
+export const listLedger = (propertyId: string) =>
+  api<LedgerEntry[]>(`/rent-ledger?propertyId=${propertyId}`);
+export const listTenantNotes = (propertyId: string) =>
+  api<TenantNote[]>(`/tenant-crm?propertyId=${propertyId}`);
+export const addTenantNote = (propertyId: string, text: string) =>
+  api<TenantNote>(`/tenant-crm`, {
+    method: 'POST',
+    body: JSON.stringify({ propertyId, text }),
+  });
 
 // Inspections
 export const getInspections = (params?: {

@@ -1,4 +1,11 @@
-export type Property = { id: string; address: string };
+export type Property = {
+  id: string;
+  address: string;
+  tenant: string;
+  leaseStart: string;
+  leaseEnd: string;
+  rent: number;
+};
 export type Tenant = { id: string; name: string; propertyId: string };
 export type Expense = {
   id: string;
@@ -36,13 +43,48 @@ export type Reminder = {
   dueDate: string;
   severity: ReminderSeverity;
 };
-export type RentEntry = { id: string; propertyId: string; tenantId: string; amount: number; dueDate: string; status: 'paid' | 'late'; paidDate?: string };
+export type RentEntry = {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  amount: number;
+  dueDate: string;
+  status: 'paid' | 'late';
+  paidDate?: string;
+};
+export type TenantNote = {
+  id: string;
+  propertyId: string;
+  text: string;
+  createdAt: string;
+};
 export type Notification = { id: string; [key: string]: any };
 
 const initialProperties: Property[] = [
-  { id: '1', address: '123 Main St' },
-  { id: '2', address: '456 Oak Ave' },
-  { id: '3', address: '789 Pine Rd' },
+  {
+    id: '1',
+    address: '123 Main St',
+    tenant: 'Alice Tenant',
+    leaseStart: '2024-01-01',
+    leaseEnd: '2024-12-31',
+    rent: 1200,
+  },
+  {
+    id: '2',
+    address: '456 Oak Ave',
+    tenant: 'Bob Renter',
+    leaseStart: '2023-06-01',
+    leaseEnd: '2024-05-31',
+    rent: 950,
+  },
+  {
+    id: '3',
+    address: '789 Pine Rd',
+    tenant: 'Carol Dweller',
+    leaseStart: '2023-03-15',
+    leaseEnd: '2024-03-14',
+    rent: 1100,
+  },
 ];
 
 const initialTenants: Tenant[] = [
@@ -163,6 +205,15 @@ const initialRentLedger: RentEntry[] = [
   { id: 'rent2', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-06-01', status: 'late' },
 ];
 
+const initialTenantNotes: TenantNote[] = [
+  {
+    id: 'tn1',
+    propertyId: '1',
+    text: 'Tenant called about leaking tap',
+    createdAt: '2024-05-15',
+  },
+];
+
 const initialNotifications: Notification[] = [
   { id: 'notificationSettings', email: true, sms: false, push: true },
   { id: 'note1', message: 'Welcome to PropTech' },
@@ -176,6 +227,7 @@ export let documents = [...initialDocuments];
 export let reminders = [...initialReminders];
 export let rentLedger = [...initialRentLedger];
 export let notifications = [...initialNotifications];
+export let tenantNotes = [...initialTenantNotes];
 
 export const resetStore = () => {
   properties = [...initialProperties];
@@ -185,6 +237,7 @@ export const resetStore = () => {
   reminders = [...initialReminders];
   rentLedger = [...initialRentLedger];
   notifications = [...initialNotifications];
+  tenantNotes = [...initialTenantNotes];
 };
 
 export default {
@@ -195,4 +248,5 @@ export default {
   reminders,
   rentLedger,
   notifications,
+  tenantNotes,
 };
