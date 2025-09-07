@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listTenantNotes, addTenantNote } from "../lib/api";
+import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 
 interface Props {
@@ -23,6 +24,7 @@ export default function TenantCRM({ propertyId }: Props) {
       queryClient.invalidateQueries({ queryKey: ["tenant-notes", propertyId] });
       setText("");
       toast({ title: "Note saved" });
+      logEvent("note_add", { propertyId });
     },
   });
 

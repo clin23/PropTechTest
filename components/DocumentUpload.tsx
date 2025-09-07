@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { listProperties, uploadFile, createDocument } from "../lib/api";
+import { logEvent } from "../lib/log";
 import { DocumentTag } from "../types/document";
 import type { PropertySummary } from "../types/summary";
 
@@ -29,6 +30,7 @@ export default function DocumentUpload({ onUploaded }: Props) {
       tag,
     });
     onUploaded();
+    logEvent("document_upload", { propertyId, tag, title: file.name });
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {

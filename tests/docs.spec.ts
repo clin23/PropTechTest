@@ -14,12 +14,12 @@ test('Documents hub search, filter and upload', async ({ page }) => {
   // search
   await page.getByPlaceholder('Search documents').fill('lease');
   await expect(page.getByText('lease.pdf')).toBeVisible();
-  await expect(page.getByText('insurance.pdf')).not.toBeVisible();
+  await expect(page.getByText('invoice.pdf')).not.toBeVisible();
 
   // filter by property
   await page.getByPlaceholder('Search documents').fill('');
   await page.getByLabel('Property filter').selectOption('456 Oak Ave');
-  await expect(page.getByText('insurance.pdf')).toBeVisible();
+  await expect(page.getByText('inspection.pdf')).toBeVisible();
   await expect(page.getByText('lease.pdf')).not.toBeVisible();
 
   // upload

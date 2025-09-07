@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import PnLChart from "../../../../components/PnLChart";
 import { useToast } from "../../../../components/ui/use-toast";
 import { exportPDF } from "../../../../lib/export";
+import { logEvent } from "../../../../lib/log";
 import { getPnL, type PnL } from "../../../../lib/api";
 
 const propertyId = "1";
@@ -68,6 +69,7 @@ export default function PnLPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "P&L CSV downloaded" });
+    logEvent("pnl_export_csv", { propertyId, from, to });
   };
 
   const handleExportPDF = async () => {
@@ -75,6 +77,7 @@ export default function PnLPage() {
     const html = await res.text();
     exportPDF("pnl.pdf", html);
     toast({ title: "P&L PDF downloaded" });
+    logEvent("pnl_export_pdf", { propertyId, from, to });
   };
 
   const handleExportExpensesCSV = async () => {
@@ -88,6 +91,7 @@ export default function PnLPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "Expenses CSV downloaded" });
+    logEvent("expenses_export_csv", { propertyId, from, to });
   };
 
   return (

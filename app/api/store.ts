@@ -79,14 +79,6 @@ const initialProperties: Property[] = [
   },
   {
     id: '3',
-    address: '789 Pine Rd',
-    tenant: 'Carol Dweller',
-    leaseStart: '2023-03-15',
-    leaseEnd: '2024-03-14',
-    rent: 1100,
-  },
-  {
-    id: '4',
     address: '101 Vacant St',
     tenant: '',
     leaseStart: '',
@@ -166,6 +158,13 @@ const initialDocuments: Document[] = [
   },
   {
     id: 'doc3',
+    propertyId: '1',
+    title: 'invoice.pdf',
+    url: '/docs/invoice-prop1.pdf',
+    tag: DocumentTag.Other,
+  },
+  {
+    id: 'doc4',
     propertyId: '3',
     title: 'insurance.pdf',
     url: '/docs/insurance-prop3.pdf',
@@ -220,6 +219,12 @@ const initialTenantNotes: TenantNote[] = [
     text: 'Tenant called about leaking tap',
     createdAt: '2024-05-15',
   },
+  {
+    id: 'tn2',
+    propertyId: '2',
+    text: 'Discussed rent increase',
+    createdAt: '2024-05-20',
+  },
 ];
 
 const initialNotifications: Notification[] = [
@@ -235,16 +240,17 @@ const initialNotifications: Notification[] = [
   { id: 'note2', message: 'Rent due reminder' },
 ];
 
-export let properties = [...initialProperties];
-export let tenants = [...initialTenants];
-export let expenses = [...initialExpenses];
-export let documents = [...initialDocuments];
-export let reminders = [...initialReminders];
-export let rentLedger = [...initialRentLedger];
-export let notifications = [...initialNotifications];
-export let tenantNotes = [...initialTenantNotes];
+export let properties: Property[] = [];
+export let tenants: Tenant[] = [];
+export let expenses: Expense[] = [];
+export let documents: Document[] = [];
+export let reminders: Reminder[] = [];
+export let rentLedger: RentEntry[] = [];
+export let notifications: Notification[] = [];
+export let tenantNotes: TenantNote[] = [];
 
-export const resetStore = () => {
+export function seedIfEmpty() {
+  if (properties.length) return;
   properties = [...initialProperties];
   tenants = [...initialTenants];
   expenses = [...initialExpenses];
@@ -253,15 +259,29 @@ export const resetStore = () => {
   rentLedger = [...initialRentLedger];
   notifications = [...initialNotifications];
   tenantNotes = [...initialTenantNotes];
+}
+
+export const resetStore = () => {
+  properties = [];
+  tenants = [];
+  expenses = [];
+  documents = [];
+  reminders = [];
+  rentLedger = [];
+  notifications = [];
+  tenantNotes = [];
+  seedIfEmpty();
 };
 
+seedIfEmpty();
+
 export default {
-  properties,
-  tenants,
-  expenses,
-  documents,
-  reminders,
-  rentLedger,
-  notifications,
-  tenantNotes,
+  get properties() { return properties; },
+  get tenants() { return tenants; },
+  get expenses() { return expenses; },
+  get documents() { return documents; },
+  get reminders() { return reminders; },
+  get rentLedger() { return rentLedger; },
+  get notifications() { return notifications; },
+  get tenantNotes() { return tenantNotes; },
 };

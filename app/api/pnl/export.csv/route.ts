@@ -1,4 +1,5 @@
 import { calculatePnL } from '../helpers';
+import { logEvent } from '../../../../lib/log';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -16,6 +17,7 @@ export async function GET(req: Request) {
     ]),
   ];
   const csv = rows.map((r) => r.join(',')).join('\n');
+  logEvent('pnl_export_csv', { propertyId, from, to });
   return new Response(csv, {
     headers: { 'Content-Type': 'text/csv' },
   });
