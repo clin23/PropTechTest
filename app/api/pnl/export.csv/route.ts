@@ -6,7 +6,8 @@ export async function GET(req: Request) {
   const propertyId = searchParams.get('propertyId') || undefined;
   const from = searchParams.get('from') || undefined;
   const to = searchParams.get('to') || undefined;
-  const data = calculatePnL({ propertyId, from, to });
+  const includeArchived = searchParams.get('includeArchived') === 'true';
+  const data = calculatePnL({ propertyId, from, to, includeArchived });
   const rows = [
     ['Month', 'Income', 'Expenses', 'Net'],
     ...data.series.map((s) => [

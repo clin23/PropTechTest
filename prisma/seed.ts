@@ -21,7 +21,7 @@ async function main() {
     data: {
       id: propertyId,
       ownerUserId: userId,
-      address_line1: '10 Rose St',
+      address_line1: '123 Main St',
       suburb: 'Parramatta',
       state: 'NSW',
       postcode: '2150'
@@ -94,7 +94,7 @@ async function main() {
 
   // mock data for API
   await prisma.mockData.create({
-    data: { id: propertyId, type: 'property', data: { id: propertyId, address: '10 Rose St' } }
+    data: { id: propertyId, type: 'property', data: { id: propertyId, address: '123 Main St' } }
   });
   await prisma.mockData.create({
     data: { id: 'rem1', type: 'reminder', data: { id: 'rem1', propertyId, message: 'Lease expiring soon' } }

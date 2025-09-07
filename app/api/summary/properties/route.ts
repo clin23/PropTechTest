@@ -1,25 +1,16 @@
-export async function GET() {
-  return Response.json([
-    {
-      id: '1',
-      address: '123 Main St',
-      tenantName: 'Alice',
-      rentStatus: 'Paid',
-      nextKeyDate: '2024-07-01',
-    },
-    {
-      id: '2',
-      address: '456 Oak Ave',
-      tenantName: 'Bob',
-      rentStatus: 'Due',
-      nextKeyDate: '2024-06-15',
-    },
-    {
-      id: '3',
-      address: '789 Pine Rd',
-      tenantName: 'Carol',
-      rentStatus: 'Paid',
-      nextKeyDate: '2024-08-20',
-    },
-  ]);
+import { properties, reminders, isActiveProperty } from '../../store';
+
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const includeArchived = url.searchParams.get('includeArchived') === 'true';
+  const props = includeArchived ? properties : properties.filter(isActiveProperty);
+  const data = props.map((p) => ({
+    id: p.id,
+    address: p.address,
+    tenantName: p.tenant || 'Vacant',
+    rentStatus: 'Paid',
+    nextKeyDate:
+      reminders.find((r) => r.propertyId === p.id)?.dueDate || '',
+  }));
+  return Response.json(data);
 }

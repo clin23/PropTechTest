@@ -43,7 +43,12 @@ function ReminderColumn({
                     : "border-gray-300"
                 }`}
               >
-                <div className="text-sm font-medium">{r.title}</div>
+                <div className="flex justify-between items-center">
+                  <div className="text-sm font-medium">{r.title}</div>
+                  <span className="ml-2 text-xs bg-gray-100 rounded px-2 py-0.5">
+                    {r.propertyAddress}
+                  </span>
+                </div>
                 <div className="text-xs text-gray-500">{formatDate(r.dueDate)}</div>
               </Link>
             </li>

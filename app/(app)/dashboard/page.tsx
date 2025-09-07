@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import CashflowTile from "../../../components/CashflowTile";
+import DashboardPnlMiniChart from "../../../components/DashboardPnlMiniChart";
 import DashboardPropertyCard from "../../../components/DashboardPropertyCard";
 import QuickActionsBar from "../../../components/QuickActionsBar";
 import Skeleton from "../../../components/Skeleton";
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
+        <DashboardPnlMiniChart />
         <CashflowTile />
         {loading ? (
           <>
