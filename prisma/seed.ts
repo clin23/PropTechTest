@@ -108,6 +108,36 @@ async function main() {
   await prisma.mockData.create({
     data: { id: 'notif1', type: 'notification', data: { id: 'notif1', propertyId, type: 'rentLate', message: 'Rent is late' } }
   });
+
+  // sample expenses and income
+  await prisma.mockData.create({
+    data: {
+      id: 'exp1',
+      type: 'expense',
+      data: {
+        id: 'exp1',
+        propertyId,
+        date: '2024-01-05',
+        category: 'Council rates',
+        vendor: 'City Council',
+        amount: 1000,
+        gst: 0,
+      },
+    },
+  });
+  await prisma.mockData.create({
+    data: {
+      id: 'inc1',
+      type: 'income',
+      data: {
+        id: 'inc1',
+        propertyId,
+        date: '2024-01-01',
+        category: 'Base rent',
+        amount: 1200,
+      },
+    },
+  });
 }
 
 main()

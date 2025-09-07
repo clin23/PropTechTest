@@ -10,7 +10,7 @@ test('reminders display and clear after rent payment', async ({ page }) => {
   await expect(page.getByText('Rent is late')).toBeVisible();
 
   await page.request.post(`/api/properties/${propertyId}/income`, {
-    data: { amount: 100, description: 'rent' },
+    data: { amount: 100, category: 'Base rent', date: '2024-01-01' },
   });
 
   await page.reload();

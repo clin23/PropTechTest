@@ -1,7 +1,10 @@
 export interface IncomeRow {
   id: string;
+  propertyId: string;
+  tenantId?: string;
   date: string;
-  source: string;
+  category: string;
   amount: number;
   notes?: string;
+  label?: string;
 }

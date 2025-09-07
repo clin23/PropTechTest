@@ -12,6 +12,7 @@ test('scan receipt and apply to expense', async ({ page }) => {
   await expect(page.getByText('Vendor: Bunnings')).toBeVisible();
   await page.getByRole('button', { name: 'Apply to Expense' }).click();
   await page.getByLabel('Property').selectOption('123 Main St');
+  await page.getByLabel('Category').selectOption('General repairs');
   await page.getByRole('button', { name: 'Save' }).click();
   await page.goto('/finance/expenses');
   await expect(page.getByText('Bunnings')).toBeVisible();

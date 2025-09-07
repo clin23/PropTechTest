@@ -1,5 +1,6 @@
 import type { ExpenseRow } from "../types/expense";
 import { logEvent } from "./log";
+import { EXPENSE_CATEGORIES } from "./categories";
 
 export function toCSV(rows: string[][]) {
   return rows
@@ -37,9 +38,10 @@ export function exportExpensesCSV(
   expenses: ExpenseRow[],
 ) {
   const rows: string[][] = [
-    ["Date", "Category", "Vendor", "Amount", "GST", "Notes"],
+    ["Date", "Parent Group", "Category", "Vendor", "Amount", "GST", "Notes"],
     ...expenses.map((e) => [
       e.date,
+      categoryParent(e.category),
       e.category,
       e.vendor,
       e.amount.toString(),
@@ -58,10 +60,17 @@ export function exportExpensesPDF(
   const rows = expenses
     .map(
       (e) =>
-        `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.vendor}</td><td>${e.amount}</td><td>${e.gst}</td><td>${e.notes ?? ""}</td></tr>`,
+        `<tr><td>${e.date}</td><td>${categoryParent(e.category)}</td><td>${e.category}</td><td>${e.vendor}</td><td>${e.amount}</td><td>${e.gst}</td><td>${e.notes ?? ""}</td></tr>`,
     )
     .join("");
-  const html = `<table border='1'><tr><th>Date</th><th>Category</th><th>Vendor</th><th>Amount</th><th>GST</th><th>Notes</th></tr>${rows}</table>`;
+  const html = `<table border='1'><tr><th>Date</th><th>Parent Group</th><th>Category</th><th>Vendor</th><th>Amount</th><th>GST</th><th>Notes</th></tr>${rows}</table>`;
   logEvent("export_expenses_pdf", { count: expenses.length });
   exportPDF(filename, html);
+}
+
+export function categoryParent(cat: string): string {
+  for (const [parent, list] of Object.entries(EXPENSE_CATEGORIES)) {
+    if (list.includes(cat)) return parent;
+  }
+  return "Other";
 }

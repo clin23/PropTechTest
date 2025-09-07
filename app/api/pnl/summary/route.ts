@@ -1,4 +1,4 @@
-import { expenses, rentLedger, properties, isActiveProperty } from '../../store';
+import { expenses, incomes, properties, isActiveProperty } from '../../store';
 import type { PnlSummary, PnlPoint } from '../../../../types/pnl';
 
 export async function GET(req: Request) {
@@ -23,13 +23,9 @@ export async function GET(req: Request) {
   const incomeByMonth = new Map<string, number>();
   const expenseByMonth = new Map<string, number>();
 
-  rentLedger.forEach((e) => {
-    const month = e.dueDate.slice(0, 7);
-    if (
-      monthsSet.has(month) &&
-      allowedIds.includes(e.propertyId) &&
-      e.status === 'paid'
-    ) {
+  incomes.forEach((e) => {
+    const month = e.date.slice(0, 7);
+    if (monthsSet.has(month) && allowedIds.includes(e.propertyId)) {
       incomeByMonth.set(month, (incomeByMonth.get(month) || 0) + e.amount);
     }
   });

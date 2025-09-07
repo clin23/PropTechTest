@@ -6,6 +6,7 @@ import { createExpense, listProperties } from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
+import { EXPENSE_CATEGORIES } from "../lib/categories";
 type FormState = {
   propertyId: string;
   date: string;
@@ -14,6 +15,7 @@ type FormState = {
   amount: string;
   gst: string;
   notes: string;
+  label: string;
 };
 
 
@@ -38,7 +40,8 @@ export default function ExpenseForm({
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
-const getInitialForm = (): FormState => ({
+
+  const getInitialForm = (): FormState => ({
   propertyId: propertyId ?? (defaults?.propertyId ?? ""),
   date: defaults?.date ?? "",
   category: defaults?.category ?? "",
@@ -46,11 +49,27 @@ const getInitialForm = (): FormState => ({
   amount: defaults?.amount !== undefined ? String(defaults.amount) : "",
   gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
   notes: defaults?.notes ?? "",
+  label: (defaults as any)?.label ?? "",
 });
 
   const [form, setForm] = useState<FormState>(getInitialForm());
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [recent, setRecent] = useState<string[]>([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("recentExpenseCategories");
+    if (stored) setRecent(JSON.parse(stored));
+  }, []);
+
+  const addRecent = (cat: string) => {
+    setRecent((prev) => {
+      const next = [cat, ...prev.filter((c) => c !== cat)].slice(0, 5);
+      localStorage.setItem("recentExpenseCategories", JSON.stringify(next));
+      return next;
+    });
+  };
+
   useEffect(() => {
     setForm(getInitialForm());
   }, [propertyId, defaults, open]);
@@ -122,7 +141,9 @@ const getInitialForm = (): FormState => ({
                 amount: parseFloat(form.amount),
                 gst: form.gst ? parseFloat(form.gst) : 0,
                 notes: form.notes,
+                label: form.label,
               });
+              addRecent(form.category);
             }}
           >
             {!propertyId && (
@@ -155,11 +176,34 @@ const getInitialForm = (): FormState => ({
             </label>
             <label className="block">
               Category
-              <input
+              <select
                 className="border p-1 w-full"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-              />
+              >
+                <option value="">Select category</option>
+                {recent.length > 0 && (
+                  <optgroup label="Recent">
+                    {recent.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {Object.entries(EXPENSE_CATEGORIES).map(([group, items]) => (
+                  <optgroup
+                    key={group}
+                    label={group.replace(/([A-Z])/g, " $1").trim()}
+                  >
+                    {items.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </label>
             <label className="block">
               Vendor
@@ -193,6 +237,14 @@ const getInitialForm = (): FormState => ({
                 className="border p-1 w-full"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              />
+            </label>
+            <label className="block">
+              Custom label
+              <input
+                className="border p-1 w-full"
+                value={form.label}
+                onChange={(e) => setForm({ ...form, label: e.target.value })}
               />
             </label>
             {error && <p className="text-red-600 text-sm">{error}</p>}

@@ -1,4 +1,4 @@
-import { expenses, rentLedger, properties, isActiveProperty } from '../store';
+import { expenses, incomes, properties, isActiveProperty } from '../store';
 
 interface Params {
   from?: string;
@@ -14,12 +14,11 @@ export function calculatePnL({ from, to, propertyId, includeArchived }: Params) 
     ? [propertyId]
     : (includeArchived ? properties : properties.filter(isActiveProperty)).map((p) => p.id);
 
-  const incomeEntries = rentLedger.filter(
+  const incomeEntries = incomes.filter(
     (e) =>
       allowedIds.includes(e.propertyId) &&
-      e.status === 'paid' &&
-      new Date(e.dueDate) >= fromDate &&
-      new Date(e.dueDate) <= toDate,
+      new Date(e.date) >= fromDate &&
+      new Date(e.date) <= toDate,
   );
 
   const expenseEntries = expenses.filter(
@@ -35,7 +34,7 @@ export function calculatePnL({ from, to, propertyId, includeArchived }: Params) 
   const seriesMap = new Map<string, { income: number; expenses: number }>();
 
   for (const entry of incomeEntries) {
-    const month = entry.dueDate.slice(0, 7);
+    const month = entry.date.slice(0, 7);
     const item = seriesMap.get(month) || { income: 0, expenses: 0 };
     item.income += entry.amount;
     seriesMap.set(month, item);

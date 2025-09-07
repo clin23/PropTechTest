@@ -8,4 +8,5 @@ export interface ExpenseRow {
   gst: number;
   notes?: string;
   receiptUrl?: string;
+  label?: string;
 }
