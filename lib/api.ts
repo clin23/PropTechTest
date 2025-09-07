@@ -7,6 +7,7 @@ import type {
   LedgerEntry,
   PropertyDocument,
 } from "../types/property";
+import type { PnlSummary } from '../types/pnl';
 
 export interface Inspection {
   id: string;
@@ -29,12 +30,6 @@ export interface Vendor {
 
 // Application types moved to types/application.ts
 
-export interface PnLPoint {
-  month: string;
-  income: number;
-  expenses: number;
-}
-
 export interface NotificationSettings {
   arrears: { email: boolean; sms: boolean; inApp: boolean };
   maintenance: { email: boolean; sms: boolean; inApp: boolean };
@@ -46,6 +41,7 @@ export interface NotificationSettings {
 export interface Reminder {
   id: string;
   propertyId: string;
+  propertyAddress: string;
   type: 'lease_expiry' | 'rent_review' | 'insurance_renewal' | 'inspection_due' | 'custom';
   title: string;
   dueDate: string;
@@ -345,3 +341,11 @@ export const updateNotificationSettings = (payload: NotificationSettings) =>
 // Reminders & notifications
 export const listReminders = () => api<Reminder[]>('/reminders');
 export const listNotifications = () => api<Notification[]>('/notifications');
+export const getPnlSummary = (
+  period: 'last6m' | 'last12m',
+  propertyId?: string,
+) => {
+  const params = new URLSearchParams({ period });
+  if (propertyId) params.set('propertyId', propertyId);
+  return api<PnlSummary>(`/pnl/summary?${params.toString()}`);
+};

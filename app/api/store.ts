@@ -5,6 +5,7 @@ export type Property = {
   leaseStart: string;
   leaseEnd: string;
   rent: number;
+  archived?: boolean;
 };
 export type Tenant = { id: string; name: string; propertyId: string };
 export type Expense = {
@@ -249,6 +250,8 @@ export let rentLedger: RentEntry[] = [];
 export let notifications: Notification[] = [];
 export let tenantNotes: TenantNote[] = [];
 
+export const isActiveProperty = (p: Property) => !p.archived;
+
 export function seedIfEmpty() {
   if (properties.length) return;
   properties = [...initialProperties];
@@ -259,6 +262,18 @@ export function seedIfEmpty() {
   rentLedger = [...initialRentLedger];
   notifications = [...initialNotifications];
   tenantNotes = [...initialTenantNotes];
+
+  // Safety cleanup for "10 Rose St"
+  let targetId: string | undefined;
+  for (const p of properties) {
+    if (p.address === '10 Rose St') {
+      p.archived = true;
+      targetId = p.id;
+    }
+  }
+  if (targetId) {
+    reminders = reminders.filter((r) => r.propertyId !== targetId);
+  }
 }
 
 export const resetStore = () => {

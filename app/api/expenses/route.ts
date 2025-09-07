@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { expenses } from '../store';
+import { expenses, properties, isActiveProperty } from '../store';
 import { expenseSchema } from '../../../lib/validation';
 import { prisma } from '../../../lib/prisma';
 import { randomUUID } from 'crypto';
@@ -11,6 +11,7 @@ export async function GET(req: Request) {
   const to = searchParams.get('to');
   const category = searchParams.get('category');
   const vendor = searchParams.get('vendor');
+  const includeArchived = searchParams.get('includeArchived') === 'true';
 
   let results;
   if (process.env.MOCK_MODE === 'true') {
@@ -22,9 +23,10 @@ export async function GET(req: Request) {
     results = records.map((r: any) => r.data);
   }
 
-  if (propertyId) {
-    results = results.filter((e: any) => e.propertyId === propertyId);
-  }
+  const allowedIds = propertyId
+    ? [propertyId]
+    : (includeArchived ? properties : properties.filter(isActiveProperty)).map((p) => p.id);
+  results = results.filter((e: any) => allowedIds.includes(e.propertyId));
   if (from) {
     results = results.filter(
       (e: any) => new Date(e.date) >= new Date(from)

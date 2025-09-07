@@ -1,18 +1,22 @@
-import { expenses, rentLedger } from '../store';
+import { expenses, rentLedger, properties, isActiveProperty } from '../store';
 
 interface Params {
   from?: string;
   to?: string;
   propertyId?: string;
+  includeArchived?: boolean;
 }
 
-export function calculatePnL({ from, to, propertyId }: Params) {
+export function calculatePnL({ from, to, propertyId, includeArchived }: Params) {
   const fromDate = from ? new Date(from) : new Date('1970-01-01');
   const toDate = to ? new Date(to) : new Date('2100-01-01');
+  const allowedIds = propertyId
+    ? [propertyId]
+    : (includeArchived ? properties : properties.filter(isActiveProperty)).map((p) => p.id);
 
   const incomeEntries = rentLedger.filter(
     (e) =>
-      (!propertyId || e.propertyId === propertyId) &&
+      allowedIds.includes(e.propertyId) &&
       e.status === 'paid' &&
       new Date(e.dueDate) >= fromDate &&
       new Date(e.dueDate) <= toDate,
@@ -20,7 +24,7 @@ export function calculatePnL({ from, to, propertyId }: Params) {
 
   const expenseEntries = expenses.filter(
     (e) =>
-      (!propertyId || e.propertyId === propertyId) &&
+      allowedIds.includes(e.propertyId) &&
       new Date(e.date) >= fromDate &&
       new Date(e.date) <= toDate,
   );

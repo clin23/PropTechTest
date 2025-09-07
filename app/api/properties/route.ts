@@ -1,7 +1,10 @@
-import { properties, reminders } from '../store';
+import { properties, reminders, isActiveProperty } from '../store';
 
-export async function GET() {
-  const data = properties.map((p) => ({
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const includeArchived = url.searchParams.get('includeArchived') === 'true';
+  const props = includeArchived ? properties : properties.filter(isActiveProperty);
+  const data = props.map((p) => ({
     id: p.id,
     address: p.address,
     tenant: p.tenant,

@@ -11,3 +11,10 @@ test('pnl tiles, chart and export', async ({ page }) => {
   ]);
   expect(download.suggestedFilename()).toBe('pnl.csv');
 });
+
+test('pnl summary endpoint', async ({ request }) => {
+  const res = await request.get('/api/pnl/summary?period=last6m');
+  expect(res.ok()).toBeTruthy();
+  const json = await res.json();
+  expect(json.series).toHaveLength(6);
+});
