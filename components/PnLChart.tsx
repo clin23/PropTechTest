@@ -11,6 +11,8 @@ import {
 
 interface MonthlyNet {
   month: string;
+  income?: number;
+  expenses?: number;
   net: number;
 }
 
@@ -28,6 +30,24 @@ export default function PnLChart({ data }: { data: MonthlyNet[] }) {
               color: "var(--tooltip-text, #000000)",
             }}
           />
+          {data.some((d) => d.income !== undefined) && (
+            <Line
+              type="monotone"
+              dataKey="income"
+              stroke="var(--color-income, rgb(34,197,94))"
+              strokeWidth={2}
+              dot={false}
+            />
+          )}
+          {data.some((d) => d.expenses !== undefined) && (
+            <Line
+              type="monotone"
+              dataKey="expenses"
+              stroke="var(--color-expenses, rgb(239,68,68))"
+              strokeWidth={2}
+              dot={false}
+            />
+          )}
           <Line
             type="monotone"
             dataKey="net"
