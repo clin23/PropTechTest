@@ -1,4 +1,4 @@
-import type { ApplicationRow } from '../components/ApplicationsTable';
+import type { ApplicationRow, Application } from '../types/application';
 import type { ExpenseRow } from '../types/expense';
 import type { Listing } from '../types/listing';
 import type { IncomeRow } from '../types/income';
@@ -27,13 +27,7 @@ export interface Vendor {
   documents?: string[];
 }
 
-export interface Application {
-  id: string;
-  applicant: string;
-  property: string;
-  status: string;
-  // include any other fields returned by `/applications/{id}`
-}
+// Application types moved to types/application.ts
 
 export interface PnLPoint {
   month: string;
@@ -156,8 +150,12 @@ export const shareInspectionReport = (id: string) =>
   api(`/inspections/${id}/share`, { method: 'POST' });
 
 // Applications
-export const listApplications = () =>
-  api<ApplicationRow[]>('/applications');
+export const listApplications = (propertyId?: string) =>
+  api<ApplicationRow[]>(
+    `/applications${propertyId ? `?propertyId=${propertyId}` : ''}`
+  );
+export const createApplication = (payload: any) =>
+  api('/applications', { method: 'POST', body: JSON.stringify(payload) });
 export const getApplication = (id: string) => api<Application>(`/applications/${id}`);
 export const updateApplication = (id: string, payload: any) => api(`/applications/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 export const postScore = (id: string, payload: any) =>

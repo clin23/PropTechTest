@@ -1,9 +1,13 @@
 import { randomUUID } from 'crypto';
 import { prisma } from '../../../lib/prisma';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const propertyId = searchParams.get('propertyId');
   const rows = await prisma.mockData.findMany({ where: { type: 'application' } });
-  return Response.json(rows.map((r) => r.data));
+  let data = rows.map((r) => r.data as any);
+  if (propertyId) data = data.filter((a) => a.propertyId === propertyId);
+  return Response.json(data);
 }
 
 export async function POST(req: Request) {

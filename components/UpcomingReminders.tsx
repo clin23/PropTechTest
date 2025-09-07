@@ -29,7 +29,11 @@ function ReminderColumn({
           {items.map((r) => (
             <li key={r.id}>
               <Link
-                href={`/properties/${r.propertyId}#key-dates`}
+                href={
+                  r.type === "inspection_due"
+                    ? `/properties/${r.propertyId}/inspections`
+                    : `/properties/${r.propertyId}#key-dates`
+                }
                 className={`block p-2 border-l-4 rounded hover:bg-gray-50 ${
                   r.severity === "high"
                     ? "border-red-500"

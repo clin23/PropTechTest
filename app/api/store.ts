@@ -85,6 +85,14 @@ const initialProperties: Property[] = [
     leaseEnd: '2024-03-14',
     rent: 1100,
   },
+  {
+    id: '4',
+    address: '101 Vacant St',
+    tenant: '',
+    leaseStart: '',
+    leaseEnd: '',
+    rent: 0,
+  },
 ];
 
 const initialTenants: Tenant[] = [
