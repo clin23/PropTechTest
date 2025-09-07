@@ -223,7 +223,14 @@ const initialTenantNotes: TenantNote[] = [
 ];
 
 const initialNotifications: Notification[] = [
-  { id: 'notificationSettings', email: true, sms: false, push: true },
+  {
+    id: 'notificationSettings',
+    arrears: { email: false, sms: false, inApp: false },
+    maintenance: { email: false, sms: false, inApp: false },
+    compliance: { email: false, sms: false, inApp: false },
+    quietHoursStart: '',
+    quietHoursEnd: '',
+  },
   { id: 'note1', message: 'Welcome to PropTech' },
   { id: 'note2', message: 'Rent due reminder' },
 ];

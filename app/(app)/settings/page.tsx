@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PageHeader from "../../components/PageHeader";
+import PageHeader from "../../../components/PageHeader";
 
 export default function SettingsPage() {
   return (

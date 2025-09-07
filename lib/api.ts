@@ -36,13 +36,11 @@ export interface PnLPoint {
 }
 
 export interface NotificationSettings {
-  email: boolean;
-  sms: boolean;
-  inApp: boolean;
+  arrears: { email: boolean; sms: boolean; inApp: boolean };
+  maintenance: { email: boolean; sms: boolean; inApp: boolean };
+  compliance: { email: boolean; sms: boolean; inApp: boolean };
   quietHoursStart?: string;
   quietHoursEnd?: string;
-  critical: boolean;
-  normal: boolean;
 }
 
 export interface Reminder {
