@@ -1,18 +1,16 @@
-export interface DashboardProperty {
-  id: string;
-  address: string;
-  tenant: string;
-  rentStatus: string;
-  leaseExpiry: string;
-}
+import Link from "next/link";
+import type { PropertySummary } from "../types/summary";
 
-export default function DashboardPropertyCard({ property }: { property: DashboardProperty }) {
+export default function DashboardPropertyCard({ property }: { property: PropertySummary }) {
   return (
-    <div className="p-4 border rounded" data-testid="property-card">
+    <Link
+      href={`/properties/${property.id}`}
+      className="block p-4 border rounded hover:bg-gray-50"
+    >
       <h3 className="font-semibold">{property.address}</h3>
-      <div className="text-sm">Tenant: {property.tenant}</div>
+      <div className="text-sm">Tenant: {property.tenantName}</div>
       <div className="text-sm">Rent: {property.rentStatus}</div>
-      <div className="text-sm">Lease Expiry: {property.leaseExpiry}</div>
-    </div>
+      <div className="text-sm">Next: {property.nextKeyDate}</div>
+    </Link>
   );
 }
