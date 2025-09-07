@@ -11,11 +11,7 @@ export default function Sidebar() {
   const links = [
     { href: "/", label: "Dashboard" },
     { href: "/properties", label: "Properties" },
-    { href: "/inspections", label: "Inspections" },
-    { href: "/applications", label: "Applications" },
-    { href: "/listings", label: "Listings" },
     { href: "/rent-review", label: "Rent Review" },
-    { href: "/vendors", label: "Vendors" },
     { href: "/settings", label: "Settings" }
   ];
 
