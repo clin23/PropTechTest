@@ -11,26 +11,35 @@ export type Expense = {
   notes?: string;
   receiptUrl?: string;
 };
-export type Document = { id: string; propertyId?: string; tenantId?: string; name: string; url: string };
+import { DocumentTag } from '../../types/document';
+
+export type Document = {
+  id: string;
+  propertyId?: string;
+  tenantId?: string;
+  title: string;
+  url: string;
+  tag: DocumentTag;
+};
 export type Reminder = { id: string; propertyId: string; note: string; due: string };
 export type RentEntry = { id: string; propertyId: string; tenantId: string; amount: number; dueDate: string; status: 'paid' | 'late'; paidDate?: string };
 export type Notification = { id: string; [key: string]: any };
 
 const initialProperties: Property[] = [
-  { id: 'prop1', address: '123 Main St' },
-  { id: 'prop2', address: '456 Side Ave' },
-  { id: 'prop3', address: '789 Oak Rd' },
+  { id: '1', address: '123 Main St' },
+  { id: '2', address: '456 Oak Ave' },
+  { id: '3', address: '789 Pine Rd' },
 ];
 
 const initialTenants: Tenant[] = [
-  { id: 'tenant1', name: 'Alice Tenant', propertyId: 'prop1' },
-  { id: 'tenant2', name: 'Bob Renter', propertyId: 'prop2' },
+  { id: 'tenant1', name: 'Alice Tenant', propertyId: '1' },
+  { id: 'tenant2', name: 'Bob Renter', propertyId: '2' },
 ];
 
 const initialExpenses: Expense[] = [
   {
     id: 'exp1',
-    propertyId: 'prop1',
+    propertyId: '1',
     date: '2024-01-05',
     category: 'Repairs',
     vendor: 'Plumber Co',
@@ -40,7 +49,7 @@ const initialExpenses: Expense[] = [
   },
   {
     id: 'exp2',
-    propertyId: 'prop1',
+    propertyId: '1',
     date: '2024-02-10',
     category: 'Gardening',
     vendor: 'Gardeners Ltd',
@@ -49,7 +58,7 @@ const initialExpenses: Expense[] = [
   },
   {
     id: 'exp3',
-    propertyId: 'prop2',
+    propertyId: '2',
     date: '2024-03-15',
     category: 'Painting',
     vendor: 'Paint Pros',
@@ -58,7 +67,7 @@ const initialExpenses: Expense[] = [
   },
   {
     id: 'exp4',
-    propertyId: 'prop2',
+    propertyId: '2',
     date: '2024-04-12',
     category: 'Electrical',
     vendor: 'Sparkies',
@@ -67,7 +76,7 @@ const initialExpenses: Expense[] = [
   },
   {
     id: 'exp5',
-    propertyId: 'prop3',
+    propertyId: '3',
     date: '2024-05-20',
     category: 'Inspection',
     vendor: 'Roof Inspect',
@@ -77,19 +86,37 @@ const initialExpenses: Expense[] = [
 ];
 
 const initialDocuments: Document[] = [
-  { id: 'doc1', propertyId: 'prop1', name: 'Lease Agreement', url: '/docs/lease-prop1.pdf' },
-  { id: 'doc2', propertyId: 'prop2', name: 'Inspection Report', url: '/docs/inspection-prop2.pdf' },
-  { id: 'doc3', propertyId: 'prop3', name: 'Insurance', url: '/docs/insurance-prop3.pdf' },
+  {
+    id: 'doc1',
+    propertyId: '1',
+    title: 'lease.pdf',
+    url: '/docs/lease-prop1.pdf',
+    tag: DocumentTag.Lease,
+  },
+  {
+    id: 'doc2',
+    propertyId: '2',
+    title: 'inspection.pdf',
+    url: '/docs/inspection-prop2.pdf',
+    tag: DocumentTag.Compliance,
+  },
+  {
+    id: 'doc3',
+    propertyId: '3',
+    title: 'insurance.pdf',
+    url: '/docs/insurance-prop3.pdf',
+    tag: DocumentTag.Insurance,
+  },
 ];
 
 const initialReminders: Reminder[] = [
-  { id: 'rem1', propertyId: 'prop1', note: 'Renew insurance', due: '2024-07-01' },
-  { id: 'rem2', propertyId: 'prop2', note: 'Schedule inspection', due: '2024-06-15' },
+  { id: 'rem1', propertyId: '1', note: 'Renew insurance', due: '2024-07-01' },
+  { id: 'rem2', propertyId: '2', note: 'Schedule inspection', due: '2024-06-15' },
 ];
 
 const initialRentLedger: RentEntry[] = [
-  { id: 'rent1', propertyId: 'prop1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-05-01', status: 'paid', paidDate: '2024-05-01' },
-  { id: 'rent2', propertyId: 'prop1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-06-01', status: 'late' },
+  { id: 'rent1', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-05-01', status: 'paid', paidDate: '2024-05-01' },
+  { id: 'rent2', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-06-01', status: 'late' },
 ];
 
 const initialNotifications: Notification[] = [
