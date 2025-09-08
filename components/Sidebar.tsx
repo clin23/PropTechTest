@@ -2,10 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { listProperties } from "../lib/api";
+import type { PropertySummary } from "../types/property";
 
 export default function Sidebar() {
-  // `open` tracks whether the sidebar is expanded or collapsed
   const [open, setOpen] = useState(false);
+  const { data: propertyList = [] } = useQuery<PropertySummary[]>({
+    queryKey: ["properties"],
+    queryFn: listProperties,
+  });
 
   const links = [
     {
@@ -47,15 +53,10 @@ export default function Sidebar() {
           />
         </svg>
       ),
-      children: [
-        // Use property IDs to link directly to the property pages.
-        // The previous slug-based links (e.g. "/properties/123-main-st")
-        // didn't match the API routes which expect numeric IDs, causing
-        // the property page to get stuck in a loading state when accessed
-        // from the sidebar.
-        { href: "/properties/1", label: "123 Main St" },
-        { href: "/properties/2", label: "456 Oak Ave" },
-      ],
+      children: propertyList.map((p) => ({
+        href: `/properties/${p.id}`,
+        label: p.address,
+      })),
     },
   ];
 
@@ -69,62 +70,63 @@ export default function Sidebar() {
     >
       <div className="flex flex-col h-full justify-between">
         <nav className="mt-12 space-y-1">
-            {links.map((link) => (
-              <div key={link.href}>
-                <Link
-                  href={link.href}
-                  className={`flex items-center px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                    open ? "" : "justify-center"
-                  }`}
-                >
-                  <span className="h-6 w-6">{link.icon}</span>
-                  {open && <span className="ml-3">{link.label}</span>}
-                </Link>
-                {open && link.children && (
-                  <div className="ml-8 mt-1 space-y-1">
-                    {link.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className="block px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
-          <div className="p-4 border-t dark:border-gray-700 flex justify-center">
-            <Link
-              href="/settings"
-              className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-              aria-label="Settings"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          {links.map((link) => (
+            <div key={link.href}>
+              <Link
+                href={link.href}
+                className={`flex items-center px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  open ? "" : "justify-center"
+                }`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.591 1.003 1.724 1.724 0 012.356.63 1.724 1.724 0 001.845 1.845 1.724 1.724 0 01.63 2.356 1.724 1.724 0 001.003 2.591c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.003 2.591 1.724 1.724 0 01-.63 2.356 1.724 1.724 0 00-2.356.63 1.724 1.724 0 01-2.591 1.003c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.591-1.003 1.724 1.724 0 01-2.356-.63 1.724 1.724 0 00-2.356-.63 1.724 1.724 0 01-1.003-2.591c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.003-2.591 1.724 1.724 0 01.63-2.356 1.724 1.724 0 00.63-2.356 1.724 1.724 0 011.003-2.591 1.724 1.724 0 012.591-1.003z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </Link>
-          </div>
+                <span className="h-6 w-6">{link.icon}</span>
+                {open && <span className="ml-3">{link.label}</span>}
+              </Link>
+              {open && link.children && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {link.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className="block px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+        <div className="p-4 border-t dark:border-gray-700 flex justify-center">
+          <Link
+            href="/settings"
+            className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Settings"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.591 1.003 1.724 1.724 0 012.356.63 1.724 1.724 0 001.845 1.845 1.724 1.724 0 01.63 2.356 1.724 1.724 0 001.003 2.591c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.003 2.591 1.724 1.724 0 01-.63 2.356 1.724 1.724 0 00-2.356.63 1.724 1.724 0 01-2.591 1.003c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.591-1.003 1.724 1.724 0 01-2.356-.63 1.724 1.724 0 00-2.356-.63 1.724 1.724 0 01-1.003-2.591c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.003-2.591 1.724 1.724 0 01.63-2.356 1.724 1.724 0 00.63-2.356 1.724 1.724 0 011.003-2.591 1.724 1.724 0 012.591-1.003z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+          </Link>
         </div>
       </div>
+    </div>
   );
 }
+
