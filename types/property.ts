@@ -6,6 +6,7 @@ export interface PropertyEvent {
 export interface PropertySummary {
   id: string;
   address: string;
+  imageUrl?: string;
   rent: number;
   tenant: string;
   leaseStart: string;

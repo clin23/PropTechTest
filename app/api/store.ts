@@ -1,6 +1,7 @@
 export type Property = {
   id: string;
   address: string;
+  imageUrl?: string;
   tenant: string;
   leaseStart: string;
   leaseEnd: string;
