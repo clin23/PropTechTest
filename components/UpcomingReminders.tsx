@@ -35,17 +35,17 @@ function ReminderColumn({
                     ? `/properties/${r.propertyId}/inspections`
                     : `/properties/${r.propertyId}#key-dates`
                 }
-                className={`block p-2 border-l-4 rounded hover:bg-gray-50 ${
+                className={`block p-2 border-l-4 rounded hover:bg-gray-50 dark:hover:bg-gray-700 ${
                   r.severity === "high"
                     ? "border-red-500"
                     : r.severity === "med"
                     ? "border-yellow-500"
-                    : "border-gray-300"
+                    : "border-gray-300 dark:border-gray-700"
                 }`}
               >
                 <div className="flex justify-between items-center">
                   <div className="text-sm font-medium">{r.title}</div>
-                  <span className="ml-2 text-xs bg-gray-100 rounded px-2 py-0.5">
+                  <span className="ml-2 text-xs bg-gray-100 dark:bg-gray-700 rounded px-2 py-0.5">
                     {r.propertyAddress}
                   </span>
                 </div>

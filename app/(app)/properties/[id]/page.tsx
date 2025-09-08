@@ -42,30 +42,30 @@ export default function PropertyPage() {
           More...
         </button>
         {moreOpen && (
-          <div className="absolute z-10 mt-2 bg-white border rounded shadow">
+          <div className="absolute z-10 mt-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow">
             <Link
               href={`/properties/${id}/inspections`}
-              className="block px-4 py-2 hover:bg-gray-100"
+              className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Inspections
             </Link>
             {property.tenant === "" && (
               <Link
                 href={`/properties/${id}/applications`}
-                className="block px-4 py-2 hover:bg-gray-100"
+                className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 Applications
               </Link>
             )}
             <Link
               href={`/properties/${id}/listing`}
-              className="block px-4 py-2 hover:bg-gray-100"
+              className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Create Listing
             </Link>
             <Link
               href="/vendors"
-              className="block px-4 py-2 hover:bg-gray-100"
+              className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Vendors
             </Link>

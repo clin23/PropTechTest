@@ -14,9 +14,9 @@ export default function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) 
   const openDetails = (id: string) => router.push(`/applications/${id}`);
 
   return (
-    <table className="min-w-full border">
+    <table className="min-w-full border dark:border-gray-700">
       <thead>
-        <tr className="bg-gray-100">
+        <tr className="bg-gray-100 dark:bg-gray-800">
           <th className="p-2 text-left">Applicant</th>
           <th className="p-2 text-left">Property</th>
           <th className="p-2 text-left">Status</th>
@@ -26,7 +26,7 @@ export default function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) 
         {rows.map((r) => (
           <tr
             key={r.id}
-            className="border-t cursor-pointer hover:bg-gray-50"
+            className="border-t cursor-pointer hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
             role="button"
             tabIndex={0}
             onClick={() => openDetails(r.id)}
