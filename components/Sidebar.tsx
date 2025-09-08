@@ -58,26 +58,6 @@ export default function Sidebar() {
         { href: "/properties/456-oak-ave", label: "456 Oak Ave" },
       ],
     },
-    {
-      href: "/rent-review",
-      label: "Rent Review",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 2h6a2 2 0 012 2v16a2 2 0 01-2 2H9a2 2 0 01-2-2V4a2 2 0 012-2zm0 4h6m-6 4h6m-6 4h6"
-          />
-        </svg>
-      ),
-    },
   ];
 
   return (
