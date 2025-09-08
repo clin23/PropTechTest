@@ -84,7 +84,11 @@ export default function PropertyPage() {
         onOpenChange={setExpenseOpen}
         showTrigger={false}
       />
-      <DocumentUploadModal open={docOpen} onClose={() => setDocOpen(false)} />
+      <DocumentUploadModal
+        propertyId={id}
+        open={docOpen}
+        onClose={() => setDocOpen(false)}
+      />
       <MessageTenantModal open={messageOpen} onClose={() => setMessageOpen(false)} />
       <h1 className="text-2xl font-semibold">Property Details</h1>
       <PropertyOverviewCard property={property} />

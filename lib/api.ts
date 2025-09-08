@@ -315,6 +315,10 @@ export const createDocument = (payload: {
 export const searchDocuments = (search: string) =>
   listDocuments({ query: search });
 
+// Property documents
+export const listPropertyDocuments = (propertyId: string) =>
+  listDocuments({ propertyId });
+
 // Vendors
 export const listVendors = () => api<Vendor[]>('/vendors');
 export const createVendor = (payload: Vendor) =>

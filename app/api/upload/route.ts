@@ -1,4 +1,6 @@
 import { randomUUID } from 'crypto';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
 import { prisma } from '../../../lib/prisma';
 
 const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB) || 5;
@@ -18,7 +20,13 @@ export async function POST(req: Request) {
     if (sizeMb > MAX_UPLOAD_MB) {
       return Response.json({ error: 'File too large' }, { status: 400 });
     }
-    const url = `/uploads/${randomUUID()}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const ext = file.name ? `.${file.name.split('.').pop()}` : '';
+    const filename = `${randomUUID()}${ext}`;
+    const dir = join(process.cwd(), 'public', 'uploads');
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, filename), buffer);
+    const url = `/uploads/${filename}`;
     await prisma.mockData.create({ data: { id: randomUUID(), type: 'upload', data: { url } } });
     return Response.json({ url });
   } catch {
