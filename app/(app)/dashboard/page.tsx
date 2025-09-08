@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import CashflowTile from "../../../components/CashflowTile";
 import DashboardPnlMiniChart from "../../../components/DashboardPnlMiniChart";
 import DashboardPropertyCard from "../../../components/DashboardPropertyCard";
-import QuickActionsBar from "../../../components/QuickActionsBar";
 import Skeleton from "../../../components/Skeleton";
 import UpcomingReminders from "../../../components/UpcomingReminders";
 import AlertsPanel from "../../../components/AlertsPanel";
@@ -53,7 +52,6 @@ export default function DashboardPage() {
       </div>
       <AlertsPanel />
       <UpcomingReminders showViewAll />
-      <QuickActionsBar />
     </div>
   );
 }
