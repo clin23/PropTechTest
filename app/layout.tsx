@@ -10,9 +10,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-200">
         <Providers>
-          <div className="flex min-h-screen">
+          <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 overflow-y-auto">{children}</main>
           </div>
         </Providers>
       </body>
