@@ -42,6 +42,7 @@ export default function TaskList() {
         <TaskRow
           key={t.id}
           task={t}
+          properties={properties}
           onUpdate={(data) => updateMut.mutate({ id: t.id, data })}
           onDelete={() => deleteMut.mutate(t.id)}
           onToggle={() => completeMut.mutate(t.id)}
