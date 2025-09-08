@@ -14,11 +14,11 @@ describe("QuickActionsBar", () => {
         onMessageTenant={messageTenant}
       />
     );
-    fireEvent.click(screen.getByText("Log Expense"));
+    fireEvent.click(screen.getByText("+Expense"));
     expect(logExpense).toHaveBeenCalled();
-    fireEvent.click(screen.getByText("Upload Document"));
+    fireEvent.click(screen.getByText("+Upload Doc"));
     expect(uploadDoc).toHaveBeenCalled();
-    fireEvent.click(screen.getByText("Message Tenant"));
+    fireEvent.click(screen.getByText("+Tenant Note"));
     expect(messageTenant).toHaveBeenCalled();
   });
 });
