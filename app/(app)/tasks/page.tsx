@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { listTasks } from "../../../../lib/api";
-import type { TaskDto } from "../../../../types/tasks";
+import { listTasks } from "../../../lib/api";
+import type { TaskDto } from "../../../types/tasks";
 
 export default function TasksPage() {
   const { data: tasks = [] } = useQuery<TaskDto[]>({
