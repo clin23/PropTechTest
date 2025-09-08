@@ -112,6 +112,38 @@ export const zReminder = z.object({
 
 export const zReminders = z.array(zReminder);
 
+export const zTaskCadence = z.enum(['Immediate','Weekly','Monthly','Yearly','Custom']);
+export const zTaskStatus = z.enum(['todo','in_progress','blocked','done']);
+export const zTaskPriority = z.enum(['low','normal','high']);
+
+export const zTaskRecurrence = z.object({
+  freq: z.enum(['WEEKLY','MONTHLY','YEARLY','CUSTOM']).nullable(),
+  interval: z.number().int().positive().optional(),
+  byDay: z.array(z.string()).optional(),
+  byMonthDay: z.array(z.number().int()).optional(),
+  rrule: z.string().optional(),
+}).nullable();
+
+export const zTask = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  cadence: zTaskCadence,
+  dueDate: z.string().optional(),    // ISO
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  recurrence: zTaskRecurrence,
+  properties: z.array(z.object({ id: z.string(), address: z.string() })).min(1),
+  status: zTaskStatus.default('todo'),
+  priority: zTaskPriority.default('normal'),
+  tags: z.array(z.string()).optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  reminderId: z.string().nullable().optional(),
+});
+
+export const zTasks = z.array(zTask);
+
 export type InspectionInput = z.infer<typeof inspectionSchema>;
 export type ExpenseInput = z.infer<typeof zExpense>;
 export type VendorInput = z.infer<typeof vendorSchema>;

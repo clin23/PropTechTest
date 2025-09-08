@@ -11,6 +11,7 @@ PropTechTest is a lightweight, dashboard-first property management prototype for
 - **Inspections** with room checklists and shareable reports.
 - **Rent review** calculator and notice generation within each property.
 - **Settings** for notification preferences.
+- **Tasks** module with Kanban, Calendar and Gantt views.
 
 ## Navigation
 
@@ -22,6 +23,7 @@ A collapsible sidebar links to:
 - Listings
 - Finance (Expenses & P&L)
 - Vendors
+- Tasks
 - Settings
 
 ## Environment variables
