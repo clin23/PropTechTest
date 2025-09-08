@@ -29,7 +29,7 @@ A collapsible sidebar links to:
 Copy `.env.local.sample` to `.env.local` and adjust as needed.
 
 * `NEXT_PUBLIC_API_BASE` - Base URL for backend API.
-* `MOCK_MODE` - Enables mocked API responses when set to `true`.
+* `MOCK_MODE` - Enables mocked API responses (defaults to `true`; set to `false` to use PostgreSQL).
 * `DATABASE_URL` - PostgreSQL connection string.
 * `MAX_UPLOAD_MB` - Maximum upload size in megabytes.
 

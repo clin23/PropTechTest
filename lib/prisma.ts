@@ -1,6 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import * as store from '../app/api/store';
 
+// Default to in-memory mock data unless explicitly disabled
+if (!process.env.MOCK_MODE) {
+  process.env.MOCK_MODE = 'true';
+}
+
 let prisma: PrismaClient | { mockData: typeof mockData };
 
 if (process.env.MOCK_MODE === 'true') {
