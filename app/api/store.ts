@@ -72,6 +72,7 @@ export type TenantNote = {
   createdAt: string;
 };
 export type Notification = { id: string; [key: string]: any };
+import { TaskDto } from '../../types/tasks';
 
 const initialProperties: Property[] = [
   {
@@ -302,6 +303,102 @@ const initialReminders: Reminder[] = [
   },
 ];
 
+const initialTasks: TaskDto[] = [
+  {
+    id: 'task1',
+    title: 'Fix leaking tap',
+    cadence: 'Immediate',
+    dueDate: '2024-07-10',
+    properties: [{ id: '1', address: '123 Main St' }],
+    status: 'todo',
+    priority: 'normal',
+    createdAt: '2024-06-01',
+    updatedAt: '2024-06-01',
+  },
+  {
+    id: 'task2',
+    title: 'Garden tidy-up',
+    cadence: 'Monthly',
+    dueDate: '2024-07-15',
+    recurrence: { freq: 'MONTHLY', interval: 1 },
+    properties: [
+      { id: '1', address: '123 Main St' },
+      { id: '2', address: '456 Oak Ave' },
+    ],
+    status: 'in_progress',
+    priority: 'low',
+    createdAt: '2024-06-01',
+    updatedAt: '2024-06-15',
+  },
+  {
+    id: 'task3',
+    title: 'Smoke alarm service',
+    cadence: 'Yearly',
+    dueDate: '2024-12-01',
+    properties: [{ id: '2', address: '456 Oak Ave' }],
+    status: 'todo',
+    priority: 'normal',
+    createdAt: '2024-06-01',
+    updatedAt: '2024-06-01',
+  },
+  {
+    id: 'task4',
+    title: 'Insurance renewal',
+    cadence: 'Yearly',
+    dueDate: '2025-01-05',
+    properties: [{ id: '1', address: '123 Main St' }],
+    status: 'blocked',
+    priority: 'high',
+    createdAt: '2024-06-01',
+    updatedAt: '2024-06-20',
+  },
+  {
+    id: 'task5',
+    title: 'Log quarterly water rates',
+    cadence: 'Monthly',
+    dueDate: '2024-08-01',
+    properties: [{ id: '1', address: '123 Main St' }],
+    status: 'todo',
+    priority: 'normal',
+    createdAt: '2024-06-01',
+    updatedAt: '2024-06-01',
+  },
+  {
+    id: 'task6',
+    title: 'End-of-lease clean',
+    cadence: 'Immediate',
+    dueDate: '2024-07-20',
+    properties: [{ id: '2', address: '456 Oak Ave' }],
+    status: 'done',
+    priority: 'high',
+    createdAt: '2024-06-01',
+    updatedAt: '2024-07-01',
+  },
+  {
+    id: 'task7',
+    title: 'General inspection',
+    cadence: 'Weekly',
+    dueDate: '2024-07-12',
+    properties: [{ id: '1', address: '123 Main St' }],
+    status: 'todo',
+    priority: 'normal',
+    createdAt: '2024-06-01',
+    updatedAt: '2024-06-01',
+  },
+  {
+    id: 'task8',
+    title: 'Paint touch-up',
+    cadence: 'Custom',
+    startDate: '2024-07-01',
+    endDate: '2024-07-03',
+    properties: [{ id: '1', address: '123 Main St' }],
+    status: 'todo',
+    priority: 'low',
+    createdAt: '2024-06-01',
+    updatedAt: '2024-06-01',
+  },
+];
+
 const initialRentLedger: RentEntry[] = [
   { id: 'rent1-jan', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-01-01', status: 'paid', paidDate: '2024-01-01' },
   { id: 'rent1-feb', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-02-01', status: 'paid', paidDate: '2024-02-01' },
@@ -355,6 +452,7 @@ type Store = {
   rentLedger: RentEntry[];
   notifications: Notification[];
   tenantNotes: TenantNote[];
+  tasks: TaskDto[];
 };
 
 const initStore = (): Store => ({
@@ -367,6 +465,7 @@ const initStore = (): Store => ({
   rentLedger: [...initialRentLedger],
   notifications: [...initialNotifications],
   tenantNotes: [...initialTenantNotes],
+  tasks: [...initialTasks],
 });
 
 const g = globalThis as any;
@@ -383,6 +482,7 @@ export const {
   rentLedger,
   notifications,
   tenantNotes,
+  tasks,
 } = store;
 
 export const isActiveProperty = (p: Property) => !p.archived;
@@ -431,5 +531,8 @@ export default {
   },
   get tenantNotes() {
     return tenantNotes;
+  },
+  get tasks() {
+    return tasks;
   },
 };
