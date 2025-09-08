@@ -1,17 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 export default function Sidebar() {
   // `open` tracks whether the sidebar is expanded or collapsed
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
-      setOpen(true);
-    }
-  }, []);
 
   const links = [
     {
@@ -58,71 +52,16 @@ export default function Sidebar() {
         { href: "/properties/456-oak-ave", label: "456 Oak Ave" },
       ],
     },
-    {
-      href: "/rent-review",
-      label: "Rent Review",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 2h6a2 2 0 012 2v16a2 2 0 01-2 2H9a2 2 0 01-2-2V4a2 2 0 012-2zm0 4h6m-6 4h6m-6 4h6"
-          />
-        </svg>
-      ),
-    },
   ];
 
   return (
     <div
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
       className={`relative h-screen bg-white dark:bg-gray-800 border-r dark:border-gray-700 transition-all ${
         open ? "w-64" : "w-16"
       }`}
     >
-      <button
-        onClick={() => setOpen(!open)}
-        className="absolute top-2 right-2 p-1 rounded bg-blue-600 text-white"
-        aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
-      >
-        {open ? (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        ) : (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        )}
-      </button>
       <div className="flex flex-col h-full justify-between">
         <nav className="mt-12 space-y-1">
             {links.map((link) => (
