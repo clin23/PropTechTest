@@ -95,6 +95,18 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const listProperties = () => api<PropertySummary[]>('/properties');
 export const getProperty = (id: string) => api<PropertySummary>(`/properties/${id}`);
+export const createProperty = (payload: any) =>
+  api<PropertySummary>('/properties', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+export const updateProperty = (id: string, payload: any) =>
+  api<PropertySummary>(`/properties/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+export const deleteProperty = (id: string) =>
+  api(`/properties/${id}`, { method: 'DELETE' });
 export const listLedger = (propertyId: string) =>
   api<LedgerEntry[]>(`/rent-ledger?propertyId=${propertyId}`);
 export const listTenantNotes = (propertyId: string) =>

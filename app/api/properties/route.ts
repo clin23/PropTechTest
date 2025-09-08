@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { properties, reminders, isActiveProperty } from '../store';
 
 export async function GET(req: Request) {
@@ -17,4 +18,24 @@ export async function GET(req: Request) {
       .map((r) => ({ date: r.dueDate, title: r.title })),
   }));
   return Response.json(data);
+}
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  const id = body.id || randomUUID();
+  const property = {
+    id,
+    address: body.address || '',
+    imageUrl: body.imageUrl,
+    tenant: body.tenant || '',
+    leaseStart: body.leaseStart || '',
+    leaseEnd: body.leaseEnd || '',
+    rent: typeof body.rent === 'number' ? body.rent : Number(body.rent) || 0,
+    archived: body.archived ?? false,
+  };
+  properties.push(property);
+  const events = reminders
+    .filter((r) => r.propertyId === id)
+    .map((r) => ({ date: r.dueDate, title: r.title }));
+  return Response.json({ ...property, events }, { status: 201 });
 }
