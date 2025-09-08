@@ -114,3 +114,12 @@ and restart the dev server.
 
 From the finance pages (`/finance/[propertyId]/pnl` or `/finance/[propertyId]/expenses`) use the **Export** buttons to download CSV or PDF reports.
 
+### Property archive endpoints
+
+Mock API routes are available to hide or restore properties:
+
+- `POST /api/properties/:id/archive` marks a property as archived.
+- `POST /api/properties/:id/unarchive` restores an archived property.
+
+Archived properties are excluded from listings unless `includeArchived=true` is specified.
+
