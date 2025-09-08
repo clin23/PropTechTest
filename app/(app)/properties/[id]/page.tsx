@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import QuickActionsBar from "../../../../components/QuickActionsBar";
 import ExpenseForm from "../../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../../components/DocumentUploadModal";
@@ -11,7 +12,6 @@ import PropertyOverviewCard from "../../../../components/PropertyOverviewCard";
 import PropertyDetailTabs from "../../../../components/PropertyDetailTabs";
 import { getProperty } from "../../../../lib/api";
 import type { PropertySummary } from "../../../../types/property";
-import Link from "next/link";
 
 export default function PropertyPage() {
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -34,6 +34,12 @@ export default function PropertyPage() {
         onUploadDocument={() => setDocOpen(true)}
         onMessageTenant={() => setMessageOpen(true)}
       />
+      <Link
+        href={`/properties/${id}/edit`}
+        className="inline-block px-2 py-1 border rounded"
+      >
+        Edit Property
+      </Link>
       <div className="relative inline-block">
         <button
           className="px-2 py-1 border rounded"
