@@ -89,12 +89,25 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     headers,
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const text = await res.text();
+  if (!res.ok) throw new Error(text);
+  return text ? JSON.parse(text) : (undefined as T);
 }
 
 export const listProperties = () => api<PropertySummary[]>('/properties');
 export const getProperty = (id: string) => api<PropertySummary>(`/properties/${id}`);
+export const createProperty = (payload: any) =>
+  api<PropertySummary>('/properties', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+export const updateProperty = (id: string, payload: any) =>
+  api<PropertySummary>(`/properties/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+export const deleteProperty = (id: string) =>
+  api(`/properties/${id}`, { method: 'DELETE' });
 export const listLedger = (propertyId: string) =>
   api<LedgerEntry[]>(`/rent-ledger?propertyId=${propertyId}`);
 export const listTenantNotes = (propertyId: string) =>
