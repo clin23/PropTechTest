@@ -9,10 +9,15 @@ interface Props {
 
 export default function PropertyOverviewCard({ property }: Props) {
   return (
-    <div className="border rounded p-4 space-y-2">
-      <div className="flex justify-between">
+    <div className="border rounded overflow-hidden h-64 grid grid-rows-2">
+      <img
+        src={property.imageUrl || "/default-house.svg"}
+        alt={`Photo of ${property.address}`}
+        className="w-full h-full object-cover"
+      />
+      <div className="p-4 flex flex-col justify-between">
         <div>
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-lg font-semibold">
             <Link
               href={`/properties/${property.id}`}
               className="text-blue-600 underline"
@@ -21,24 +26,8 @@ export default function PropertyOverviewCard({ property }: Props) {
             </Link>
           </h2>
           <p>Tenant: {property.tenant}</p>
-          <p>
-            Lease: {property.leaseStart} – {property.leaseEnd}
-          </p>
         </div>
-        <div className="text-right">
-          <p className="text-lg font-semibold">${property.rent}/week</p>
-        </div>
-      </div>
-      <div>
-        <h3 className="font-semibold">Upcoming</h3>
-        <ul className="list-disc pl-5">
-          {property.events.map((e) => (
-            <li key={e.date + e.title}>
-              {e.date}: {e.title}
-            </li>
-          ))}
-          {property.events.length === 0 && <li>None</li>}
-        </ul>
+        <p className="text-right font-semibold">${property.rent}/week</p>
       </div>
     </div>
   );

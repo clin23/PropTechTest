@@ -7,6 +7,7 @@ export async function GET(req: Request) {
   const data = props.map((p) => ({
     id: p.id,
     address: p.address,
+    imageUrl: p.imageUrl,
     tenant: p.tenant,
     rent: p.rent,
     leaseStart: p.leaseStart,
