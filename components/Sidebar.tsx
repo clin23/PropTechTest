@@ -10,7 +10,6 @@ export default function Sidebar() {
   const links = [
     { href: "/", label: "Dashboard" },
     { href: "/properties", label: "Properties" },
-    { href: "/rent-review", label: "Rent Review" },
     { href: "/settings", label: "Settings" }
   ];
 
