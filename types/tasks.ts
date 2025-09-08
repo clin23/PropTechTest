@@ -1,29 +1,29 @@
 export type TaskCadence = 'Immediate'|'Weekly'|'Monthly'|'Yearly'|'Custom';
-export type TaskStatus = 'todo'|'in_progress'|'blocked'|'done';
+export type TaskStatus  = 'todo'|'in_progress'|'blocked'|'done';
 export type TaskPriority = 'low'|'normal'|'high';
+
 export type TaskDto = {
   id: string;
   title: string;
   description?: string;
-  cadence: TaskCadence;
-  // Single due date OR a date window for Gantt (start/end)
-  dueDate?: string;       // ISO
-  startDate?: string;     // ISO (optional, for Gantt)
-  endDate?: string;       // ISO (optional, for Gantt)
+  status: TaskStatus;            // checkbox maps todo/done
+  priority: TaskPriority;
+  cadence: TaskCadence;          // bucket for later Kanban
+  dueDate?: string;              // ISO
+  startDate?: string;            // for Gantt (optional)
+  endDate?: string;              // for Gantt (optional)
   recurrence?: {
-    // For Weekly/Monthly/Yearly or Custom RRULE-like
-    freq: 'WEEKLY'|'MONTHLY'|'YEARLY'|'CUSTOM'|null;
-    interval?: number; // e.g., every 2 weeks
-    byDay?: string[];  // ['MO','FR'] if weekly
-    byMonthDay?: number[]; // [1,15] if monthly
-    rrule?: string; // optional raw string if CUSTOM
+    freq: 'DAILY'|'WEEKLY'|'MONTHLY'|'YEARLY'|'CUSTOM'|null;
+    interval?: number;           // every N units
+    byDay?: string[];            // ['MO','FR'] etc
+    byMonthDay?: number[];       // [1,15]
+    rrule?: string;              // raw string if CUSTOM
+    endsOn?: string | null;      // ISO date limit
   } | null;
   properties: { id: string; address: string }[]; // 1..n properties
-  status: TaskStatus;
-  priority: TaskPriority;
-  tags?: string[];       // arbitrary labels
+  tags?: string[];
+  attachments?: { name: string; url: string }[];
+  parentId?: string | null;      // for subtasks
   createdAt: string;
   updatedAt: string;
-  // linkage to reminders (optional)
-  reminderId?: string | null;
 };

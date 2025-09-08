@@ -378,7 +378,8 @@ export const listTasks = (params?: {
   status?: string;
   from?: string;
   to?: string;
-  search?: string;
+  q?: string;
+  parentId?: string;
 }) => {
   const query = params
     ? new URLSearchParams(
@@ -397,3 +398,5 @@ export const deleteTask = (id: string) =>
   api(`/tasks/${id}`, { method: 'DELETE' });
 export const completeTask = (id: string) =>
   api<TaskDto>(`/tasks/${id}/complete`, { method: 'POST' });
+export const bulkTasks = (payload: any) =>
+  api<TaskDto[]>('/tasks/bulk', { method: 'POST', body: JSON.stringify(payload) });

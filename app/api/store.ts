@@ -487,6 +487,118 @@ export const {
 
 export const isActiveProperty = (p: Property) => !p.archived;
 
+type TaskFilters = {
+  propertyId?: string;
+  status?: string;
+  cadence?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+  parentId?: string;
+};
+
+export const listTasks = (filters: TaskFilters = {}): TaskDto[] => {
+  const activeIds = new Set(properties.filter(isActiveProperty).map((p) => p.id));
+  let data = tasks
+    .map((t) => ({
+      ...t,
+      properties: t.properties.filter((p) => activeIds.has(p.id)),
+    }))
+    .filter((t) => t.properties.length > 0);
+
+  if (filters.propertyId) {
+    data = data.filter((t) => t.properties.some((p) => p.id === filters.propertyId));
+  }
+  if (filters.status) {
+    data = data.filter((t) => t.status === filters.status);
+  }
+  if (filters.cadence) {
+    data = data.filter((t) => t.cadence === filters.cadence);
+  }
+  if (filters.parentId !== undefined) {
+    data = data.filter((t) => t.parentId === filters.parentId);
+  }
+  if (filters.q) {
+    const s = filters.q.toLowerCase();
+    data = data.filter(
+      (t) =>
+        t.title.toLowerCase().includes(s) ||
+        (t.description ? t.description.toLowerCase().includes(s) : false)
+    );
+  }
+  if (filters.from || filters.to) {
+    const fromTime = filters.from ? Date.parse(filters.from) : undefined;
+    const toTime = filters.to ? Date.parse(filters.to) : undefined;
+    data = data.filter((t) => {
+      const start = t.startDate || t.dueDate;
+      const end = t.endDate || t.dueDate;
+      const sTime = start ? Date.parse(start) : undefined;
+      const eTime = end ? Date.parse(end) : undefined;
+      if (fromTime && eTime && eTime < fromTime) return false;
+      if (toTime && sTime && sTime > toTime) return false;
+      return true;
+    });
+  }
+
+  return data;
+};
+
+export const createTask = (
+  data: Omit<TaskDto, 'id' | 'createdAt' | 'updatedAt'> &
+    Partial<Pick<TaskDto, 'id' | 'createdAt' | 'updatedAt'>>
+): TaskDto => {
+  const now = new Date().toISOString();
+  const task: TaskDto = {
+    ...data,
+    id: data.id ?? crypto.randomUUID(),
+    createdAt: data.createdAt ?? now,
+    updatedAt: data.updatedAt ?? now,
+  } as TaskDto;
+  tasks.push(task);
+  return task;
+};
+
+export const updateTask = (id: string, data: Partial<TaskDto>): TaskDto | null => {
+  const idx = tasks.findIndex((t) => t.id === id);
+  if (idx === -1) return null;
+  const updated = { ...tasks[idx], ...data, updatedAt: new Date().toISOString() } as TaskDto;
+  tasks[idx] = updated;
+  return updated;
+};
+
+export const deleteTask = (id: string): boolean => {
+  const idx = tasks.findIndex((t) => t.id === id);
+  if (idx === -1) return false;
+  tasks.splice(idx, 1);
+  return true;
+};
+
+export const completeTask = (id: string): TaskDto | null => {
+  const task = tasks.find((t) => t.id === id);
+  if (!task) return null;
+  task.status = task.status === 'done' ? 'todo' : 'done';
+  task.updatedAt = new Date().toISOString();
+  return task;
+};
+
+export const expandRecurrenceInRange = (
+  task: TaskDto,
+  _from: Date,
+  _to: Date
+): TaskDto[] => {
+  // Basic stub - real recurrence handling to be implemented later
+  return [task];
+};
+
+export const seedTasks = () => {
+  if (tasks.length === 0) {
+    tasks.push(...initialTasks);
+  }
+};
+
+export const getTask = (id: string): TaskDto | undefined =>
+  tasks.find((t) => t.id === id);
+
 export const resetStore = () => {
   const fresh = initStore();
   (Object.keys(store) as (keyof Store)[]).forEach((key) => {
