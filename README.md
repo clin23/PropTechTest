@@ -123,3 +123,11 @@ Mock API routes are available to hide or restore properties:
 
 Archived properties are excluded from listings unless `includeArchived=true` is specified.
 
+### Property P&L summary endpoint
+
+Retrieve profit and loss figures for a single property over a specific date range using the mock API:
+
+- `GET /api/properties/:id/summary/pnl?from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+The response contains total `income`, `expenses`, `net` amount and a `buckets` array of monthly breakdowns.
+
