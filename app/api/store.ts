@@ -272,66 +272,83 @@ const initialNotifications: Notification[] = [
   { id: 'note2', message: 'Rent due reminder' },
 ];
 
-export let properties: Property[] = [];
-export let tenants: Tenant[] = [];
-export let expenses: Expense[] = [];
-export let incomes: Income[] = [];
-export let documents: Document[] = [];
-export let reminders: Reminder[] = [];
-export let rentLedger: RentEntry[] = [];
-export let notifications: Notification[] = [];
-export let tenantNotes: TenantNote[] = [];
+type Store = {
+  properties: Property[];
+  tenants: Tenant[];
+  expenses: Expense[];
+  incomes: Income[];
+  documents: Document[];
+  reminders: Reminder[];
+  rentLedger: RentEntry[];
+  notifications: Notification[];
+  tenantNotes: TenantNote[];
+};
+
+const initStore = (): Store => ({
+  properties: [...initialProperties],
+  tenants: [...initialTenants],
+  expenses: [...initialExpenses],
+  incomes: [...initialIncomes],
+  documents: [...initialDocuments],
+  reminders: [...initialReminders],
+  rentLedger: [...initialRentLedger],
+  notifications: [...initialNotifications],
+  tenantNotes: [...initialTenantNotes],
+});
+
+const g = globalThis as any;
+const store: Store = g.__store || initStore();
+g.__store = store;
+
+export const {
+  properties,
+  tenants,
+  expenses,
+  incomes,
+  documents,
+  reminders,
+  rentLedger,
+  notifications,
+  tenantNotes,
+} = store;
 
 export const isActiveProperty = (p: Property) => !p.archived;
 
-export function seedIfEmpty() {
-  if (properties.length) return;
-  properties = [...initialProperties];
-  tenants = [...initialTenants];
-  expenses = [...initialExpenses];
-  incomes = [...initialIncomes];
-  documents = [...initialDocuments];
-  reminders = [...initialReminders];
-  rentLedger = [...initialRentLedger];
-  notifications = [...initialNotifications];
-  tenantNotes = [...initialTenantNotes];
-
-  // Safety cleanup for "10 Rose St"
-  let targetId: string | undefined;
-  for (const p of properties) {
-    if (p.address === '10 Rose St') {
-      p.archived = true;
-      targetId = p.id;
-    }
-  }
-  if (targetId) {
-    reminders = reminders.filter((r) => r.propertyId !== targetId);
-  }
-}
-
 export const resetStore = () => {
-  properties = [];
-  tenants = [];
-  expenses = [];
-  incomes = [];
-  documents = [];
-  reminders = [];
-  rentLedger = [];
-  notifications = [];
-  tenantNotes = [];
-  seedIfEmpty();
+  const fresh = initStore();
+  (Object.keys(store) as (keyof Store)[]).forEach((key) => {
+    // mutate arrays in place so imported references stay valid
+    store[key].length = 0;
+    store[key].push(...fresh[key]);
+  });
 };
 
-seedIfEmpty();
-
 export default {
-  get properties() { return properties; },
-  get tenants() { return tenants; },
-  get expenses() { return expenses; },
-  get incomes() { return incomes; },
-  get documents() { return documents; },
-  get reminders() { return reminders; },
-  get rentLedger() { return rentLedger; },
-  get notifications() { return notifications; },
-  get tenantNotes() { return tenantNotes; },
+  get properties() {
+    return properties;
+  },
+  get tenants() {
+    return tenants;
+  },
+  get expenses() {
+    return expenses;
+  },
+  get incomes() {
+    return incomes;
+  },
+  get documents() {
+    return documents;
+  },
+  get reminders() {
+    return reminders;
+  },
+  get rentLedger() {
+    return rentLedger;
+  },
+  get notifications() {
+    return notifications;
+  },
+  get tenantNotes() {
+    return tenantNotes;
+  },
 };
