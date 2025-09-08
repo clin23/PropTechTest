@@ -89,8 +89,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     headers,
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const text = await res.text();
+  if (!res.ok) throw new Error(text);
+  return text ? JSON.parse(text) : (undefined as T);
 }
 
 export const listProperties = () => api<PropertySummary[]>('/properties');
