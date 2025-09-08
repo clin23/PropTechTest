@@ -10,8 +10,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-200">
         <Providers>
-          <Sidebar />
-          <main className="md:ml-64">{children}</main>
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <main className="flex-1">{children}</main>
+          </div>
         </Providers>
       </body>
     </html>
