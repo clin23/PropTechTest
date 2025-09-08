@@ -48,8 +48,13 @@ export default function Sidebar() {
         </svg>
       ),
       children: [
-        { href: "/properties/123-main-st", label: "123 Main St" },
-        { href: "/properties/456-oak-ave", label: "456 Oak Ave" },
+        // Use property IDs to link directly to the property pages.
+        // The previous slug-based links (e.g. "/properties/123-main-st")
+        // didn't match the API routes which expect numeric IDs, causing
+        // the property page to get stuck in a loading state when accessed
+        // from the sidebar.
+        { href: "/properties/1", label: "123 Main St" },
+        { href: "/properties/2", label: "456 Oak Ave" },
       ],
     },
   ];
