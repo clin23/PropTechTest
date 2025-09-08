@@ -8,6 +8,7 @@ import type {
   PropertyDocument,
 } from "../types/property";
 import type { PnlSummary } from '../types/pnl';
+import type { TaskDto } from '../types/tasks';
 
 export interface Inspection {
   id: string;
@@ -369,3 +370,30 @@ export const getPnlSummary = (
   if (propertyId) params.set('propertyId', propertyId);
   return api<PnlSummary>(`/pnl/summary?${params.toString()}`);
 };
+
+// Tasks
+export const listTasks = (params?: {
+  propertyId?: string;
+  cadence?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+  search?: string;
+}) => {
+  const query = params
+    ? new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v) as [string, string][]
+      ).toString()
+    : '';
+  const path = `/tasks${query ? `?${query}` : ''}`;
+  return api<TaskDto[]>(path);
+};
+export const createTask = (payload: any) =>
+  api<TaskDto>('/tasks', { method: 'POST', body: JSON.stringify(payload) });
+export const getTask = (id: string) => api<TaskDto>(`/tasks/${id}`);
+export const updateTask = (id: string, payload: any) =>
+  api<TaskDto>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+export const deleteTask = (id: string) =>
+  api(`/tasks/${id}`, { method: 'DELETE' });
+export const completeTask = (id: string) =>
+  api<TaskDto>(`/tasks/${id}/complete`, { method: 'POST' });
