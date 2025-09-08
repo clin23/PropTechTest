@@ -5,7 +5,7 @@ export default function DashboardPropertyCard({ property }: { property: Property
   return (
     <Link
       href={`/properties/${property.id}`}
-      className="block p-4 border rounded hover:bg-gray-50"
+      className="block p-4 border rounded hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
     >
       <h3 className="font-semibold">{property.address}</h3>
       <div className="text-sm">Tenant: {property.tenantName}</div>
