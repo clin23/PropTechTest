@@ -61,6 +61,39 @@ export const zPnlSummary = z.object({
   }),
 });
 
+export const zPnlSeries = z.object({
+  series: z.array(zPnlPoint),
+  totals: z.object({
+    income: z.number(),
+    expenses: z.number(),
+    net: z.number(),
+  }),
+});
+
+export const zRentMetrics = z.object({
+  expected: z.number(),
+  received: z.number(),
+  collectionRate: z.number(),
+  arrearsCount: z.number(),
+  arrearsAmount: z.number(),
+});
+
+export const zExpenseSlice = z.object({
+  category: z.string(),
+  amount: z.number(),
+});
+
+export const zExpenseBreakdown = z.object({
+  slices: z.array(zExpenseSlice),
+  total: z.number(),
+});
+
+export const zOccupancy = z.object({
+  occupiedDays: z.number(),
+  vacantDays: z.number(),
+  occupancyRate: z.number(),
+});
+
 export const zReminder = z.object({
   id: z.string(),
   propertyId: z.string(),

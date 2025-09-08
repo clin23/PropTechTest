@@ -135,6 +135,33 @@ const initialExpenses: Expense[] = [
     gst: 20,
   },
   {
+    id: 'exp6',
+    propertyId: '1',
+    date: '2024-04-12',
+    category: 'Gardening & landscaping',
+    vendor: 'GreenThumb',
+    amount: 180,
+    gst: 25,
+  },
+  {
+    id: 'exp7',
+    propertyId: '1',
+    date: '2024-05-18',
+    category: 'Electrical',
+    vendor: 'Sparky Ltd',
+    amount: 220,
+    gst: 30,
+  },
+  {
+    id: 'exp8',
+    propertyId: '1',
+    date: '2024-06-05',
+    category: 'General repairs',
+    vendor: 'Handyman Co',
+    amount: 160,
+    gst: 24,
+  },
+  {
     id: 'exp4',
     propertyId: '2',
     date: '2024-04-01',
@@ -151,6 +178,42 @@ const initialExpenses: Expense[] = [
     vendor: 'Cleaners Ltd',
     amount: 300,
     gst: 45,
+  },
+  {
+    id: 'exp9',
+    propertyId: '2',
+    date: '2024-01-20',
+    category: 'Council rates',
+    vendor: 'City Council',
+    amount: 800,
+    gst: 0,
+  },
+  {
+    id: 'exp10',
+    propertyId: '2',
+    date: '2024-02-14',
+    category: 'Plumbing',
+    vendor: 'Plumber Co',
+    amount: 120,
+    gst: 18,
+  },
+  {
+    id: 'exp11',
+    propertyId: '2',
+    date: '2024-03-22',
+    category: 'Landlord insurance',
+    vendor: 'Insurance Co',
+    amount: 400,
+    gst: 0,
+  },
+  {
+    id: 'exp12',
+    propertyId: '2',
+    date: '2024-06-10',
+    category: 'Miscellaneous',
+    vendor: 'Misc Vendor',
+    amount: 100,
+    gst: 15,
   },
 ];
 
@@ -240,8 +303,18 @@ const initialReminders: Reminder[] = [
 ];
 
 const initialRentLedger: RentEntry[] = [
-  { id: 'rent1', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-05-01', status: 'paid', paidDate: '2024-05-01' },
-  { id: 'rent2', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-06-01', status: 'late' },
+  { id: 'rent1-jan', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-01-01', status: 'paid', paidDate: '2024-01-01' },
+  { id: 'rent1-feb', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-02-01', status: 'paid', paidDate: '2024-02-01' },
+  { id: 'rent1-mar', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-03-01', status: 'paid', paidDate: '2024-03-01' },
+  { id: 'rent1-apr', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-04-01', status: 'paid', paidDate: '2024-04-01' },
+  { id: 'rent1-may', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-05-01', status: 'paid', paidDate: '2024-05-01' },
+  { id: 'rent1-jun', propertyId: '1', tenantId: 'tenant1', amount: 1200, dueDate: '2024-06-01', status: 'paid', paidDate: '2024-06-01' },
+  { id: 'rent2-jan', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2024-01-01', status: 'paid', paidDate: '2024-01-01' },
+  { id: 'rent2-feb', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2024-02-01', status: 'paid', paidDate: '2024-02-01' },
+  { id: 'rent2-mar', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2024-03-01', status: 'paid', paidDate: '2024-03-01' },
+  { id: 'rent2-apr', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2024-04-01', status: 'paid', paidDate: '2024-04-01' },
+  { id: 'rent2-may', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2024-05-01', status: 'paid', paidDate: '2024-05-01' },
+  { id: 'rent2-jun', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2024-06-01', status: 'late' },
 ];
 
 const initialTenantNotes: TenantNote[] = [
@@ -319,6 +392,14 @@ export const resetStore = () => {
   (Object.keys(store) as (keyof Store)[]).forEach((key) => {
     // mutate arrays in place so imported references stay valid
     store[key].length = 0;
+    store[key].push(...fresh[key]);
+  });
+};
+
+export const seedIfEmpty = () => {
+  if (properties.length > 0) return;
+  const fresh = initStore();
+  (Object.keys(store) as (keyof Store)[]).forEach((key) => {
     store[key].push(...fresh[key]);
   });
 };
