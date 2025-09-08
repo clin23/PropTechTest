@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Button } from "./ui/button";
 
 export default function Sidebar() {
   // `open` tracks whether the sidebar is expanded or collapsed
@@ -82,20 +81,50 @@ export default function Sidebar() {
   ];
 
   return (
-    <>
-      <Button
-        className="m-2 fixed top-2 left-2 z-50"
+    <div
+      className={`relative h-screen bg-white dark:bg-gray-800 border-r dark:border-gray-700 transition-all ${
+        open ? "w-64" : "w-16"
+      }`}
+    >
+      <button
         onClick={() => setOpen(!open)}
+        className="absolute top-2 right-2 p-1 rounded bg-blue-600 text-white"
+        aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
       >
-        {open ? "Collapse" : "Menu"}
-      </Button>
-      <div
-          className={`h-screen bg-white dark:bg-gray-800 border-r dark:border-gray-700 transition-all ${
-            open ? "w-64" : "w-16"
-          }`}
-      >
-        <div className="flex flex-col h-full justify-between">
-          <nav className="mt-4 space-y-1">
+        {open ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        )}
+      </button>
+      <div className="flex flex-col h-full justify-between">
+        <nav className="mt-12 space-y-1">
             {links.map((link) => (
               <div key={link.href}>
                 <Link
@@ -153,6 +182,6 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
