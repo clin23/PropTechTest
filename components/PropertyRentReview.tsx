@@ -1,24 +1,27 @@
 "use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { listLeases, computeRentIncrease, generateNotice, Lease } from '../../lib/api';
-import PageHeader from '../../components/PageHeader';
-import Skeleton from '../../components/Skeleton';
-import ErrorState from '../../components/ErrorState';
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { listLeases, computeRentIncrease, generateNotice, Lease } from "../lib/api";
+import Skeleton from "./Skeleton";
+import ErrorState from "./ErrorState";
 
-export default function RentReviewPage() {
-  const {
-    data: leases = [],
-    isLoading,
-    error,
-  } = useQuery({ queryKey: ['leases'], queryFn: listLeases });
-  const [filter, setFilter] = useState('');
-  const [selected, setSelected] = useState<Lease | null>(null);
-  const [currentRent, setCurrentRent] = useState('');
-  const [cpi, setCpi] = useState('');
-  const [percent, setPercent] = useState('');
-  const [amount, setAmount] = useState('');
+interface Props {
+  propertyId: string;
+}
+
+export default function PropertyRentReview({ propertyId }: Props) {
+  const { data: leases = [], isLoading, error } = useQuery<Lease[]>({
+    queryKey: ["leases"],
+    queryFn: listLeases,
+  });
+  const lease = leases.find((l) => l.propertyId === propertyId);
+
+  const [open, setOpen] = useState(false);
+  const [currentRent, setCurrentRent] = useState("");
+  const [cpi, setCpi] = useState("");
+  const [percent, setPercent] = useState("");
+  const [amount, setAmount] = useState("");
   const [newRent, setNewRent] = useState<number | null>(null);
 
   const compute = useMutation({
@@ -35,71 +38,40 @@ export default function RentReviewPage() {
   const generate = useMutation({
     mutationFn: () =>
       generateNotice({
-        tenancyId: selected?.id,
+        tenancyId: lease?.id,
         currentRent: parseFloat(currentRent),
         newRent,
       }),
-    onSuccess: () => setSelected(null),
+    onSuccess: () => setOpen(false),
   });
 
-  const filtered = leases.filter((l) =>
-    l.address.toLowerCase().includes(filter.toLowerCase())
-  );
+  if (isLoading) return <Skeleton className="h-24" />;
+  if (error) return <ErrorState message={(error as Error).message} />;
+  if (!lease) return <p>No lease found.</p>;
 
   return (
-    <div className="p-6">
-      <PageHeader title="Rent Reviews" />
-      <input
-        placeholder="Filter by address"
-        className="border p-1 mb-4"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-      />
-      {isLoading ? (
-        <Skeleton className="h-32" />
-      ) : error ? (
-        <ErrorState message={(error as Error).message} />
-      ) : (
-        <table className="w-full border">
-          <thead>
-            <tr className="text-left">
-              <th className="p-2 border">Property</th>
-              <th className="p-2 border">Current Rent</th>
-              <th className="p-2 border">Next Review</th>
-              <th className="p-2 border"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((l) => (
-              <tr key={l.id}>
-                <td className="p-2 border">{l.address}</td>
-                <td className="p-2 border">{l.currentRent}</td>
-                <td className="p-2 border">{l.nextReview}</td>
-                <td className="p-2 border">
-                  <button
-                    className="px-2 py-1 bg-blue-500 text-white"
-                    onClick={() => {
-                      setSelected(l);
-                      setCurrentRent(String(l.currentRent));
-                      setCpi('');
-                      setPercent('');
-                      setAmount('');
-                      setNewRent(null);
-                    }}
-                  >
-                    Review
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+    <div>
+      <h2 className="text-xl font-semibold mb-2">Rent Review</h2>
+      <p>Current Rent: {lease.currentRent}</p>
+      <p>Next Review: {lease.nextReview}</p>
+      <button
+        className="mt-2 px-2 py-1 bg-blue-500 text-white"
+        onClick={() => {
+          setOpen(true);
+          setCurrentRent(String(lease.currentRent));
+          setCpi("");
+          setPercent("");
+          setAmount("");
+          setNewRent(null);
+        }}
+      >
+        Review
+      </button>
 
-      {selected && (
+      {open && (
         <div className="fixed inset-0 bg-black/30 flex justify-end">
           <div className="bg-white w-96 p-4 space-y-2">
-            <h2 className="text-xl font-semibold mb-2">Rent Review</h2>
+            <h3 className="text-lg font-semibold mb-2">Rent Review</h3>
             <label className="block">
               Current Rent
               <input
@@ -151,7 +123,7 @@ export default function RentReviewPage() {
               >
                 Generate Notice
               </button>
-              <button className="px-2 py-1" onClick={() => setSelected(null)}>
+              <button className="px-2 py-1" onClick={() => setOpen(false)}>
                 Close
               </button>
             </div>
@@ -167,3 +139,4 @@ export default function RentReviewPage() {
     </div>
   );
 }
+
