@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ExpensesTable from "./ExpensesTable";
 import RentLedgerTable from "./RentLedgerTable";
 import PropertyDocumentsTable from "./PropertyDocumentsTable";
+import PropertyRentReview from "./PropertyRentReview";
 import TenantCRM from "./TenantCRM";
 import UpcomingReminders from "./UpcomingReminders";
 
@@ -15,6 +16,7 @@ const tabs = [
   { id: "rent-ledger", label: "Rent Ledger" },
   { id: "expenses", label: "Expenses" },
   { id: "documents", label: "Documents" },
+  { id: "rent-review", label: "Rent Review" },
   { id: "key-dates", label: "Key Dates" },
   { id: "tenant-crm", label: "Tenant CRM" },
 ] as const;
@@ -54,6 +56,7 @@ export default function PropertyDetailTabs({ propertyId }: Props) {
       {active === "rent-ledger" && <RentLedgerTable propertyId={propertyId} />}
       {active === "expenses" && <ExpensesTable propertyId={propertyId} />}
       {active === "documents" && <PropertyDocumentsTable propertyId={propertyId} />}
+      {active === "rent-review" && <PropertyRentReview propertyId={propertyId} />}
       {active === "key-dates" && <UpcomingReminders propertyId={propertyId} />}
       {active === "tenant-crm" && <TenantCRM propertyId={propertyId} />}
     </div>
