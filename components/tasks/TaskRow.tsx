@@ -63,6 +63,28 @@ export default function TaskRow({
     setEditing(false);
   };
 
+  const dueSoon = (() => {
+    if (!task.dueDate) return false;
+    const due = new Date(task.dueDate);
+    const now = new Date();
+    const diff = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    return diff <= 1 && diff >= 0;
+  })();
+  const dueTomorrow = (() => {
+    if (!task.dueDate) return false;
+    const due = new Date(task.dueDate);
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+    const startOfDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const diff =
+      (startOfDue.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24);
+    return diff === 1;
+  })();
+
   return (
     <div className="flex flex-col gap-2 p-2 border rounded">
       <div className="flex items-start gap-2">
@@ -84,7 +106,14 @@ export default function TaskRow({
               <PropertyBadge key={p.id} address={p.address} />
             ))}
             {task.dueDate && (
-              <span className="text-xs text-gray-500">Due {task.dueDate}</span>
+              <span
+                className={`text-xs ${
+                  dueSoon ? "text-red-600" : "text-gray-500"
+                }`}
+              >
+                {dueTomorrow ? `Due tomorrow!` : `Due ${task.dueDate}`}
+                {dueSoon && <span className="ml-1">⚠️</span>}
+              </span>
             )}
           </div>
         </div>
