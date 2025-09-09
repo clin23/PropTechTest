@@ -6,6 +6,7 @@ test('Settings page has heading', async ({ page }) => {
 });
 
 test('can toggle dark mode', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('theme', 'light'));
   await page.goto('/settings');
   const html = page.locator('html');
   await expect(html).not.toHaveClass(/dark/);
