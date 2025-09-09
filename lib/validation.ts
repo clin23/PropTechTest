@@ -121,6 +121,7 @@ export const zTask = z.object({
   priority: z.enum(['low','normal','high']).default('normal'),
   cadence: z.enum(['Immediate','Weekly','Monthly','Yearly','Custom']).default('Immediate'),
   dueDate: z.string().optional(),
+  dueTime: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   recurrence: z

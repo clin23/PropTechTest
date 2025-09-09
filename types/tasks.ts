@@ -11,6 +11,7 @@ export type TaskDto = {
   priority: TaskPriority;
   cadence: TaskCadence;          // bucket for later Kanban
   dueDate?: string;              // ISO
+  dueTime?: string;              // HH:mm optional
   startDate?: string;            // for Gantt (optional)
   endDate?: string;              // for Gantt (optional)
   recurrence?: {

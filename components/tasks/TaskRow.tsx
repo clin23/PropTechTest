@@ -21,6 +21,7 @@ export default function TaskRow({
   const [editing, setEditing] = useState(false);
   const [description, setDescription] = useState(task.description ?? "");
   const [dueDate, setDueDate] = useState(task.dueDate ?? "");
+  const [dueTime, setDueTime] = useState(task.dueTime ?? "");
   const [cadence, setCadence] = useState<TaskDto["cadence"]>(task.cadence);
   const [selectedProps, setSelectedProps] = useState<string[]>(
     task.properties.map((p) => p.id)
@@ -41,6 +42,7 @@ export default function TaskRow({
   const startEdit = () => {
     setDescription(task.description ?? "");
     setDueDate(task.dueDate ?? "");
+    setDueTime(task.dueTime ?? "");
     setCadence(task.cadence);
     setSelectedProps(task.properties.map((p) => p.id));
     setFreq(task.recurrence?.freq ?? null);
@@ -56,6 +58,7 @@ export default function TaskRow({
       title,
       description,
       dueDate: dueDate || undefined,
+      dueTime: dueTime || undefined,
       cadence,
       properties: props,
       recurrence: { freq },
@@ -111,7 +114,9 @@ export default function TaskRow({
                   dueSoon ? "text-red-600" : "text-gray-500"
                 }`}
               >
-                {dueTomorrow ? `Due tomorrow!` : `Due ${task.dueDate}`}
+                {dueTomorrow
+                  ? `Due tomorrow!`
+                  : `Due ${task.dueDate}${task.dueTime ? ` ${task.dueTime}` : ""}`}
                 {dueSoon && <span className="ml-1">⚠️</span>}
               </span>
             )}
@@ -145,6 +150,15 @@ export default function TaskRow({
                 className="border rounded p-1"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-1">
+              Time
+              <input
+                type="time"
+                className="border rounded p-1"
+                value={dueTime}
+                onChange={(e) => setDueTime(e.target.value)}
               />
             </label>
             <label className="flex items-center gap-1">

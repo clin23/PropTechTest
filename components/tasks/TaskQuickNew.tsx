@@ -17,7 +17,7 @@ export default function TaskQuickNew({
   };
   return (
     <input
-      className={`w-full border rounded p-2 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white ${className}`}
+      className="w-full border rounded p-2 mb-2 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white"
       placeholder="+ New task"
       value={title}
       onChange={(e) => setTitle(e.target.value)}
