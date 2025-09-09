@@ -1,7 +1,13 @@
 "use client";
 import { useState } from "react";
 
-export default function TaskQuickNew({ onCreate }: { onCreate: (title: string) => void }) {
+export default function TaskQuickNew({
+  onCreate,
+  className = "",
+}: {
+  onCreate: (title: string) => void;
+  className?: string;
+}) {
   const [title, setTitle] = useState("");
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && title.trim()) {

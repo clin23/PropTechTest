@@ -24,16 +24,23 @@ export default function Providers({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('theme') as Theme | null;
     if (stored) {
       setTheme(stored);
+    } else {
+      const hour = new Date().getHours();
+      const isDark = hour >= 18 || hour < 6;
+      setTheme(isDark ? 'dark' : 'light');
     }
   }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('theme', theme);
   }, [theme]);
 
   const toggleTheme = () =>
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', next);
+      return next;
+    });
 
   return (
     <QueryClientProvider client={queryClient}>

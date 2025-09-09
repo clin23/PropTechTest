@@ -21,6 +21,7 @@ import TaskQuickNew from "./TaskQuickNew";
 import TaskEditModal from "./TaskEditModal";
 import ColumnRenameModal from "./ColumnRenameModal";
 import ColumnDeleteModal from "./ColumnDeleteModal";
+import ColumnCreateModal from "./ColumnCreateModal";
 
 type Column = { id: string; title: string };
 
@@ -74,6 +75,7 @@ export default function TasksKanban() {
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<Column | null>(null);
   const [deleting, setDeleting] = useState<Column | null>(null);
+  const [creating, setCreating] = useState(false);
   const [columns, setColumns] = useState<Column[]>([]);
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -95,9 +97,7 @@ export default function TasksKanban() {
     updateMut.mutate({ id: draggableId, data: { status: destination.droppableId } });
   };
 
-  const addColumn = () => {
-    const title = prompt("Column name");
-    if (!title) return;
+  const addColumn = (title: string) => {
     const id = title.toLowerCase().replace(/\s+/g, "_");
     setColumns([...columns, { id, title }]);
   };
@@ -162,7 +162,7 @@ export default function TasksKanban() {
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className="min-h-[100px] space-y-2"
+                  className="space-y-2"
                 >
                   {tasks
                     .filter((t) => t.status === col.id)
@@ -178,26 +178,26 @@ export default function TasksKanban() {
                             {...prov.draggableProps}
                             {...prov.dragHandleProps}
                           >
-                          <TaskCard task={task} onClick={() => setEditingTask(task)} />
+                            <TaskCard task={task} onClick={() => setEditingTask(task)} />
                           </div>
                         )}
                       </Draggable>
                     ))}
                   {provided.placeholder}
+                  <TaskQuickNew
+                    onCreate={(title) =>
+                      createMut.mutate({ title, status: col.id })
+                    }
+                  />
                 </div>
               )}
             </Droppable>
-            <TaskQuickNew
-              onCreate={(title) =>
-                createMut.mutate({ title, status: col.id })
-              }
-            />
           </div>
         ))}
       </DragDropContext>
       <div className="w-64 flex-shrink-0">
         <button
-          onClick={addColumn}
+          onClick={() => setCreating(true)}
           className="w-full border rounded p-2 text-sm"
         >
           + Add Column
@@ -232,6 +232,12 @@ export default function TasksKanban() {
           column={deleting}
           onClose={() => setDeleting(null)}
           onConfirm={() => deleteColumn(deleting.id)}
+        />
+      )}
+      {creating && (
+        <ColumnCreateModal
+          onClose={() => setCreating(false)}
+          onSave={(title) => addColumn(title)}
         />
       )}
     </>
