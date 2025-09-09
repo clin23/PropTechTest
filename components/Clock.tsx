@@ -28,7 +28,6 @@ const months = [
   "Nov",
   "Dec",
 ];
-
 export default function Clock({
   className = "",
 }: {

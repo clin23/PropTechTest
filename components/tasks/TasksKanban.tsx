@@ -19,6 +19,8 @@ import type { TaskDto } from "../../types/tasks";
 import TaskCard from "./TaskCard";
 import TaskQuickNew from "./TaskQuickNew";
 import TaskEditModal from "./TaskEditModal";
+import ColumnRenameModal from "./ColumnRenameModal";
+import ColumnDeleteModal from "./ColumnDeleteModal";
 
 type Column = { id: string; title: string };
 
@@ -69,7 +71,9 @@ export default function TasksKanban() {
   });
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
-
+  const [menuColumn, setMenuColumn] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<Column | null>(null);
+  const [deleting, setDeleting] = useState<Column | null>(null);
   const [columns, setColumns] = useState<Column[]>([]);
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -98,18 +102,14 @@ export default function TasksKanban() {
     setColumns([...columns, { id, title }]);
   };
 
-  const renameColumn = (id: string) => {
-    const col = columns.find((c) => c.id === id);
-    if (!col) return;
-    const title = prompt("New name", col.title);
-    if (!title) return;
+  const renameColumn = (id: string, title: string) => {
     setColumns(columns.map((c) => (c.id === id ? { ...c, title } : c)));
   };
 
   const deleteColumn = (id: string) => {
-    if (!confirm("Delete column and move tasks to first column?")) return;
-    const fallback = columns[0]?.id || "todo";
-    setColumns(columns.filter((c) => c.id !== id));
+    const remaining = columns.filter((c) => c.id !== id);
+    const fallback = remaining[0]?.id || "todo";
+    setColumns(remaining);
     tasks
       .filter((t) => t.status === id)
       .forEach((t) =>
@@ -124,19 +124,37 @@ export default function TasksKanban() {
           <div key={col.id} className="w-64 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-semibold">{col.title}</h2>
-              <div className="space-x-1">
+              <div className="relative">
                 <button
-                  onClick={() => renameColumn(col.id)}
-                  className="text-xs text-blue-500"
+                  onClick={() =>
+                    setMenuColumn(menuColumn === col.id ? null : col.id)
+                  }
+                  className="px-1"
                 >
-                  ✎
+                  ⋯
                 </button>
-                <button
-                  onClick={() => deleteColumn(col.id)}
-                  className="text-xs text-red-500"
-                >
-                  ✕
-                </button>
+                {menuColumn === col.id && (
+                  <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10">
+                    <button
+                      className="block w-full px-3 py-1 text-left hover:bg-gray-100"
+                      onClick={() => {
+                        setMenuColumn(null);
+                        setRenaming(col);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100"
+                      onClick={() => {
+                        setMenuColumn(null);
+                        setDeleting(col);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <Droppable droppableId={col.id}>
@@ -200,6 +218,20 @@ export default function TasksKanban() {
             archiveMut.mutate(editingTask.id);
             setEditingTask(null);
           }}
+        />
+      )}
+      {renaming && (
+        <ColumnRenameModal
+          column={renaming}
+          onClose={() => setRenaming(null)}
+          onSave={(title) => renameColumn(renaming.id, title)}
+        />
+      )}
+      {deleting && (
+        <ColumnDeleteModal
+          column={deleting}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => deleteColumn(deleting.id)}
         />
       )}
     </>
