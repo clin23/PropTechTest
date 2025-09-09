@@ -1,5 +1,6 @@
 export type TaskCadence = 'Immediate'|'Weekly'|'Monthly'|'Yearly'|'Custom';
-export type TaskStatus  = 'todo'|'in_progress'|'blocked'|'done';
+// Allow arbitrary statuses so users can create custom columns in the Kanban board
+export type TaskStatus  = string;
 export type TaskPriority = 'low'|'normal'|'high';
 
 export type TaskDto = {
