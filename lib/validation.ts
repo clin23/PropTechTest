@@ -116,7 +116,8 @@ export const zTask = z.object({
   id: z.string().optional(),
   title: z.string().min(1),
   description: z.string().optional(),
-  status: z.enum(['todo','in_progress','blocked','done']).default('todo'),
+  // Accept any string so additional columns can be created on the Kanban board
+  status: z.string().default('todo'),
   priority: z.enum(['low','normal','high']).default('normal'),
   cadence: z.enum(['Immediate','Weekly','Monthly','Yearly','Custom']).default('Immediate'),
   dueDate: z.string().optional(),
