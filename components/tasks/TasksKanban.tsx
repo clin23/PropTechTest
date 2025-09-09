@@ -21,6 +21,7 @@ import TaskQuickNew from "./TaskQuickNew";
 import TaskEditModal from "./TaskEditModal";
 import ColumnRenameModal from "./ColumnRenameModal";
 import ColumnDeleteModal from "./ColumnDeleteModal";
+import ColumnCreateModal from "./ColumnCreateModal";
 
 type Column = { id: string; title: string };
 
@@ -74,6 +75,7 @@ export default function TasksKanban() {
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<Column | null>(null);
   const [deleting, setDeleting] = useState<Column | null>(null);
+  const [creating, setCreating] = useState(false);
   const [columns, setColumns] = useState<Column[]>([]);
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -95,9 +97,7 @@ export default function TasksKanban() {
     updateMut.mutate({ id: draggableId, data: { status: destination.droppableId } });
   };
 
-  const addColumn = () => {
-    const title = prompt("Column name");
-    if (!title) return;
+  const addColumn = (title: string) => {
     const id = title.toLowerCase().replace(/\s+/g, "_");
     setColumns([...columns, { id, title }]);
   };
@@ -197,7 +197,7 @@ export default function TasksKanban() {
       </DragDropContext>
       <div className="w-64 flex-shrink-0">
         <button
-          onClick={addColumn}
+          onClick={() => setCreating(true)}
           className="w-full border rounded p-2 text-sm"
         >
           + Add Column
@@ -232,6 +232,12 @@ export default function TasksKanban() {
           column={deleting}
           onClose={() => setDeleting(null)}
           onConfirm={() => deleteColumn(deleting.id)}
+        />
+      )}
+      {creating && (
+        <ColumnCreateModal
+          onClose={() => setCreating(false)}
+          onSave={(title) => addColumn(title)}
         />
       )}
     </>
