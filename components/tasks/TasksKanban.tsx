@@ -13,6 +13,7 @@ import {
   updateTask,
   deleteTask,
   listProperties,
+  listVendors,
 } from "../../lib/api";
 import type { TaskDto } from "../../types/tasks";
 import TaskCard from "./TaskCard";
@@ -39,6 +40,10 @@ export default function TasksKanban() {
   const { data: properties = [] } = useQuery({
     queryKey: ["properties"],
     queryFn: () => listProperties(),
+  });
+  const { data: vendors = [] } = useQuery({
+    queryKey: ["vendors"],
+    queryFn: () => listVendors(),
   });
   const defaultProp = properties[0];
 
@@ -198,6 +203,8 @@ export default function TasksKanban() {
       {editingTask && (
         <TaskEditModal
           task={editingTask}
+          properties={properties}
+          vendors={vendors}
           onClose={() => setEditingTask(null)}
           onSave={(data) => {
             updateMut.mutate({ id: editingTask.id, data });

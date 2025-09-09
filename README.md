@@ -34,6 +34,7 @@ Copy `.env.local.sample` to `.env.local` and adjust as needed.
 * `MOCK_MODE` - Enables mocked API responses (defaults to `true`; set to `false` to use PostgreSQL).
 * `DATABASE_URL` - PostgreSQL connection string.
 * `MAX_UPLOAD_MB` - Maximum upload size in megabytes.
+* `NEXT_PUBLIC_TASK_REMINDER_DAYS` - Number of days before a task's due date to display a warning (default 1).
 
 ### Mock API setup
 

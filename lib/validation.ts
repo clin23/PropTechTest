@@ -135,6 +135,7 @@ export const zTask = z.object({
     .nullable()
     .optional(),
   properties: z.array(z.object({ id: z.string(), address: z.string() })).min(1),
+  vendor: z.object({ id: z.string(), name: z.string() }).nullable().optional(),
   tags: z.array(z.string()).optional(),
   attachments: z
     .array(z.object({ name: z.string(), url: z.string() }))

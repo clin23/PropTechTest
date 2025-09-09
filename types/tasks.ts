@@ -22,6 +22,7 @@ export type TaskDto = {
     endsOn?: string | null;      // ISO date limit
   } | null;
   properties: { id: string; address: string }[]; // 1..n properties
+  vendor?: { id: string; name: string } | null;
   tags?: string[];
   attachments?: { name: string; url: string }[];
   parentId?: string | null;      // for subtasks
