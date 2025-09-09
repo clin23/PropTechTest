@@ -22,6 +22,7 @@ export default function TaskEditModal({
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
   const [dueDate, setDueDate] = useState(task.dueDate ?? "");
+  const [dueTime, setDueTime] = useState(task.dueTime ?? "");
   const [selectedProps, setSelectedProps] = useState<string[]>(
     task.properties.map((p) => p.id)
   );
@@ -34,6 +35,7 @@ export default function TaskEditModal({
     setTitle(task.title);
     setDescription(task.description ?? "");
     setDueDate(task.dueDate ?? "");
+    setDueTime(task.dueTime ?? "");
     setSelectedProps(task.properties.map((p) => p.id));
     setVendorId(task.vendor?.id ?? "");
     setAttachments(task.attachments ?? []);
@@ -60,6 +62,7 @@ export default function TaskEditModal({
       title,
       description,
       dueDate: dueDate || undefined,
+      dueTime: dueTime || undefined,
       properties: props,
       vendor: vendor ? { id: vendor.id!, name: vendor.name } : null,
       attachments,
@@ -113,15 +116,26 @@ export default function TaskEditModal({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <label className="block text-sm dark:text-gray-200">
-          Due date
-          <input
-            type="date"
-            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </label>
+        <div className="flex gap-2 text-sm">
+          <label className="flex flex-1 flex-col dark:text-gray-200">
+            Due date
+            <input
+              type="date"
+              className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-1 flex-col dark:text-gray-200">
+            Time
+            <input
+              type="time"
+              className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              value={dueTime}
+              onChange={(e) => setDueTime(e.target.value)}
+            />
+          </label>
+        </div>
         <div>
           <label className="mb-1 block text-sm dark:text-gray-200">Property</label>
           <select
