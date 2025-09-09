@@ -134,9 +134,9 @@ export default function TasksKanban() {
                   ⋯
                 </button>
                 {menuColumn === col.id && (
-                  <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10">
+                  <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
                     <button
-                      className="block w-full px-3 py-1 text-left hover:bg-gray-100"
+                      className="block w-full px-3 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
                       onClick={() => {
                         setMenuColumn(null);
                         setRenaming(col);
@@ -145,7 +145,7 @@ export default function TasksKanban() {
                       Edit
                     </button>
                     <button
-                      className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100"
+                      className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
                       onClick={() => {
                         setMenuColumn(null);
                         setDeleting(col);
