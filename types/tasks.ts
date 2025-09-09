@@ -26,6 +26,7 @@ export type TaskDto = {
   tags?: string[];
   attachments?: { name: string; url: string }[];
   parentId?: string | null;      // for subtasks
+  archived?: boolean;
   createdAt: string;
   updatedAt: string;
 };

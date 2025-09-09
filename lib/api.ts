@@ -380,10 +380,13 @@ export const listTasks = (params?: {
   to?: string;
   q?: string;
   parentId?: string;
+  archived?: boolean;
 }) => {
   const query = params
     ? new URLSearchParams(
-        Object.entries(params).filter(([, v]) => v) as [string, string][]
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined && v !== null)
+          .map(([k, v]) => [k, String(v)])
       ).toString()
     : '';
   const path = `/tasks${query ? `?${query}` : ''}`;
@@ -396,6 +399,10 @@ export const updateTask = (id: string, payload: any) =>
   api<TaskDto>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 export const deleteTask = (id: string) =>
   api(`/tasks/${id}`, { method: 'DELETE' });
+export const archiveTask = (id: string) =>
+  api(`/tasks/${id}/archive`, { method: 'POST' });
+export const unarchiveTask = (id: string) =>
+  api(`/tasks/${id}/unarchive`, { method: 'POST' });
 export const completeTask = (id: string) =>
   api<TaskDto>(`/tasks/${id}/complete`, { method: 'POST' });
 export const bulkTasks = (payload: any) =>

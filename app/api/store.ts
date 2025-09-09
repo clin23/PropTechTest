@@ -495,6 +495,7 @@ type TaskFilters = {
   from?: string;
   to?: string;
   parentId?: string;
+  archived?: boolean;
 };
 
 export const listTasks = (filters: TaskFilters = {}): TaskDto[] => {
@@ -505,6 +506,12 @@ export const listTasks = (filters: TaskFilters = {}): TaskDto[] => {
       properties: t.properties.filter((p) => activeIds.has(p.id)),
     }))
     .filter((t) => t.properties.length > 0);
+
+  if (filters.archived !== undefined) {
+    data = data.filter((t) => !!t.archived === filters.archived);
+  } else {
+    data = data.filter((t) => !t.archived);
+  }
 
   if (filters.propertyId) {
     data = data.filter((t) => t.properties.some((p) => p.id === filters.propertyId));
@@ -553,6 +560,7 @@ export const createTask = (
     id: data.id ?? crypto.randomUUID(),
     createdAt: data.createdAt ?? now,
     updatedAt: data.updatedAt ?? now,
+    archived: data.archived ?? false,
   } as TaskDto;
   tasks.push(task);
   return task;
@@ -564,6 +572,20 @@ export const updateTask = (id: string, data: Partial<TaskDto>): TaskDto | null =
   const updated = { ...tasks[idx], ...data, updatedAt: new Date().toISOString() } as TaskDto;
   tasks[idx] = updated;
   return updated;
+};
+
+export const archiveTask = (id: string): boolean => {
+  const task = tasks.find((t) => t.id === id);
+  if (!task) return false;
+  task.archived = true;
+  return true;
+};
+
+export const unarchiveTask = (id: string): boolean => {
+  const task = tasks.find((t) => t.id === id);
+  if (!task) return false;
+  task.archived = false;
+  return true;
 };
 
 export const deleteTask = (id: string): boolean => {

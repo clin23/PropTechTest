@@ -141,6 +141,7 @@ export const zTask = z.object({
     .array(z.object({ name: z.string(), url: z.string() }))
     .optional(),
   parentId: z.string().nullable().optional(),
+  archived: z.boolean().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
