@@ -1,7 +1,14 @@
-import { expenses, incomes, properties, isActiveProperty } from '../../store';
+import {
+  expenses,
+  incomes,
+  properties,
+  isActiveProperty,
+  seedIfEmpty,
+} from '../../store';
 import type { PnlSummary, PnlPoint } from '../../../../types/pnl';
 
 export async function GET(req: Request) {
+  seedIfEmpty();
   const { searchParams } = new URL(req.url);
   const period = searchParams.get('period') === 'last12m' ? 'last12m' : 'last6m';
   const propertyId = searchParams.get('propertyId') || undefined;

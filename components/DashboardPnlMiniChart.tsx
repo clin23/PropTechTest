@@ -7,9 +7,11 @@ import Skeleton from "./Skeleton";
 import EmptyState from "./EmptyState";
 import { zPnlSummary } from "../lib/validation";
 import type { PnlSummary } from "../types/pnl";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPnlMiniChart() {
   const { toast } = useToast();
+  const router = useRouter();
   const { data, isLoading } = useQuery<PnlSummary>({
     queryKey: ["pnl-summary", "last6m"],
     queryFn: async () => {
@@ -36,7 +38,12 @@ export default function DashboardPnlMiniChart() {
   const { totals, series } = data;
 
   return (
-    <div className="p-4 border rounded" data-testid="pnl-mini">
+    <div
+      className="p-4 border rounded group cursor-pointer"
+      data-testid="pnl-mini"
+      onClick={() => router.push("/analytics")}
+      role="link"
+    >
       <h2 className="font-semibold mb-2">P&L Trend (Last 6 months)</h2>
       <div className="h-24">
         <ResponsiveContainer width="100%" height="100%">
@@ -59,7 +66,7 @@ export default function DashboardPnlMiniChart() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex justify-between text-xs mt-2">
+      <div className="flex justify-between text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <div>Income: {totals.income}</div>
         <div>Expenses: {totals.expenses}</div>
         <div>Net: {totals.net}</div>
