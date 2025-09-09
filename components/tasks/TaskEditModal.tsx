@@ -22,6 +22,7 @@ export default function TaskEditModal({
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
   const [dueDate, setDueDate] = useState(task.dueDate ?? "");
+  const [dueTime, setDueTime] = useState(task.dueTime ?? "");
   const [selectedProps, setSelectedProps] = useState<string[]>(
     task.properties.map((p) => p.id)
   );
@@ -34,6 +35,7 @@ export default function TaskEditModal({
     setTitle(task.title);
     setDescription(task.description ?? "");
     setDueDate(task.dueDate ?? "");
+    setDueTime(task.dueTime ?? "");
     setSelectedProps(task.properties.map((p) => p.id));
     setVendorId(task.vendor?.id ?? "");
     setAttachments(task.attachments ?? []);
@@ -60,6 +62,7 @@ export default function TaskEditModal({
       title,
       description,
       dueDate: dueDate || undefined,
+      dueTime: dueTime || undefined,
       properties: props,
       vendor: vendor ? { id: vendor.id!, name: vendor.name } : null,
       attachments,
@@ -79,7 +82,7 @@ export default function TaskEditModal({
       onClick={handleClose}
     >
       <div
-        className="relative w-80 rounded bg-white p-4 shadow dark:bg-gray-800 space-y-2"
+        className="relative w-[32rem] rounded-xl bg-white p-6 shadow space-y-4 dark:bg-gray-800 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -89,13 +92,13 @@ export default function TaskEditModal({
           ⋯
         </button>
         {menuOpen && (
-          <div className="absolute right-2 top-8 rounded border bg-white shadow">
+          <div className="absolute right-2 top-8 rounded-md border bg-white shadow dark:bg-gray-700">
             <button
               onClick={() => {
                 handleSave();
                 onArchive();
               }}
-              className="block px-4 py-2 text-left text-sm w-full hover:bg-gray-100"
+              className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600"
             >
               Archive
             </button>
@@ -103,29 +106,40 @@ export default function TaskEditModal({
         )}
         <h2 className="text-lg font-semibold">Task Details</h2>
         <input
-          className="w-full rounded border p-1"
+          className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <textarea
-          className="w-full rounded border p-1"
+          className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           placeholder="Notes"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <label className="block text-sm">
-          Due date
-          <input
-            type="date"
-            className="w-full rounded border p-1"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </label>
+        <div className="flex gap-2 text-sm">
+          <label className="flex flex-1 flex-col dark:text-gray-200">
+            Due date
+            <input
+              type="date"
+              className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-1 flex-col dark:text-gray-200">
+            Time
+            <input
+              type="time"
+              className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              value={dueTime}
+              onChange={(e) => setDueTime(e.target.value)}
+            />
+          </label>
+        </div>
         <div>
-          <label className="block text-sm mb-1">Property</label>
+          <label className="mb-1 block text-sm dark:text-gray-200">Property</label>
           <select
-            className="w-full rounded border p-1"
+            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             value={selectedProps[0] ?? ""}
             onChange={(e) => setSelectedProps(e.target.value ? [e.target.value] : [])}
           >
@@ -138,9 +152,9 @@ export default function TaskEditModal({
           </select>
         </div>
         <div>
-          <label className="block text-sm mb-1">Vendor</label>
+          <label className="mb-1 block text-sm dark:text-gray-200">Vendor</label>
           <select
-            className="w-full rounded border p-1"
+            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             value={vendorId}
             onChange={(e) => setVendorId(e.target.value)}
           >
@@ -153,10 +167,11 @@ export default function TaskEditModal({
           </select>
         </div>
         <div>
-          <label className="block text-sm mb-1">Attachments</label>
+          <label className="mb-1 block text-sm dark:text-gray-200">Attachments</label>
           <input
             type="file"
             multiple
+            className="text-sm text-gray-700 dark:text-gray-200"
             onChange={(e) => handleFiles(e.target.files)}
           />
           {attachments?.length ? (

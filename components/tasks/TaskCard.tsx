@@ -51,7 +51,9 @@ export default function TaskCard({
         ) : null}
         {task.dueDate && (
           <div className={dueSoon ? "text-red-600" : ""}>
-            {dueTomorrow ? `Due tomorrow!` : `Due ${task.dueDate}`}
+            {dueTomorrow
+              ? `Due tomorrow!`
+              : `Due ${task.dueDate}${task.dueTime ? ` ${task.dueTime}` : ""}`}
             {dueSoon && <span className="ml-1">⚠️</span>}
           </div>
         )}
