@@ -17,6 +17,7 @@ import {
 import type { TaskDto } from "../../types/tasks";
 import TaskCard from "./TaskCard";
 import TaskQuickNew from "./TaskQuickNew";
+import TaskEditModal from "./TaskEditModal";
 
 type Column = { id: string; title: string };
 
@@ -61,6 +62,8 @@ export default function TasksKanban() {
     mutationFn: (id: string) => deleteTask(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
+  const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
+
 
   const [columns, setColumns] = useState<Column[]>([]);
   useEffect(() => {
@@ -109,7 +112,7 @@ export default function TasksKanban() {
       );
   };
 
-  return (
+  return (<>
     <div className="flex gap-4 overflow-x-auto p-1">
       <DragDropContext onDragEnd={handleDragEnd}>
         {columns.map((col) => (
@@ -152,20 +155,10 @@ export default function TasksKanban() {
                             {...prov.draggableProps}
                             {...prov.dragHandleProps}
                           >
-                            <TaskCard task={task} />
+                             <TaskCard task={task} onClick={() => setEditingTask(task)} />
                             <div className="flex justify-end gap-1 text-xs mt-1">
                               <button
-                                onClick={() => {
-                                  const title = prompt(
-                                    "Edit task",
-                                    task.title
-                                  );
-                                  if (title)
-                                    updateMut.mutate({
-                                      id: task.id,
-                                      data: { title },
-                                    });
-                                }}
+                                onClick={() => setEditingTask(task)}
                                 className="text-blue-500"
                               >
                                 ✎
@@ -201,7 +194,18 @@ export default function TasksKanban() {
           + Add Column
         </button>
       </div>
-    </div>
+      </div>
+      {editingTask && (
+        <TaskEditModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onSave={(data) => {
+            updateMut.mutate({ id: editingTask.id, data });
+            setEditingTask(null);
+          }}
+        />
+      )}
+    </>
   );
 }
 
