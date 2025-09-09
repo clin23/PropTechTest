@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import CashflowTile from "../../../components/CashflowTile";
 import DashboardPnlMiniChart from "../../../components/DashboardPnlMiniChart";
 import DashboardPropertyCard from "../../../components/DashboardPropertyCard";
@@ -38,14 +37,7 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="relative">
-          <DashboardPnlMiniChart />
-          <div className="absolute bottom-2 right-2 text-xs">
-            <Link href="/analytics" className="text-blue-600 underline">
-              View full analytics →
-            </Link>
-          </div>
-        </div>
+        <DashboardPnlMiniChart />
         <CashflowTile />
         {loading ? (
           <>
