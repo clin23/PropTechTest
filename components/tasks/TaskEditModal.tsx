@@ -162,7 +162,16 @@ export default function TaskEditModal({
           {attachments?.length ? (
             <ul className="mt-1 list-inside list-disc text-xs">
               {attachments.map((a) => (
-                <li key={a.url}>{a.name}</li>
+                <li key={a.url}>
+                  <a
+                    href={a.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline hover:no-underline"
+                  >
+                    {a.name}
+                  </a>
+                </li>
               ))}
             </ul>
           ) : null}
