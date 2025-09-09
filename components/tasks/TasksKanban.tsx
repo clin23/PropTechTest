@@ -11,7 +11,7 @@ import {
   listTasks,
   createTask,
   updateTask,
-  deleteTask,
+  archiveTask,
   listProperties,
   listVendors,
 } from "../../lib/api";
@@ -63,8 +63,8 @@ export default function TasksKanban() {
       updateTask(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
-  const deleteMut = useMutation({
-    mutationFn: (id: string) => deleteTask(id),
+  const archiveMut = useMutation({
+    mutationFn: (id: string) => archiveTask(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
@@ -160,21 +160,7 @@ export default function TasksKanban() {
                             {...prov.draggableProps}
                             {...prov.dragHandleProps}
                           >
-                             <TaskCard task={task} onClick={() => setEditingTask(task)} />
-                            <div className="flex justify-end gap-1 text-xs mt-1">
-                              <button
-                                onClick={() => setEditingTask(task)}
-                                className="text-blue-500"
-                              >
-                                ✎
-                              </button>
-                              <button
-                                onClick={() => deleteMut.mutate(task.id)}
-                                className="text-red-500"
-                              >
-                                🗑
-                              </button>
-                            </div>
+                          <TaskCard task={task} onClick={() => setEditingTask(task)} />
                           </div>
                         )}
                       </Draggable>
@@ -208,6 +194,10 @@ export default function TasksKanban() {
           onClose={() => setEditingTask(null)}
           onSave={(data) => {
             updateMut.mutate({ id: editingTask.id, data });
+            setEditingTask(null);
+          }}
+          onArchive={() => {
+            archiveMut.mutate(editingTask.id);
             setEditingTask(null);
           }}
         />

@@ -10,12 +10,14 @@ export default function TaskEditModal({
   vendors,
   onClose,
   onSave,
+  onArchive,
 }: {
   task: TaskDto;
   properties: PropertySummary[];
   vendors: Vendor[];
   onClose: () => void;
   onSave: (data: Partial<TaskDto>) => void;
+  onArchive: () => void;
 }) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
@@ -64,10 +66,42 @@ export default function TaskEditModal({
     });
   };
 
+  const handleClose = () => {
+    handleSave();
+    onClose();
+  };
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-80 rounded bg-white p-4 shadow dark:bg-gray-800 space-y-2">
-        <h2 className="text-lg font-semibold">Edit Task</h2>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={handleClose}
+    >
+      <div
+        className="relative w-80 rounded bg-white p-4 shadow dark:bg-gray-800 space-y-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          className="absolute right-2 top-2 text-xl"
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          ⋯
+        </button>
+        {menuOpen && (
+          <div className="absolute right-2 top-8 rounded border bg-white shadow">
+            <button
+              onClick={() => {
+                handleSave();
+                onArchive();
+              }}
+              className="block px-4 py-2 text-left text-sm w-full hover:bg-gray-100"
+            >
+              Archive
+            </button>
+          </div>
+        )}
+        <h2 className="text-lg font-semibold">Task Details</h2>
         <input
           className="w-full rounded border p-1"
           value={title}
@@ -132,17 +166,6 @@ export default function TaskEditModal({
               ))}
             </ul>
           ) : null}
-        </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <button onClick={onClose} className="px-2 py-1 text-gray-600">
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="rounded bg-blue-500 px-2 py-1 text-white"
-          >
-            Save
-          </button>
         </div>
       </div>
     </div>

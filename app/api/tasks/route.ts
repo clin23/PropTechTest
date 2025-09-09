@@ -12,6 +12,12 @@ export async function GET(req: Request) {
     from: url.searchParams.get('from') || undefined,
     to: url.searchParams.get('to') || undefined,
     parentId: url.searchParams.get('parentId') || undefined,
+    archived:
+      url.searchParams.get('archived') === 'true'
+        ? true
+        : url.searchParams.get('archived') === 'false'
+        ? false
+        : undefined,
   });
   return Response.json(data);
 }
