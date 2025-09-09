@@ -28,8 +28,11 @@ const months = [
   "Nov",
   "Dec",
 ];
-
-export default function Clock() {
+export default function Clock({
+  className = "",
+}: {
+  className?: string;
+}) {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -38,6 +41,6 @@ export default function Clock() {
   const day = weekdays[now.getDay()];
   const date = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
   const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  return <span>{`${day} ${date} – ${time}`}</span>;
+  return <span className={className}>{`${day} ${date} – ${time}`}</span>;
 }
 
