@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const notes = base.replace(/[-_]/g, ' ');
 
   return NextResponse.json({
-    date: date || '2024-01-01',
+    date: date || '2025-03-01',
     amount,
     category,
     vendor,
