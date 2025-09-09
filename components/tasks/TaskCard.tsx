@@ -19,6 +19,20 @@ export default function TaskCard({
     const diff = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     return diff <= REMINDER_DAYS && diff >= 0;
   })();
+  const dueTomorrow = (() => {
+    if (!task.dueDate) return false;
+    const due = new Date(task.dueDate);
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+    const startOfDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const diff =
+      (startOfDue.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24);
+    return diff === 1;
+  })();
   return (
     <div
       className={`border rounded p-2 ${
@@ -37,7 +51,7 @@ export default function TaskCard({
         ) : null}
         {task.dueDate && (
           <div className={dueSoon ? "text-red-600" : ""}>
-            Due {task.dueDate}
+            {dueTomorrow ? `Due tomorrow!` : `Due ${task.dueDate}`}
             {dueSoon && <span className="ml-1">⚠️</span>}
           </div>
         )}
