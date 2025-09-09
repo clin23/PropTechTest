@@ -24,6 +24,10 @@ export default function Providers({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('theme') as Theme | null;
     if (stored) {
       setTheme(stored);
+    } else {
+      const hour = new Date().getHours();
+      const isDark = hour >= 18 || hour < 6;
+      setTheme(isDark ? 'dark' : 'light');
     }
   }, []);
 
