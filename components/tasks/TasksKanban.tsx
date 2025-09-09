@@ -162,7 +162,7 @@ export default function TasksKanban() {
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className="min-h-[100px] space-y-2"
+                  className="space-y-2"
                 >
                   {tasks
                     .filter((t) => t.status === col.id)
@@ -178,20 +178,20 @@ export default function TasksKanban() {
                             {...prov.draggableProps}
                             {...prov.dragHandleProps}
                           >
-                          <TaskCard task={task} onClick={() => setEditingTask(task)} />
+                            <TaskCard task={task} onClick={() => setEditingTask(task)} />
                           </div>
                         )}
                       </Draggable>
                     ))}
                   {provided.placeholder}
+                  <TaskQuickNew
+                    onCreate={(title) =>
+                      createMut.mutate({ title, status: col.id })
+                    }
+                  />
                 </div>
               )}
             </Droppable>
-            <TaskQuickNew
-              onCreate={(title) =>
-                createMut.mutate({ title, status: col.id })
-              }
-            />
           </div>
         ))}
       </DragDropContext>
