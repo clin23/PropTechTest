@@ -1,7 +1,13 @@
 "use client";
 import { useState } from "react";
 
-export default function TaskQuickNew({ onCreate }: { onCreate: (title: string) => void }) {
+export default function TaskQuickNew({
+  onCreate,
+  className = "",
+}: {
+  onCreate: (title: string) => void;
+  className?: string;
+}) {
   const [title, setTitle] = useState("");
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && title.trim()) {
@@ -11,7 +17,7 @@ export default function TaskQuickNew({ onCreate }: { onCreate: (title: string) =
   };
   return (
     <input
-      className="w-full border rounded p-2 mb-2 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+      className={`w-full border rounded p-2 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white ${className}`}
       placeholder="+ New task"
       value={title}
       onChange={(e) => setTitle(e.target.value)}
