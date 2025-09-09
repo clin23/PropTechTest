@@ -87,7 +87,7 @@ async function main() {
       id: complianceId,
       propertyId,
       type: 'SMOKE_ALARM',
-      due_date: new Date('2025-09-15'),
+      due_date: new Date('2025-09-01'),
       status: 'DUE'
     }
   });
@@ -117,7 +117,7 @@ async function main() {
       data: {
         id: 'exp1',
         propertyId,
-        date: '2024-01-05',
+        date: '2025-03-05',
         category: 'Council rates',
         vendor: 'City Council',
         amount: 1000,
@@ -132,7 +132,7 @@ async function main() {
       data: {
         id: 'inc1',
         propertyId,
-        date: '2024-01-01',
+        date: '2025-03-01',
         category: 'Base rent',
         amount: 1200,
       },
