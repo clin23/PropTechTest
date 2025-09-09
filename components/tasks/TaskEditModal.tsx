@@ -162,8 +162,8 @@ export default function TaskEditModal({
           />
           {attachments?.length ? (
             <ul className="mt-1 list-inside list-disc text-xs">
-              {attachments.map((a) => (
-                <li key={a.url}>
+              {attachments.map((a, i) => (
+                <li key={a.url} className="flex items-center justify-between">
                   <a
                     href={a.url}
                     target="_blank"
@@ -172,6 +172,17 @@ export default function TaskEditModal({
                   >
                     {a.name}
                   </a>
+                  <button
+                    className="ml-2 text-gray-400 hover:text-red-500"
+                    onClick={() =>
+                      setAttachments((att) =>
+                        (att ?? []).filter((_, idx) => idx !== i)
+                      )
+                    }
+                    aria-label={`Remove ${a.name}`}
+                  >
+                    &times;
+                  </button>
                 </li>
               ))}
             </ul>
