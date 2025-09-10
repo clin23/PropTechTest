@@ -2,6 +2,7 @@
 
 import TasksKanban from "../../../components/tasks/TasksKanban";
 import Clock from "../../../components/Clock";
+import Link from "next/link";
 
 export default function TasksPage() {
   return (
