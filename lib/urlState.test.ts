@@ -9,4 +9,11 @@ describe('urlState', () => {
     const parsed = urlState.parse(params);
     expect(parsed).toEqual(state);
   });
+
+  it('provides defaults when params missing', () => {
+    const params = new URLSearchParams();
+    const parsed = urlState.parse(params);
+    expect(typeof parsed.from).toBe('string');
+    expect(typeof parsed.to).toBe('string');
+  });
 });

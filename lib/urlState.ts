@@ -2,6 +2,12 @@ import { useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AnalyticsState, AnalyticsStateType } from './schemas';
 
+function defaultRange() {
+  const to = new Date();
+  const from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+  return { from: from.toISOString(), to: to.toISOString() };
+}
+
 function parse(params: URLSearchParams): AnalyticsStateType {
   const obj: any = {};
   params.forEach((value, key) => {
@@ -15,7 +21,12 @@ function parse(params: URLSearchParams): AnalyticsStateType {
       obj.filters = {};
     }
   }
-  return AnalyticsState.parse(obj);
+  const defaults = defaultRange();
+  try {
+    return AnalyticsState.parse({ ...defaults, ...obj });
+  } catch {
+    return AnalyticsState.parse(defaults);
+  }
 }
 
 function serialize(state: AnalyticsStateType): URLSearchParams {
