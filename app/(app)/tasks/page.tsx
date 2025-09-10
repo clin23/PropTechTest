@@ -6,10 +6,10 @@ import Clock from "../../../components/Clock";
 export default function TasksPage() {
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Tasks</h1>
         <Clock className="text-2xl font-semibold" />
-      </div>
+      </header>
       <TasksKanban />
     </div>
   );
