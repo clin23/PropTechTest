@@ -1,4 +1,4 @@
-import { downloadCsv, downloadPng } from '../../../lib/download';
+import { downloadCsv, downloadPng } from '../../../../lib/download';
 import { useRef } from 'react';
 
 interface Props {
