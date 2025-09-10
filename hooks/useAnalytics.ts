@@ -38,6 +38,11 @@ export function usePresets() {
 
 export function useSavePreset() {
   return useMutation({
-    mutationFn: (body: any) => fetch('/api/analytics/presets', { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }).then(r => r.json()),
+    mutationFn: (body: any) =>
+      fetch('/api/analytics/presets', {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+      }).then(r => r.json()),
   });
 }
