@@ -49,18 +49,24 @@ export default function TasksArchive() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <input
-          type="date"
-          className="rounded border p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-        />
-        <input
-          type="date"
-          className="rounded border p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-        />
+        <div className="flex flex-col">
+          <label className="text-sm">From</label>
+          <input
+            type="date"
+            className="rounded border p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col">
+          <label className="text-sm">To</label>
+          <input
+            type="date"
+            className="rounded border p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </div>
         <button
           className="rounded bg-red-500 px-3 py-2 text-white hover:bg-red-600"
           onClick={() => setConfirmOpen(true)}
