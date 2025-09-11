@@ -31,13 +31,13 @@ export default function AppliedFiltersPanel({ state, onAdd, onRemove }: Props) {
     >
       <div className="font-semibold">Currently Applied</div>
       <div className="grid grid-cols-2 gap-4">
-        <div>
+        <div className="min-w-0">
           <div className="font-medium mb-1">Income</div>
           <div className="flex flex-wrap gap-2">
             {income.map(value => (
               <span
                 key={value}
-                className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center gap-1 text-gray-900 dark:text-gray-100"
+                className="max-w-full break-words px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full inline-flex items-center gap-1 text-gray-900 dark:text-gray-100"
               >
                 {value}
                 <button
@@ -52,13 +52,13 @@ export default function AppliedFiltersPanel({ state, onAdd, onRemove }: Props) {
             {income.length === 0 && <div className="text-gray-500 dark:text-gray-400">None</div>}
           </div>
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="font-medium mb-1">Expenses</div>
           <div className="flex flex-wrap gap-2">
             {expenses.map(value => (
               <span
                 key={value}
-                className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center gap-1 text-gray-900 dark:text-gray-100"
+                className="max-w-full break-words px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full inline-flex items-center gap-1 text-gray-900 dark:text-gray-100"
               >
                 {value}
                 <button
