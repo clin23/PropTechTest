@@ -22,3 +22,10 @@ test('breakdown endpoint responds', async ({ request }) => {
   const data = await res.json();
   expect(Array.isArray(data.items)).toBe(true);
 });
+
+test('series income pulls from rent ledger', async ({ request }) => {
+  const res = await request.get('/api/analytics/series?from=2025-03-01&to=2025-03-31');
+  const data = await res.json();
+  const march = data.buckets.find((b: any) => b.label === '2025-03');
+  expect(march?.income).toBe(2200);
+});

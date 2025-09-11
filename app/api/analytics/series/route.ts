@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const metric = searchParams.get('metric') ?? 'net';
 
   const incomeEntries = [
-    ...incomes,
+    ...incomes.filter((i) => i.category !== 'Base rent'),
     ...rentLedger
       .filter((r) => r.status === 'paid')
       .map((r) => ({
