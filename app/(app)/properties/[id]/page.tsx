@@ -10,6 +10,7 @@ import DocumentUploadModal from "../../../../components/DocumentUploadModal";
 import MessageTenantModal from "../../../../components/MessageTenantModal";
 import PropertyOverviewCard from "../../../../components/PropertyOverviewCard";
 import PropertyDetailTabs from "../../../../components/PropertyDetailTabs";
+import PropertyEditModal from "../../../../components/PropertyEditModal";
 import { getProperty } from "../../../../lib/api";
 import type { PropertySummary } from "../../../../types/property";
 
@@ -18,6 +19,7 @@ export default function PropertyPage() {
   const [docOpen, setDocOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const { id } = useParams<{ id: string }>();
 
   const { data: property } = useQuery<PropertySummary>({
@@ -34,12 +36,12 @@ export default function PropertyPage() {
         onUploadDocument={() => setDocOpen(true)}
         onMessageTenant={() => setMessageOpen(true)}
       />
-      <Link
-        href={`/properties/${id}/edit`}
+      <button
         className="inline-block px-2 py-1 border rounded"
+        onClick={() => setEditOpen(true)}
       >
         Edit Property
-      </Link>
+      </button>
       <div className="relative inline-block">
         <button
           className="px-2 py-1 border rounded"
@@ -90,6 +92,11 @@ export default function PropertyPage() {
         onClose={() => setDocOpen(false)}
       />
       <MessageTenantModal open={messageOpen} onClose={() => setMessageOpen(false)} />
+      <PropertyEditModal
+        property={property}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
       <h1 className="text-2xl font-semibold">Property Details</h1>
       <PropertyOverviewCard property={property} />
       <PropertyDetailTabs propertyId={id} />
