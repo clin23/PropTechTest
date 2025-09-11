@@ -33,14 +33,21 @@ export default function Clock({
 }: {
   className?: string;
 }) {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const tick = () => setNow(new Date());
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, []);
+  if (!now) return <span className={className} />;
   const day = weekdays[now.getDay()];
   const date = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
   const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  return <span className={className}>{`${day} ${date} – ${time}`}</span>;
+  return (
+    <span className={className} suppressHydrationWarning>
+      {`${day} ${date} – ${time}`}
+    </span>
+  );
 }
 
