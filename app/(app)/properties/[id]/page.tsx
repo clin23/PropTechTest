@@ -41,7 +41,7 @@ export default function PropertyPage() {
         className="inline-block px-2 py-1 border rounded dark:border-gray-700"
       >
         Edit Property
-      </button>
+      </Link>
       <div className="relative inline-block">
         <button
           className="px-2 py-1 border rounded dark:border-gray-700"
