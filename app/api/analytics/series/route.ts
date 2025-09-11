@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { incomes, expenses, rentLedger } from '../../store';
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../../../../lib/categories';
 
 function monthKey(d: Date) {
   return d.toISOString().slice(0, 7);
@@ -10,9 +11,30 @@ export async function GET(req: Request) {
   const from = new Date(searchParams.get('from') ?? '2000-01-01');
   const to = new Date(searchParams.get('to') ?? '2100-01-01');
   const metric = searchParams.get('metric') ?? 'net';
+  const filters = JSON.parse(searchParams.get('filters') ?? '{}');
+
+  const propertyIds: string[] = filters.properties ?? [];
+  const incomeTypes: string[] = filters.incomeTypes ?? [];
+  const expenseTypes: string[] = filters.expenseTypes ?? [];
+
+  const expand = (types: string[], groups: Record<string, readonly string[]>) => {
+    const expanded: string[] = [];
+    for (const t of types) {
+      const groupKey = Object.keys(groups).find((key) => {
+        const label = key.replace(/([A-Z])/g, ' $1').trim();
+        return label === t;
+      });
+      if (groupKey) expanded.push(...(groups[groupKey] || []));
+      else expanded.push(t);
+    }
+    return new Set(expanded);
+  };
+
+  const incomeTypeSet = expand(incomeTypes, INCOME_CATEGORIES);
+  const expenseTypeSet = expand(expenseTypes, EXPENSE_CATEGORIES);
 
   const incomeEntries = [
-    ...incomes,
+    ...incomes.filter((i) => i.category !== 'Base rent'),
     ...rentLedger
       .filter((r) => r.status === 'paid')
       .map((r) => ({
@@ -21,7 +43,11 @@ export async function GET(req: Request) {
         category: 'Base rent',
         amount: r.amount,
       })),
-  ];
+  ].filter((i) => {
+    if (propertyIds.length && !propertyIds.includes(i.propertyId)) return false;
+    if (incomeTypeSet.size && !incomeTypeSet.has(i.category)) return false;
+    return true;
+  });
 
   const incomeByMonth = new Map<string, number>();
   for (const i of incomeEntries) {
@@ -31,8 +57,13 @@ export async function GET(req: Request) {
     incomeByMonth.set(key, (incomeByMonth.get(key) || 0) + i.amount);
   }
 
+  const expenseEntries = expenses.filter((e) => {
+    if (propertyIds.length && !propertyIds.includes(e.propertyId)) return false;
+    if (expenseTypeSet.size && !expenseTypeSet.has(e.category)) return false;
+    return true;
+  });
   const expenseByMonth = new Map<string, number>();
-  for (const e of expenses) {
+  for (const e of expenseEntries) {
     const d = new Date(e.date);
     if (d < from || d > to) continue;
     const key = monthKey(d);
