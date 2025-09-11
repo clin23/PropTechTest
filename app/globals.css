@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Global scrollbar styling for light and dark modes */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af transparent; /* gray-400 */
+}
+
+.dark * {
+  scrollbar-color: #4b5563 transparent; /* gray-600 */
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #9ca3af; /* gray-400 */
+  border-radius: 4px;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* gray-600 */
+}
