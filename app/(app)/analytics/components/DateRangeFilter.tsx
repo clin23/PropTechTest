@@ -5,7 +5,6 @@ interface Props {
   state: AnalyticsStateType;
   onChange: (s: Partial<AnalyticsStateType>) => void;
 }
-
 function dayOfYear(d: Date) {
   const start = new Date(d.getFullYear(), 0, 1);
   return Math.floor((d.getTime() - start.getTime()) / 86400000) + 1;
