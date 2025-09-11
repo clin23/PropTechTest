@@ -41,37 +41,39 @@ export default function RentLedgerTable({
   };
 
   return (
-    <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
-      <thead className="bg-gray-100 dark:bg-gray-700">
-        <tr>
-          <th className="p-2 text-left">Date</th>
-          <th className="p-2 text-left">Description</th>
-          <th className="p-2 text-left">Amount</th>
-          <th className="p-2 text-left">Balance</th>
-        </tr>
-      </thead>
-      <tbody>
-        {entries.map((e) => (
-          <tr
-            key={e.id}
-            className="cursor-pointer border-t hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
-            onClick={() => setSelected(e)}
-          >
-            <td className="p-2">{e.date}</td>
-            <td className="p-2">{e.description}</td>
-            <td className="p-2">{e.amount}</td>
-            <td className="p-2">{e.balance}</td>
+    <>
+      <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+        <thead className="bg-gray-100 dark:bg-gray-700">
+          <tr>
+            <th className="p-2 text-left">Date</th>
+            <th className="p-2 text-left">Description</th>
+            <th className="p-2 text-left">Amount</th>
+            <th className="p-2 text-left">Balance</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
-    {selected && (
-      <EditLedgerEntryModal
-        entry={selected}
-        onSave={handleSave}
-        onClose={() => setSelected(null)}
-      />
-    )}
+        </thead>
+        <tbody>
+          {entries.map((e) => (
+            <tr
+              key={e.id}
+              className="cursor-pointer border-t hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+              onClick={() => setSelected(e)}
+            >
+              <td className="p-2">{e.date}</td>
+              <td className="p-2">{e.description}</td>
+              <td className="p-2">{e.amount}</td>
+              <td className="p-2">{e.balance}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {selected && (
+        <EditLedgerEntryModal
+          entry={selected}
+          onSave={handleSave}
+          onClose={() => setSelected(null)}
+        />
+      )}
+    </>
   );
 }
 
