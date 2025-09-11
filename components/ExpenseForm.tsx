@@ -12,6 +12,7 @@ const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
 type FormState = {
   propertyId: string;
   date: string;
+  group: string;
   category: string;
   vendor: string;
   amount: string;
@@ -43,16 +44,23 @@ export default function ExpenseForm({
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
 
-  const getInitialForm = (): FormState => ({
-  propertyId: propertyId ?? (defaults?.propertyId ?? ""),
-  date: defaults?.date ?? "",
-  category: defaults?.category ?? "",
-  vendor: defaults?.vendor ?? "",
-  amount: defaults?.amount !== undefined ? String(defaults.amount) : "",
-  gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
-  notes: defaults?.notes ?? "",
-  label: (defaults as any)?.label ?? "",
-});
+  const getInitialForm = (): FormState => {
+    const defaultCategory = defaults?.category ?? "";
+    const foundGroup = Object.entries(EXPENSE_CATEGORIES).find(([g, items]) =>
+      items.includes(defaultCategory)
+    )?.[0];
+    return {
+      propertyId: propertyId ?? (defaults?.propertyId ?? ""),
+      date: defaults?.date ?? "",
+      group: foundGroup ?? "",
+      category: defaultCategory,
+      vendor: defaults?.vendor ?? "",
+      amount: defaults?.amount !== undefined ? String(defaults.amount) : "",
+      gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
+      notes: defaults?.notes ?? "",
+      label: (defaults as any)?.label ?? "",
+    };
+  };
 
   const [form, setForm] = useState<FormState>(getInitialForm());
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +145,7 @@ export default function ExpenseForm({
               if (
                 !form.propertyId ||
                 !form.date ||
+                !form.group ||
                 !form.category ||
                 !form.vendor ||
                 !form.amount
@@ -158,7 +167,7 @@ export default function ExpenseForm({
                 notes: form.notes,
                 label: form.label,
               });
-              addRecent(form.category);
+              addRecent(form.group);
             }}
           >
             {!propertyId && (
@@ -193,8 +202,10 @@ export default function ExpenseForm({
               Category
               <select
                 className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                value={form.group}
+                onChange={(e) =>
+                  setForm({ ...form, group: e.target.value, category: "" })
+                }
               >
                 <option value="">Select category</option>
                 {recent.length > 0 && (
@@ -213,6 +224,25 @@ export default function ExpenseForm({
                 ))}
               </select>
             </label>
+            {form.group && (
+              <label className="block text-gray-700 dark:text-gray-300">
+                Expense
+                <select
+                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm({ ...form, category: e.target.value })
+                  }
+                >
+                  <option value="">Select expense</option>
+                  {EXPENSE_CATEGORIES[form.group].map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="block text-gray-700 dark:text-gray-300">
               Custom label
               <input
