@@ -10,6 +10,11 @@ export async function GET(req: Request) {
   const from = new Date(searchParams.get('from') ?? '2000-01-01');
   const to = new Date(searchParams.get('to') ?? '2100-01-01');
   const metric = searchParams.get('metric') ?? 'net';
+  const filters = JSON.parse(searchParams.get('filters') ?? '{}');
+
+  const propertyIds: string[] = filters.properties ?? [];
+  const incomeTypes: string[] = filters.incomeTypes ?? [];
+  const expenseTypes: string[] = filters.expenseTypes ?? [];
 
   const incomeEntries = [
     ...incomes.filter((i) => i.category !== 'Base rent'),
@@ -21,7 +26,11 @@ export async function GET(req: Request) {
         category: 'Base rent',
         amount: r.amount,
       })),
-  ];
+  ].filter((i) => {
+    if (propertyIds.length && !propertyIds.includes(i.propertyId)) return false;
+    if (incomeTypes.length && !incomeTypes.includes(i.category)) return false;
+    return true;
+  });
 
   const incomeByMonth = new Map<string, number>();
   for (const i of incomeEntries) {
@@ -31,8 +40,13 @@ export async function GET(req: Request) {
     incomeByMonth.set(key, (incomeByMonth.get(key) || 0) + i.amount);
   }
 
+  const expenseEntries = expenses.filter((e) => {
+    if (propertyIds.length && !propertyIds.includes(e.propertyId)) return false;
+    if (expenseTypes.length && !expenseTypes.includes(e.category)) return false;
+    return true;
+  });
   const expenseByMonth = new Map<string, number>();
-  for (const e of expenses) {
+  for (const e of expenseEntries) {
     const d = new Date(e.date);
     if (d < from || d > to) continue;
     const key = monthKey(d);

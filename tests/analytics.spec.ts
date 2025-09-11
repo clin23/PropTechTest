@@ -29,3 +29,21 @@ test('series income pulls from rent ledger', async ({ request }) => {
   const march = data.buckets.find((b: any) => b.label === '2025-03');
   expect(march?.income).toBe(2200);
 });
+
+test('series respects income and expense filters', async ({ request }) => {
+  const filters = encodeURIComponent(
+    JSON.stringify({
+      properties: ['1'],
+      incomeTypes: ['Base rent'],
+      expenseTypes: ['Landlord insurance'],
+    })
+  );
+  const res = await request.get(
+    `/api/analytics/series?from=2025-03-01&to=2025-05-31&filters=${filters}`
+  );
+  const data = await res.json();
+  const march = data.buckets.find((b: any) => b.label === '2025-03');
+  const april = data.buckets.find((b: any) => b.label === '2025-04');
+  expect(march?.expenses).toBe(0);
+  expect(april?.expenses).toBe(500);
+});
