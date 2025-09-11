@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   DragDropContext,
   Droppable,
@@ -203,6 +204,12 @@ export default function TasksKanban() {
           + Add Column
         </button>
       </div>
+      <Link
+        href="/tasks/archive"
+        className="w-64 flex-shrink-0"
+      >
+        <span className="block w-full border rounded p-2 text-sm text-center">Archive</span>
+      </Link>
       </div>
       {editingTask && (
         <TaskEditModal
