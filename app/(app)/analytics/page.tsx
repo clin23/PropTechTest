@@ -24,18 +24,19 @@ export default function AnalyticsPage() {
   useUrlState(state, setState);
   const { data } = useSeries(state);
 
-  const chartData = data?.buckets || [];
+  const lineData = data?.buckets || [];
+  const pieData = (data?.buckets || []).map(b => ({ label: b.label, value: b[state.metric] }));
 
   return (
     <div className="flex">
       <div className="flex-1 p-6 space-y-4">
         <h1 className="text-2xl font-semibold mb-4">Analytics</h1>
         <div data-testid="viz-section">
-          {state.viz === 'line' && <VizLine data={chartData} />}
-          {state.viz === 'pie' && <VizPie data={chartData} />}
+          {state.viz === 'line' && <VizLine data={lineData} />}
+          {state.viz === 'pie' && <VizPie data={pieData} />}
           {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
         </div>
-        <ExportButtons csvData={JSON.stringify(chartData)} />
+        <ExportButtons csvData={JSON.stringify(lineData)} />
       </div>
       <div className="w-80 p-4 space-y-4 hidden lg:block">
         <DateRangeFilter state={state} onChange={(s) => setState(prev => ({ ...prev, ...s }))} />

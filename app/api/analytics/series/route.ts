@@ -41,11 +41,11 @@ export async function GET(req: Request) {
 
   const labels = Array.from(new Set([...incomeByMonth.keys(), ...expenseByMonth.keys()])).sort();
   const buckets = labels.map((label) => {
-    const inc = incomeByMonth.get(label) || 0;
-    const exp = expenseByMonth.get(label) || 0;
-    const value = metric === 'income' ? inc : metric === 'expenses' ? exp : inc - exp;
-    return { label, value };
+    const income = incomeByMonth.get(label) || 0;
+    const expenses = expenseByMonth.get(label) || 0;
+    const net = income - expenses;
+    return { label, income, expenses, net };
   });
-  const total = buckets.reduce((sum, b) => sum + b.value, 0);
+  const total = buckets.reduce((sum, b) => sum + b[metric as 'income' | 'expenses' | 'net'], 0);
   return NextResponse.json({ total, buckets });
 }

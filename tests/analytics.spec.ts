@@ -10,6 +10,11 @@ test('series endpoint responds', async ({ request }) => {
   const res = await request.get('/api/analytics/series');
   const data = await res.json();
   expect(Array.isArray(data.buckets)).toBe(true);
+  if (data.buckets.length > 0) {
+    expect(data.buckets[0]).toHaveProperty('net');
+    expect(data.buckets[0]).toHaveProperty('income');
+    expect(data.buckets[0]).toHaveProperty('expenses');
+  }
 });
 
 test('breakdown endpoint responds', async ({ request }) => {
