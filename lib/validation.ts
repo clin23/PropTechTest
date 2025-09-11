@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { EXPENSE_CATEGORY_OPTIONS, INCOME_CATEGORY_OPTIONS } from './categories';
+import {
+  EXPENSE_CATEGORIES,
+  EXPENSE_CATEGORY_OPTIONS,
+  INCOME_CATEGORY_OPTIONS,
+} from './categories';
 
 export const inspectionSchema = z.object({
   propertyId: z.string(),
@@ -8,9 +12,16 @@ export const inspectionSchema = z.object({
   templateId: z.string().optional(),
 });
 
-export const zExpenseCategory = z.enum(
-  [...EXPENSE_CATEGORY_OPTIONS] as [string, ...string[]]
-);
+// Allow either a top-level expense group or a specific subcategory.
+// Custom expense entries only expose group names in the UI but the backend
+// previously only accepted subcategory labels, so include both here to avoid
+// validation errors when saving.
+const EXPENSE_CATEGORY_ENUM = [
+  ...Object.keys(EXPENSE_CATEGORIES),
+  ...EXPENSE_CATEGORY_OPTIONS,
+] as [string, ...string[]];
+
+export const zExpenseCategory = z.enum(EXPENSE_CATEGORY_ENUM);
 export const zIncomeCategory = z.enum(
   [...INCOME_CATEGORY_OPTIONS] as [string, ...string[]]
 );
