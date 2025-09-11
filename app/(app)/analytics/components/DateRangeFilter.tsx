@@ -40,7 +40,7 @@ export default function DateRangeFilter({ state, onChange }: Props) {
   return (
     <div
       data-testid="date-range-filter"
-      className="relative p-4 border rounded-2xl shadow-sm select-none"
+      className="relative p-4 border rounded-2xl shadow-sm select-none bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
       onClick={() => setShowCal(true)}
     >
       <div className="font-semibold mb-2">Date Range</div>
@@ -89,23 +89,23 @@ export default function DateRangeFilter({ state, onChange }: Props) {
           onClick={() => setShowCal(false)}
         >
           <div
-            className="bg-white p-4 rounded shadow-md space-y-2"
+            className="bg-white dark:bg-gray-800 p-4 rounded shadow-md space-y-2"
             onClick={e => e.stopPropagation()}
           >
             <input
               type="date"
               value={state.from.slice(0, 10)}
               onChange={e => update(new Date(e.target.value), to)}
-              className="border p-1 rounded"
+              className="border p-1 rounded bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-700"
             />
             <input
               type="date"
               value={state.to.slice(0, 10)}
               onChange={e => update(from, new Date(e.target.value))}
-              className="border p-1 rounded"
+              className="border p-1 rounded bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-700"
             />
             <button
-              className="px-2 py-1 text-sm bg-gray-200 rounded"
+              className="px-2 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded"
               onClick={() => setShowCal(false)}
             >
               Close
