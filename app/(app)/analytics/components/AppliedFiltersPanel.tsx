@@ -27,7 +27,7 @@ export default function AppliedFiltersPanel({ state, onAdd, onRemove }: Props) {
   return (
     <div
       data-testid="applied-filters"
-      className="p-4 border rounded-2xl shadow-sm space-y-2"
+      className="p-4 border rounded-2xl shadow-sm space-y-2 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
       onDragOver={e => e.preventDefault()}
       onDrop={handleDrop}
     >
@@ -36,7 +36,7 @@ export default function AppliedFiltersPanel({ state, onAdd, onRemove }: Props) {
         {chips.map(({ key, value }) => (
           <span
             key={key + value}
-            className="px-2 py-1 text-sm bg-gray-200 rounded-full flex items-center gap-1"
+            className="px-2 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-full flex items-center gap-1"
           >
             {key}:{value}
             <button
@@ -48,7 +48,9 @@ export default function AppliedFiltersPanel({ state, onAdd, onRemove }: Props) {
             </button>
           </span>
         ))}
-        {chips.length === 0 && <div className="text-sm text-gray-500">None</div>}
+        {chips.length === 0 && (
+          <div className="text-sm text-gray-500 dark:text-gray-400">None</div>
+        )}
       </div>
     </div>
   );

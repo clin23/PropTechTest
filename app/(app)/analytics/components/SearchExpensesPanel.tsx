@@ -29,14 +29,14 @@ export default function SearchExpensesPanel() {
   return (
     <div
       data-testid="search-expenses"
-      className="p-4 border rounded-2xl shadow-sm space-y-2"
+      className="p-4 border rounded-2xl shadow-sm space-y-2 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
     >
       <div className="flex items-center justify-between">
         <div className="font-semibold">Search Expenses</div>
         <button
           aria-label="Add custom expense"
           onClick={() => setOpen(true)}
-          className="text-xl leading-none text-blue-600"
+          className="text-xl leading-none text-blue-600 dark:text-blue-400"
         >
           +
         </button>
@@ -46,7 +46,7 @@ export default function SearchExpensesPanel() {
         value={q}
         onChange={e => setQ(e.target.value)}
         placeholder="Search categories"
-        className="w-full border rounded p-1 text-sm"
+        className="w-full border rounded p-1 text-sm bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-700"
       />
       <div className="space-y-1 max-h-40 overflow-y-auto">
         {entries.map(({ group, children }) => {
@@ -70,7 +70,7 @@ export default function SearchExpensesPanel() {
                       JSON.stringify({ type: 'categories', value: group })
                     )
                   }
-                  className="flex-1 p-1 text-sm bg-gray-200 rounded cursor-grab"
+                  className="flex-1 p-1 text-sm bg-gray-200 dark:bg-gray-700 rounded cursor-grab"
                 >
                   {humanize(group)}
                 </div>
@@ -87,7 +87,7 @@ export default function SearchExpensesPanel() {
                           JSON.stringify({ type: 'expenseTypes', value: c })
                         )
                       }
-                      className="p-1 text-sm bg-gray-100 rounded cursor-grab"
+                      className="p-1 text-sm bg-gray-100 dark:bg-gray-600 rounded cursor-grab"
                     >
                       {c}
                     </div>
@@ -98,7 +98,7 @@ export default function SearchExpensesPanel() {
           );
         })}
         {entries.length === 0 && (
-          <div className="text-sm text-gray-500">No results</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">No results</div>
         )}
       </div>
       <ExpenseForm open={open} onOpenChange={setOpen} showTrigger={false} />
