@@ -24,15 +24,38 @@ export default function AnalyticsPage() {
   useUrlState(state, setState);
   const { data } = useSeries(state);
 
-  const lineData = data?.buckets || [];
-  const pieData = (data?.buckets || []).map(b => ({ label: b.label, value: b[state.metric] }));
+  const filtersApplied = Object.values(state.filters).some(arr => (arr || []).length > 0);
+  const hasIncomeFilters = (state.filters.incomeTypes || []).length > 0;
+  const hasExpenseFilters = (state.filters.expenseTypes || []).length > 0;
+
+  const lineData = filtersApplied ? data?.buckets || [] : [];
+  const pieData = (filtersApplied ? data?.buckets || [] : []).map(b => ({ label: b.label, value: b[state.metric] }));
+
+  let showIncome = filtersApplied;
+  let showExpenses = filtersApplied;
+  let showNet = filtersApplied;
+
+  if (hasIncomeFilters && !hasExpenseFilters) {
+    showExpenses = false;
+    showNet = false;
+  } else if (hasExpenseFilters && !hasIncomeFilters) {
+    showIncome = false;
+    showNet = false;
+  }
 
   return (
     <div className="flex">
       <div className="flex-1 p-6 space-y-4">
         <h1 className="text-2xl font-semibold mb-4">Analytics</h1>
         <div data-testid="viz-section">
-          {state.viz === 'line' && <VizLine data={lineData} />}
+          {state.viz === 'line' && (
+            <VizLine
+              data={lineData}
+              showIncome={showIncome}
+              showExpenses={showExpenses}
+              showNet={showNet}
+            />
+          )}
           {state.viz === 'pie' && <VizPie data={pieData} />}
           {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
         </div>
