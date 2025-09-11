@@ -38,8 +38,28 @@ export default function AnalyticsPage() {
         <ExportButtons csvData={JSON.stringify(chartData)} />
       </div>
       <div className="w-80 p-4 space-y-4 hidden lg:block">
-        <DateRangeFilter state={state} onChange={() => {}} />
-        <AppliedFiltersPanel state={state} onRemove={() => {}} />
+        <DateRangeFilter state={state} onChange={(s) => setState(prev => ({ ...prev, ...s }))} />
+        <AppliedFiltersPanel
+          state={state}
+          onAdd={(key, value) =>
+            setState(prev => ({
+              ...prev,
+              filters: {
+                ...prev.filters,
+                [key]: Array.from(new Set([...(prev.filters[key] || []), value])),
+              },
+            }))
+          }
+          onRemove={(key, value) =>
+            setState(prev => ({
+              ...prev,
+              filters: {
+                ...prev.filters,
+                [key]: (prev.filters[key] || []).filter(v => v !== value),
+              },
+            }))
+          }
+        />
         <SearchIncomePanel />
         <SearchExpensesPanel />
         <PresetMenu />
