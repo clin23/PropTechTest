@@ -1,10 +1,9 @@
 import { useState } from 'react';
-
-const CATEGORIES = ['Maintenance', 'Utilities', 'Insurance', 'Taxes'];
+import { EXPENSE_CATEGORY_OPTIONS } from '../../../../lib/categories';
 
 export default function SearchExpensesPanel() {
   const [q, setQ] = useState('');
-  const items = CATEGORIES.filter(c => c.toLowerCase().includes(q.toLowerCase()));
+  const items = EXPENSE_CATEGORY_OPTIONS.filter(c => c.toLowerCase().includes(q.toLowerCase()));
   return (
     <div data-testid="search-expenses" className="p-4 border rounded-2xl shadow-sm space-y-2">
       <div className="font-semibold">Search Expenses</div>
