@@ -9,9 +9,10 @@ import { useToast } from "./ui/use-toast";
 
 interface Props {
   property?: PropertySummary;
+  onSaved?: (property: PropertySummary) => void;
 }
 
-export default function PropertyForm({ property }: Props) {
+export default function PropertyForm({ property, onSaved }: Props) {
   const isEdit = !!property;
   const [form, setForm] = useState({
     address: property?.address ?? "",
@@ -35,7 +36,10 @@ export default function PropertyForm({ property }: Props) {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       if (isEdit) {
         queryClient.invalidateQueries({ queryKey: ["property", property!.id] });
-        router.push(`/properties/${property!.id}`);
+        onSaved?.(p);
+        if (!onSaved) {
+          router.push(`/properties/${property!.id}`);
+        }
       } else {
         router.push(`/properties/${p.id}`);
       }
