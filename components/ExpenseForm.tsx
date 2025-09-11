@@ -7,6 +7,8 @@ import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
+
+const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
 type FormState = {
   propertyId: string;
   date: string;
@@ -59,7 +61,10 @@ export default function ExpenseForm({
 
   useEffect(() => {
     const stored = localStorage.getItem("recentExpenseCategories");
-    if (stored) setRecent(JSON.parse(stored));
+    if (stored) {
+      const parsed = JSON.parse(stored) as string[];
+      setRecent(parsed.filter((cat) => cat in EXPENSE_CATEGORIES));
+    }
   }, []);
 
   const addRecent = (cat: string) => {
@@ -186,24 +191,25 @@ export default function ExpenseForm({
                   <optgroup label="Recent">
                     {recent.map((cat) => (
                       <option key={cat} value={cat}>
-                        {cat}
+                        {humanize(cat)}
                       </option>
                     ))}
                   </optgroup>
                 )}
-                {Object.entries(EXPENSE_CATEGORIES).map(([group, items]) => (
-                  <optgroup
-                    key={group}
-                    label={group.replace(/([A-Z])/g, " $1").trim()}
-                  >
-                    {items.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </optgroup>
+                {Object.keys(EXPENSE_CATEGORIES).map((group) => (
+                  <option key={group} value={group}>
+                    {humanize(group)}
+                  </option>
                 ))}
               </select>
+            </label>
+            <label className="block">
+              Custom label
+              <input
+                className="border p-1 w-full"
+                value={form.label}
+                onChange={(e) => setForm({ ...form, label: e.target.value })}
+              />
             </label>
             <label className="block">
               Vendor
@@ -237,14 +243,6 @@ export default function ExpenseForm({
                 className="border p-1 w-full"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
-            </label>
-            <label className="block">
-              Custom label
-              <input
-                className="border p-1 w-full"
-                value={form.label}
-                onChange={(e) => setForm({ ...form, label: e.target.value })}
               />
             </label>
             {error && <p className="text-red-600 text-sm">{error}</p>}
