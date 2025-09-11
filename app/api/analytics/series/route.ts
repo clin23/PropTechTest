@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { incomes, expenses, rentLedger } from '../../store';
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../../../../lib/categories';
 
 function monthKey(d: Date) {
   return d.toISOString().slice(0, 7);
@@ -16,6 +17,22 @@ export async function GET(req: Request) {
   const incomeTypes: string[] = filters.incomeTypes ?? [];
   const expenseTypes: string[] = filters.expenseTypes ?? [];
 
+  const expand = (types: string[], groups: Record<string, readonly string[]>) => {
+    const expanded: string[] = [];
+    for (const t of types) {
+      const groupKey = Object.keys(groups).find((key) => {
+        const label = key.replace(/([A-Z])/g, ' $1').trim();
+        return label === t;
+      });
+      if (groupKey) expanded.push(...(groups[groupKey] || []));
+      else expanded.push(t);
+    }
+    return new Set(expanded);
+  };
+
+  const incomeTypeSet = expand(incomeTypes, INCOME_CATEGORIES);
+  const expenseTypeSet = expand(expenseTypes, EXPENSE_CATEGORIES);
+
   const incomeEntries = [
     ...incomes.filter((i) => i.category !== 'Base rent'),
     ...rentLedger
@@ -28,7 +45,7 @@ export async function GET(req: Request) {
       })),
   ].filter((i) => {
     if (propertyIds.length && !propertyIds.includes(i.propertyId)) return false;
-    if (incomeTypes.length && !incomeTypes.includes(i.category)) return false;
+    if (incomeTypeSet.size && !incomeTypeSet.has(i.category)) return false;
     return true;
   });
 
@@ -42,7 +59,7 @@ export async function GET(req: Request) {
 
   const expenseEntries = expenses.filter((e) => {
     if (propertyIds.length && !propertyIds.includes(e.propertyId)) return false;
-    if (expenseTypes.length && !expenseTypes.includes(e.category)) return false;
+    if (expenseTypeSet.size && !expenseTypeSet.has(e.category)) return false;
     return true;
   });
   const expenseByMonth = new Map<string, number>();

@@ -47,3 +47,15 @@ test('series respects income and expense filters', async ({ request }) => {
   expect(march?.expenses).toBe(0);
   expect(april?.expenses).toBe(500);
 });
+
+test('series groups core rent filter correctly', async ({ request }) => {
+  const filters = encodeURIComponent(
+    JSON.stringify({ incomeTypes: ['Core Rent'] })
+  );
+  const res = await request.get(
+    `/api/analytics/series?from=2025-03-01&to=2025-03-31&filters=${filters}`
+  );
+  const data = await res.json();
+  const march = data.buckets.find((b: any) => b.label === '2025-03');
+  expect(march?.income).toBe(2150);
+});
