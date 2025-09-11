@@ -74,7 +74,7 @@ export default function PropertyForm({ property }: Props) {
       <label className="block">
         Address
         <input
-          className="border p-1 w-full"
+          className="border p-1 w-full bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={form.address}
           onChange={(e) => setForm({ ...form, address: e.target.value })}
         />
@@ -82,7 +82,7 @@ export default function PropertyForm({ property }: Props) {
       <label className="block">
         Image URL
         <input
-          className="border p-1 w-full"
+          className="border p-1 w-full bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={form.imageUrl}
           onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
         />
@@ -90,7 +90,7 @@ export default function PropertyForm({ property }: Props) {
       <label className="block">
         Tenant
         <input
-          className="border p-1 w-full"
+          className="border p-1 w-full bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={form.tenant}
           onChange={(e) => setForm({ ...form, tenant: e.target.value })}
         />
@@ -99,7 +99,7 @@ export default function PropertyForm({ property }: Props) {
         Lease Start
         <input
           type="date"
-          className="border p-1 w-full"
+          className="border p-1 w-full bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={form.leaseStart}
           onChange={(e) => setForm({ ...form, leaseStart: e.target.value })}
         />
@@ -108,7 +108,7 @@ export default function PropertyForm({ property }: Props) {
         Lease End
         <input
           type="date"
-          className="border p-1 w-full"
+          className="border p-1 w-full bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={form.leaseEnd}
           onChange={(e) => setForm({ ...form, leaseEnd: e.target.value })}
         />
@@ -117,19 +117,19 @@ export default function PropertyForm({ property }: Props) {
         Rent
         <input
           type="number"
-          className="border p-1 w-full"
+          className="border p-1 w-full bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={form.rent}
           onChange={(e) => setForm({ ...form, rent: e.target.value })}
         />
       </label>
       <div className="space-x-2">
-        <button type="submit" className="px-2 py-1 bg-blue-500 text-white">
+        <button type="submit" className="px-2 py-1 bg-blue-500 text-white dark:bg-blue-600">
           {isEdit ? "Save" : "Create"}
         </button>
         {isEdit && (
           <button
             type="button"
-            className="px-2 py-1 bg-red-500 text-white"
+            className="px-2 py-1 bg-red-500 text-white dark:bg-red-600"
             onClick={() => deleteMutation.mutate()}
           >
             Delete

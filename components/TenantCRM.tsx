@@ -32,25 +32,31 @@ export default function TenantCRM({ propertyId }: Props) {
     <div className="space-y-2">
       <div className="flex gap-2">
         <input
-          className="border p-1 flex-1"
+          className="border p-1 flex-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           placeholder="Add note"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
         <button
-          className="bg-blue-600 text-white px-2 py-1 rounded disabled:opacity-50"
+          className="bg-blue-600 text-white px-2 py-1 rounded disabled:opacity-50 dark:bg-blue-700"
           onClick={() => mutation.mutate(text)}
           disabled={!text.trim()}
         >
           Add
         </button>
-        <button className="border px-2 py-1 rounded" disabled>
+        <button
+          className="border px-2 py-1 rounded bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          disabled
+        >
           Send Template
         </button>
       </div>
       <ul className="space-y-1">
         {notes.map((n) => (
-          <li key={n.id} className="border p-2">
+          <li
+            key={n.id}
+            className="border p-2 bg-white dark:bg-gray-800 dark:border-gray-700"
+          >
             {n.text}
           </li>
         ))}

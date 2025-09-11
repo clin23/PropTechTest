@@ -78,7 +78,7 @@ export default function ExpensesTable({
       <div className="flex flex-wrap gap-2">
         {!propertyId && (
           <select
-            className="border p-1"
+            className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
             value={property}
             onChange={(e) => setProperty(e.target.value)}
           >
@@ -92,35 +92,35 @@ export default function ExpensesTable({
         )}
         <input
           type="date"
-          className="border p-1"
+          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
           placeholder="From"
         />
         <input
           type="date"
-          className="border p-1"
+          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={to}
           onChange={(e) => setTo(e.target.value)}
           placeholder="To"
         />
         <input
-          className="border p-1"
+          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           placeholder="Category"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         />
         <input
-          className="border p-1"
+          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           placeholder="Vendor"
           value={vendor}
           onChange={(e) => setVendor(e.target.value)}
         />
       </div>
       {data.length ? (
-        <table className="min-w-full border">
+        <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
           <thead>
-            <tr className="bg-gray-100">
+            <tr className="bg-gray-100 dark:bg-gray-700">
               {!propertyId && <th className="p-2 text-left">Property</th>}
               <th className="p-2 text-left">Date</th>
               <th className="p-2 text-left">Category</th>
@@ -134,7 +134,7 @@ export default function ExpensesTable({
           </thead>
           <tbody>
             {data.map((r) => (
-              <tr key={r.id} className="border-t">
+              <tr key={r.id} className="border-t dark:border-gray-700">
                 {!propertyId && (
                   <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
                 )}
@@ -147,7 +147,7 @@ export default function ExpensesTable({
                 <td className="p-2">{r.receiptUrl && <span>📎</span>}</td>
                 <td className="p-2">
                   <button
-                    className="text-red-600 underline"
+                    className="text-red-600 underline dark:text-red-400"
                     onClick={() => {
                       if (confirm("Delete this expense?")) {
                         deleteMutation.mutate(r.id);

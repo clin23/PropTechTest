@@ -18,8 +18,8 @@ export default function RentLedgerTable({
   });
 
   return (
-    <table className="min-w-full border">
-      <thead className="bg-gray-100">
+    <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+      <thead className="bg-gray-100 dark:bg-gray-700">
         <tr>
           <th className="p-2 text-left">Date</th>
           <th className="p-2 text-left">Description</th>
@@ -29,7 +29,7 @@ export default function RentLedgerTable({
       </thead>
       <tbody>
         {data.map((e) => (
-          <tr key={e.id} className="border-t">
+          <tr key={e.id} className="border-t dark:border-gray-700">
             <td className="p-2">{e.date}</td>
             <td className="p-2">{e.description}</td>
             <td className="p-2">{e.amount}</td>
