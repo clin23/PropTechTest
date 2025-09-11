@@ -1,35 +1,62 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createIncome } from "../lib/api";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createIncome, listProperties } from "../lib/api";
 import { useToast } from "./ui/use-toast";
 import { INCOME_CATEGORIES } from "../lib/categories";
+import type { PropertySummary } from "../types/property";
 
 interface IncomeFormProps {
-  propertyId: string;
+  propertyId?: string;
   onCreated?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }
 
 export default function IncomeForm({
   propertyId,
   onCreated,
+  open: controlledOpen,
+  onOpenChange,
+  showTrigger = true,
 }: IncomeFormProps) {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ date: "", category: "", amount: "", notes: "", label: "" });
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
+  const getInitialForm = () => ({
+    propertyId: propertyId ?? "",
+    date: "",
+    category: "",
+    amount: "",
+    notes: "",
+    label: "",
+  });
+  const [form, setForm] = useState(getInitialForm());
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    setForm(getInitialForm());
+  }, [propertyId]);
+
+  const { data: properties = [] } = useQuery<PropertySummary[]>({
+    queryKey: ["properties"],
+    queryFn: listProperties,
+  });
+
   const mutation = useMutation({
-    mutationFn: (payload: any) => createIncome(propertyId, payload),
-    onSuccess: () => {
+    mutationFn: ({ propertyId, data }: { propertyId: string; data: any }) =>
+      createIncome(propertyId, data),
+    onSuccess: (_data, vars) => {
       toast({ title: "Income saved" });
       setOpen(false);
-      setForm({ date: "", category: "", amount: "", notes: "", label: "" });
+      setForm(getInitialForm());
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ["income", propertyId] });
-      queryClient.invalidateQueries({ queryKey: ["pnl", propertyId] });
+      queryClient.invalidateQueries({ queryKey: ["income", vars.propertyId] });
+      queryClient.invalidateQueries({ queryKey: ["pnl", vars.propertyId] });
       onCreated?.();
     },
     onError: (err: any) => {
@@ -41,9 +68,14 @@ export default function IncomeForm({
 
   return (
     <div>
-      <button className="px-2 py-1 bg-blue-500 text-white" onClick={() => setOpen(true)}>
-        Add Income
-      </button>
+      {showTrigger && (
+        <button
+          className="px-2 py-1 bg-blue-500 text-white"
+          onClick={() => setOpen(true)}
+        >
+          Add Income
+        </button>
+      )}
 
       {open && (
         <div className="fixed inset-0 bg-black/50 flex justify-end">
@@ -52,7 +84,13 @@ export default function IncomeForm({
             onSubmit={(e) => {
               e.preventDefault();
               setError(null);
-              if (!form.date || !form.category || !form.amount) {
+              const targetPropertyId = propertyId ?? form.propertyId;
+              if (
+                !targetPropertyId ||
+                !form.date ||
+                !form.category ||
+                !form.amount
+              ) {
                 setError("Please fill in all required fields");
                 return;
               }
@@ -61,14 +99,34 @@ export default function IncomeForm({
                 return;
               }
               mutation.mutate({
-                date: form.date,
-                category: form.category,
-                amount: parseFloat(form.amount),
-                notes: form.notes,
-                label: form.label,
+                propertyId: targetPropertyId,
+                data: {
+                  date: form.date,
+                  category: form.category,
+                  amount: parseFloat(form.amount),
+                  notes: form.notes,
+                  label: form.label,
+                },
               });
             }}
           >
+            {!propertyId && (
+              <label className="block">
+                Property
+                <select
+                  className="border p-1 w-full"
+                  value={form.propertyId}
+                  onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
+                >
+                  <option value="">Select property</option>
+                  {properties.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.address}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="block">
               Date
               <input

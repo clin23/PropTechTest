@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import IncomeForm from '../../../../components/IncomeForm';
 import { INCOME_CATEGORY_OPTIONS } from '../../../../lib/categories';
 
 export default function SearchIncomePanel() {
   const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
   const items = INCOME_CATEGORY_OPTIONS.filter(c =>
     c.toLowerCase().includes(q.toLowerCase())
   );
@@ -11,7 +13,16 @@ export default function SearchIncomePanel() {
       data-testid="search-income"
       className="p-4 border rounded-2xl shadow-sm space-y-2"
     >
-      <div className="font-semibold">Search Income</div>
+      <div className="flex items-center justify-between">
+        <div className="font-semibold">Search Income</div>
+        <button
+          aria-label="Add custom income"
+          onClick={() => setOpen(true)}
+          className="text-xl leading-none text-blue-600"
+        >
+          +
+        </button>
+      </div>
       <input
         type="text"
         value={q}
@@ -39,6 +50,7 @@ export default function SearchIncomePanel() {
           <div className="text-sm text-gray-500">No results</div>
         )}
       </div>
+      <IncomeForm open={open} onOpenChange={setOpen} showTrigger={false} />
     </div>
   );
 }

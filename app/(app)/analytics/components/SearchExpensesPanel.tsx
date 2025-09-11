@@ -13,7 +13,16 @@ export default function SearchExpensesPanel() {
       data-testid="search-expenses"
       className="p-4 border rounded-2xl shadow-sm space-y-2"
     >
-      <div className="font-semibold">Search Expenses</div>
+      <div className="flex items-center justify-between">
+        <div className="font-semibold">Search Expenses</div>
+        <button
+          aria-label="Add custom expense"
+          onClick={() => setOpen(true)}
+          className="text-xl leading-none text-blue-600"
+        >
+          +
+        </button>
+      </div>
       <input
         type="text"
         value={q}
@@ -41,12 +50,6 @@ export default function SearchExpensesPanel() {
           <div className="text-sm text-gray-500">No results</div>
         )}
       </div>
-      <button
-        onClick={() => setOpen(true)}
-        className="text-sm text-blue-600 underline"
-      >
-        Add custom expense
-      </button>
       <ExpenseForm open={open} onOpenChange={setOpen} showTrigger={false} />
     </div>
   );
