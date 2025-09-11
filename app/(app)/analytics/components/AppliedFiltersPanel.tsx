@@ -7,10 +7,8 @@ interface Props {
 }
 
 export default function AppliedFiltersPanel({ state, onAdd, onRemove }: Props) {
-  const chips: { key: keyof AnalyticsStateType['filters']; value: string }[] = [];
-  (Object.entries(state.filters) as [keyof AnalyticsStateType['filters'], string[]][]).forEach(([k, arr]) => {
-    (arr || []).forEach(v => chips.push({ key: k, value: v }));
-  });
+  const income = state.filters.incomeTypes || [];
+  const expenses = state.filters.expenseTypes || [];
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -27,28 +25,54 @@ export default function AppliedFiltersPanel({ state, onAdd, onRemove }: Props) {
   return (
     <div
       data-testid="applied-filters"
-      className="p-4 border rounded-2xl shadow-sm space-y-2 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+      className="p-4 border rounded-2xl shadow-sm space-y-2 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-sm"
       onDragOver={e => e.preventDefault()}
       onDrop={handleDrop}
     >
       <div className="font-semibold">Currently Applied</div>
-      <div className="flex flex-wrap gap-2">
-        {chips.map(({ key, value }) => (
-          <span
-            key={key + value}
-            className="px-2 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-full flex items-center gap-1 text-gray-900 dark:text-gray-100"
-          >
-            {key}:{value}
-            <button
-              aria-label={`Remove ${value}`}
-              className="ml-1 text-xs"
-              onClick={() => onRemove(key, value)}
-            >
-              ×
-            </button>
-          </span>
-        ))}
-        {chips.length === 0 && <div className="text-sm text-gray-500 dark:text-gray-400">None</div>}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="font-medium mb-1">Income</div>
+          <div className="flex flex-wrap gap-2">
+            {income.map(value => (
+              <span
+                key={value}
+                className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center gap-1 text-gray-900 dark:text-gray-100"
+              >
+                {value}
+                <button
+                  aria-label={`Remove ${value}`}
+                  className="ml-1 text-xs"
+                  onClick={() => onRemove('incomeTypes', value)}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {income.length === 0 && <div className="text-gray-500 dark:text-gray-400">None</div>}
+          </div>
+        </div>
+        <div>
+          <div className="font-medium mb-1">Expenses</div>
+          <div className="flex flex-wrap gap-2">
+            {expenses.map(value => (
+              <span
+                key={value}
+                className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center gap-1 text-gray-900 dark:text-gray-100"
+              >
+                {value}
+                <button
+                  aria-label={`Remove ${value}`}
+                  className="ml-1 text-xs"
+                  onClick={() => onRemove('expenseTypes', value)}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {expenses.length === 0 && <div className="text-gray-500 dark:text-gray-400">None</div>}
+          </div>
+        </div>
       </div>
     </div>
   );
