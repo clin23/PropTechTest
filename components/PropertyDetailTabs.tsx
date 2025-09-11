@@ -36,12 +36,14 @@ export default function PropertyDetailTabs({ propertyId }: Props) {
 
   return (
     <div>
-      <div className="flex space-x-4 border-b mb-4">
+      <div className="flex space-x-4 border-b mb-4 dark:border-gray-700">
         {tabs.map((t) => (
           <button
             key={t.id}
             className={`pb-2 ${
-              active === t.id ? "border-b-2 border-blue-500 font-semibold" : ""
+              active === t.id
+                ? "border-b-2 border-blue-500 font-semibold text-blue-600 dark:text-blue-400"
+                : ""
             }`}
             onClick={() => {
               window.location.hash = t.id;

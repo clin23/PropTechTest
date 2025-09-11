@@ -36,15 +36,15 @@ export default function PropertyPage() {
         onUploadDocument={() => setDocOpen(true)}
         onMessageTenant={() => setMessageOpen(true)}
       />
-      <button
-        className="inline-block px-2 py-1 border rounded"
-        onClick={() => setEditOpen(true)}
+      <Link
+        href={`/properties/${id}/edit`}
+        className="inline-block px-2 py-1 border rounded dark:border-gray-700"
       >
         Edit Property
       </button>
       <div className="relative inline-block">
         <button
-          className="px-2 py-1 border rounded"
+          className="px-2 py-1 border rounded dark:border-gray-700"
           onClick={() => setMoreOpen((o) => !o)}
         >
           More...

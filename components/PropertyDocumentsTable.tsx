@@ -18,8 +18,8 @@ export default function PropertyDocumentsTable({
   });
 
   return (
-    <table className="min-w-full border">
-      <thead className="bg-gray-100">
+    <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+      <thead className="bg-gray-100 dark:bg-gray-700">
         <tr>
           <th className="p-2 text-left">Name</th>
           <th className="p-2 text-left">Uploaded</th>
@@ -28,7 +28,7 @@ export default function PropertyDocumentsTable({
       </thead>
       <tbody>
         {data.map((d) => (
-          <tr key={d.id} className="border-t">
+          <tr key={d.id} className="border-t dark:border-gray-700">
             <td className="p-2">{d.name}</td>
             <td className="p-2">{d.uploaded}</td>
             <td className="p-2">
@@ -36,7 +36,7 @@ export default function PropertyDocumentsTable({
                 href={d.url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-blue-600 underline"
+                className="text-blue-600 underline dark:text-blue-400"
               >
                 View
               </a>
