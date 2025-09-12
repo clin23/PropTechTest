@@ -18,7 +18,6 @@ export default function PropertyPage() {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const { id } = useParams<{ id: string }>();
 
@@ -42,44 +41,6 @@ export default function PropertyPage() {
       >
         Edit Property
       </Link>
-      <div className="relative inline-block">
-        <button
-          className="px-2 py-1 border rounded dark:border-gray-700"
-          onClick={() => setMoreOpen((o) => !o)}
-        >
-          More...
-        </button>
-        {moreOpen && (
-          <div className="absolute z-10 mt-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow">
-            <Link
-              href={`/properties/${id}/inspections`}
-              className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Inspections
-            </Link>
-            {property.tenant === "" && (
-              <Link
-                href={`/properties/${id}/applications`}
-                className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Applications
-              </Link>
-            )}
-            <Link
-              href={`/properties/${id}/listing`}
-              className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Create Listing
-            </Link>
-            <Link
-              href="/vendors"
-              className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Vendors
-            </Link>
-          </div>
-        )}
-      </div>
       <ExpenseForm
         propertyId={id}
         open={expenseOpen}
