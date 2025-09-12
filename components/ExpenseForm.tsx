@@ -146,11 +146,15 @@ export default function ExpenseForm({
                 !form.propertyId ||
                 !form.date ||
                 !form.group ||
-                !form.category ||
                 !form.vendor ||
-                !form.amount
+                !form.amount ||
+                (!form.category && !form.label)
               ) {
                 setError("Please fill in all required fields");
+                return;
+              }
+              if (form.category && form.label) {
+                setError("Please choose either an expense or a custom label");
                 return;
               }
               if (isNaN(parseFloat(form.amount))) {
@@ -225,32 +229,78 @@ export default function ExpenseForm({
               </select>
             </label>
             {form.group && (
+              form.category === "" && form.label === "" ? (
+                <div className="flex items-start gap-2">
+                  <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                    Expense
+                    <select
+                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                      value={form.category}
+                      onChange={(e) =>
+                        setForm({ ...form, category: e.target.value, label: "" })
+                      }
+                    >
+                      <option value="">Select expense</option>
+                      {EXPENSE_CATEGORIES[form.group].map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <span className="self-center text-gray-500">OR</span>
+                  <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                    Custom label
+                    <input
+                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                      value={form.label}
+                      onChange={(e) =>
+                        setForm({ ...form, label: e.target.value, category: "" })
+                      }
+                    />
+                  </label>
+                </div>
+              ) : form.category !== "" ? (
+                <label className="block text-gray-700 dark:text-gray-300">
+                  Expense
+                  <select
+                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    value={form.category}
+                    onChange={(e) =>
+                      setForm({ ...form, category: e.target.value, label: "" })
+                    }
+                  >
+                    <option value="">Select expense</option>
+                    {EXPENSE_CATEGORIES[form.group].map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <label className="block text-gray-700 dark:text-gray-300">
+                  Custom label
+                  <input
+                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    value={form.label}
+                    onChange={(e) =>
+                      setForm({ ...form, label: e.target.value, category: "" })
+                    }
+                  />
+                </label>
+              )
+            )}
+            {!form.group && (
               <label className="block text-gray-700 dark:text-gray-300">
-                Expense
-                <select
+                Custom label
+                <input
                   className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm({ ...form, category: e.target.value })
-                  }
-                >
-                  <option value="">Select expense</option>
-                  {EXPENSE_CATEGORIES[form.group].map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                  value={form.label}
+                  onChange={(e) => setForm({ ...form, label: e.target.value })}
+                />
               </label>
             )}
-            <label className="block text-gray-700 dark:text-gray-300">
-              Custom label
-              <input
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.label}
-                onChange={(e) => setForm({ ...form, label: e.target.value })}
-              />
-            </label>
             <label className="block text-gray-700 dark:text-gray-300">
               Vendor
               <input
