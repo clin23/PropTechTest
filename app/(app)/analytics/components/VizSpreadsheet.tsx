@@ -26,17 +26,26 @@ function formatLabel(label: string) {
   return date.toLocaleString('default', { month: 'short', year: 'numeric' });
 }
 
-export default function VizSpreadsheet({ data }: { data: Bucket[] }) {
+interface Props {
+  data: Bucket[];
+  showIncome?: boolean;
+  showExpenses?: boolean;
+  showNet?: boolean;
+}
+
+export default function VizSpreadsheet({ data, showIncome = true, showExpenses = true, showNet = true }: Props) {
   const [selected, setSelected] = useState<Bucket | null>(null);
   const [ytd, setYtd] = useState<number>(0);
+  const both = showIncome && showExpenses;
+  const colClass = both ? 'w-1/2' : 'w-full';
   return (
     <div className="overflow-x-auto mt-4" data-testid="viz-spreadsheet">
       <table className="w-full text-sm">
         <thead>
           <tr>
             <th className="w-24 text-left">Month</th>
-            <th className="w-1/2 text-left">Income</th>
-            <th className="w-1/2 text-left">Expenses</th>
+            {showIncome && <th className={`${colClass} text-left`}>Income</th>}
+            {showExpenses && <th className={`${colClass} text-left`}>Expenses</th>}
           </tr>
         </thead>
         <tbody>
@@ -60,20 +69,24 @@ export default function VizSpreadsheet({ data }: { data: Bucket[] }) {
                   {formatLabel(b.label)}
                 </button>
               </td>
-              <td className="align-top">
-                {b.incomeItems && b.incomeItems.length > 0
-                  ? b.incomeItems.map((i, idx) => (
-                      <div key={idx}>${i.amount} {i.property}</div>
-                    ))
-                  : <div>${b.income}</div>}
-              </td>
-              <td className="align-top">
-                {b.expenseItems && b.expenseItems.length > 0
-                  ? b.expenseItems.map((e, idx) => (
-                      <div key={idx}>${e.amount} {e.vendor}</div>
-                    ))
-                  : <div>${b.expenses}</div>}
-              </td>
+              {showIncome && (
+                <td className="align-top">
+                  {b.incomeItems && b.incomeItems.length > 0
+                    ? b.incomeItems.map((i, idx) => (
+                        <div key={idx}>${i.amount} {i.property}</div>
+                      ))
+                    : <div>${b.income}</div>}
+                </td>
+              )}
+              {showExpenses && (
+                <td className="align-top">
+                  {b.expenseItems && b.expenseItems.length > 0
+                    ? b.expenseItems.map((e, idx) => (
+                        <div key={idx}>${e.amount} {e.vendor}</div>
+                      ))
+                    : <div>${b.expenses}</div>}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -90,66 +103,70 @@ export default function VizSpreadsheet({ data }: { data: Bucket[] }) {
           >
             <h2 className="text-lg mb-2">{formatLabel(selected.label)} Details</h2>
             <div className="mb-4">
-              <div>Net: ${selected.income - selected.expenses}</div>
+              {showNet && <div>Net: ${selected.income - selected.expenses}</div>}
               <div>YTD: ${ytd}</div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-medium mb-1">Income</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-left">Property</th>
-                      <th className="text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selected.incomeItems && selected.incomeItems.length > 0 ? (
-                      selected.incomeItems.map((i, idx) => (
-                        <tr key={idx} className="border-t">
-                          <td>{i.property}</td>
-                          <td className="text-right">{i.amount}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr className="border-t">
-                        <td>Total</td>
-                        <td className="text-right">{selected.income}</td>
+            <div className={`grid gap-4 ${both ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {showIncome && (
+                <div>
+                  <h3 className="font-medium mb-1">Income</h3>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className="text-left">Property</th>
+                        <th className="text-right">Amount</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div>
-                <h3 className="font-medium mb-1">Expenses</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-left">Vendor</th>
-                      <th className="text-left">Category</th>
-                      <th className="text-right">GST</th>
-                      <th className="text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selected.expenseItems && selected.expenseItems.length > 0 ? (
-                      selected.expenseItems.map((e, idx) => (
-                        <tr key={idx} className="border-t">
-                          <td>{e.vendor}</td>
-                          <td>{e.category}</td>
-                          <td className="text-right">{e.gst}</td>
-                          <td className="text-right">{e.amount}</td>
+                    </thead>
+                    <tbody>
+                      {selected.incomeItems && selected.incomeItems.length > 0 ? (
+                        selected.incomeItems.map((i, idx) => (
+                          <tr key={idx} className="border-t">
+                            <td>{i.property}</td>
+                            <td className="text-right">{i.amount}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr className="border-t">
+                          <td>Total</td>
+                          <td className="text-right">{selected.income}</td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr className="border-t">
-                        <td colSpan={3}>Total</td>
-                        <td className="text-right">{selected.expenses}</td>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {showExpenses && (
+                <div>
+                  <h3 className="font-medium mb-1">Expenses</h3>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className="text-left">Vendor</th>
+                        <th className="text-left">Category</th>
+                        <th className="text-right">GST</th>
+                        <th className="text-right">Amount</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {selected.expenseItems && selected.expenseItems.length > 0 ? (
+                        selected.expenseItems.map((e, idx) => (
+                          <tr key={idx} className="border-t">
+                            <td>{e.vendor}</td>
+                            <td>{e.category}</td>
+                            <td className="text-right">{e.gst}</td>
+                            <td className="text-right">{e.amount}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr className="border-t">
+                          <td colSpan={3}>Total</td>
+                          <td className="text-right">{selected.expenses}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
