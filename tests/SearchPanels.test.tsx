@@ -10,15 +10,16 @@ import {
 import type { AnalyticsStateType } from '../lib/schemas';
 
 describe('SearchExpensesPanel', () => {
-  it('shows categories, expands, and adds items', () => {
+  it('shows categories, expands, and adds category only', () => {
     const onAdd = vi.fn();
     render(<SearchExpensesPanel onAdd={onAdd} />);
     const category = screen.getByText('Finance Holding');
     expect(category).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Add Finance Holding'));
+    expect(onAdd).toHaveBeenCalledWith('Finance Holding');
     fireEvent.click(screen.getByLabelText('Expand Finance Holding'));
     expect(screen.getByText('Mortgage interest')).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText('Add Mortgage interest'));
-    expect(onAdd).toHaveBeenCalledWith('Mortgage interest');
+    expect(screen.queryByLabelText('Add Mortgage interest')).toBeNull();
   });
 });
 

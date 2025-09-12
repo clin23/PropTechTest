@@ -85,7 +85,7 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
                 filteredItems.map(item => (
                   <div
                     key={item}
-                    className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
+                    className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100"
                   >
                     <span>{item}</span>
                     <button
