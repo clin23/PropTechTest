@@ -23,7 +23,7 @@ export default function AnalyticsPage() {
   const [state, setState] = useState<AnalyticsStateType>(defaultState);
   useUrlState(state, setState);
   const { data } = useSeries(state);
-  const vizRef = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const filtersApplied = Object.values(state.filters).some(arr => (arr || []).length > 0);
   const hasIncomeFilters = (state.filters.incomeTypes || []).length > 0;
@@ -48,19 +48,35 @@ export default function AnalyticsPage() {
     <div className="flex">
       <div className="flex-1 p-6 space-y-4">
         <h1 className="text-2xl font-semibold mb-4">Analytics</h1>
-        <div data-testid="viz-section" ref={vizRef}>
-          {state.viz === 'line' && (
-            <VizLine
-              data={lineData}
-              showIncome={showIncome}
-              showExpenses={showExpenses}
-              showNet={showNet}
-            />
-          )}
-          {state.viz === 'pie' && <VizPie data={pieData} />}
-          {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
+        <div ref={exportRef} className="space-y-2">
+          <div data-testid="viz-section">
+            {state.viz === 'line' && (
+              <VizLine
+                data={lineData}
+                showIncome={showIncome}
+                showExpenses={showExpenses}
+                showNet={showNet}
+              />
+            )}
+            {state.viz === 'pie' && <VizPie data={pieData} />}
+            {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
+          </div>
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            <div>
+              Date range: {new Date(state.from).toLocaleDateString()} - {new Date(state.to).toLocaleDateString()}
+            </div>
+            {filtersApplied && (
+              <div>
+                Filters:{' '}
+                {Object.entries(state.filters)
+                  .filter(([, arr]) => (arr || []).length > 0)
+                  .map(([key, arr]) => `${key}: ${(arr || []).join(', ')}`)
+                  .join('; ')}
+              </div>
+            )}
+          </div>
         </div>
-        <ExportButtons csvData={JSON.stringify(lineData)} targetRef={vizRef} />
+        <ExportButtons csvData={JSON.stringify(lineData)} targetRef={exportRef} />
       </div>
       <div className="w-80 p-4 space-y-4 hidden lg:block">
         <DateRangeFilter state={state} onChange={(s) => setState(prev => ({ ...prev, ...s }))} />
