@@ -8,7 +8,7 @@ export const metadata = { title: 'PropTech' };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="dark">
+    <html lang="en" data-theme="light">
       <body className="min-h-screen">
         <Providers>
           <TitleUpdater />

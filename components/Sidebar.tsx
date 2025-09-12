@@ -115,11 +115,12 @@ export default function Sidebar() {
                   href={link.href}
                   className={`relative flex items-center px-4 py-2 rounded hover:bg-[var(--hover)] text-text-primary ${
                     open ? "" : "justify-center"
-                  } ${active ? "bg-bg-elevated" : ""}`}
+                  } ${
+                    active
+                      ? "bg-[rgba(37,99,235,.08)] border-l-2 border-[var(--primary)]"
+                      : "border-l-2 border-transparent"
+                  }`}
                 >
-                  {active && (
-                    <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary)]" />
-                  )}
                   <span className="h-6 w-6">{link.icon}</span>
                   {open && <span className="ml-3">{link.label}</span>}
                 </Link>
