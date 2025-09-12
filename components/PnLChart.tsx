@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 
 interface MonthlyNet {
@@ -21,20 +22,21 @@ export default function PnLChart({ data }: { data: MonthlyNet[] }) {
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <XAxis dataKey="month" stroke="currentColor" />
-          <YAxis stroke="currentColor" />
+          <CartesianGrid stroke="rgba(255,255,255,0.06)" />
+          <XAxis dataKey="month" stroke="var(--text-secondary)" />
+          <YAxis stroke="var(--text-secondary)" />
           <Tooltip
             contentStyle={{
-              backgroundColor: "var(--tooltip-bg, #ffffff)",
-              borderColor: "var(--tooltip-border, #e5e7eb)",
-              color: "var(--tooltip-text, #000000)",
+              backgroundColor: "var(--bg-elevated)",
+              borderColor: "var(--border)",
+              color: "var(--text-primary)",
             }}
           />
           {data.some((d) => d.income !== undefined) && (
             <Line
               type="monotone"
               dataKey="income"
-              stroke="var(--color-income, rgb(34,197,94))"
+              stroke="var(--chart-2)"
               strokeWidth={2}
               dot={false}
             />
@@ -43,7 +45,7 @@ export default function PnLChart({ data }: { data: MonthlyNet[] }) {
             <Line
               type="monotone"
               dataKey="expenses"
-              stroke="var(--color-expenses, rgb(239,68,68))"
+              stroke="var(--chart-5)"
               strokeWidth={2}
               dot={false}
             />
@@ -51,7 +53,7 @@ export default function PnLChart({ data }: { data: MonthlyNet[] }) {
           <Line
             type="monotone"
             dataKey="net"
-            stroke="var(--color-net, rgb(75,192,192))"
+            stroke="var(--chart-1)"
             strokeWidth={2}
             dot={false}
           />
@@ -60,4 +62,3 @@ export default function PnLChart({ data }: { data: MonthlyNet[] }) {
     </div>
   );
 }
-
