@@ -6,7 +6,7 @@ import { useState } from 'react';
 // Landing page for the analytics section. Provides quick links to the
 // overview, custom analytics and builder areas, along with a placeholder for
 // the planned AI-powered search feature.
-export default function AnalyticsLandingPage() {
+export default function AnalyticsPage() {
   const [query, setQuery] = useState('');
 
 export default function AnalyticsHome() {
