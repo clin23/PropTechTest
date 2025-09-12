@@ -9,6 +9,7 @@ import VizPie from './components/VizPie';
 import CustomGraphBuilder from './components/CustomGraphBuilder';
 import ExportButtons from './components/ExportButtons';
 import PresetMenu from './components/PresetMenu';
+import VizSpreadsheet from './components/VizSpreadsheet';
 import { AnalyticsState, AnalyticsStateType } from '../../../lib/schemas';
 import { useUrlState } from '../../../lib/urlState';
 import { useSeries } from '../../../hooks/useAnalytics';
@@ -51,12 +52,15 @@ export default function AnalyticsPage() {
         <div ref={exportRef} className="space-y-2">
           <div data-testid="viz-section">
             {state.viz === 'line' && (
-              <VizLine
-                data={lineData}
-                showIncome={showIncome}
-                showExpenses={showExpenses}
-                showNet={showNet}
-              />
+              <>
+                <VizLine
+                  data={lineData}
+                  showIncome={showIncome}
+                  showExpenses={showExpenses}
+                  showNet={showNet}
+                />
+                <VizSpreadsheet data={lineData} />
+              </>
             )}
             {state.viz === 'pie' && <VizPie data={pieData} />}
             {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
