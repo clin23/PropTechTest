@@ -63,7 +63,12 @@ export default function AnalyticsBuilderPage() {
                   showExpenses={showExpenses}
                   showNet={showNet}
                 />
-                <VizSpreadsheet data={lineData} />
+                <VizSpreadsheet
+                  data={lineData}
+                  showIncome={showIncome}
+                  showExpenses={showExpenses}
+                  showNet={showNet}
+                />
               </>
             )}
             {state.viz === 'pie' && <VizPie data={pieData} />}
