@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import DateRangeFilter from '../components/DateRangeFilter';
 import AppliedFiltersPanel from '../components/AppliedFiltersPanel';
 import SearchIncomePanel from '../components/SearchIncomePanel';
@@ -48,7 +49,10 @@ export default function AnalyticsBuilderPage() {
   return (
     <div className="flex">
       <div className="flex-1 p-6 space-y-4">
-        <h1 className="text-2xl font-semibold mb-4">Analytics</h1>
+        <Link href="/analytics" className="text-sm text-blue-600 hover:underline">
+          &larr; Back to Analytics
+        </Link>
+        <h1 className="text-2xl font-semibold mb-4 mt-2">Analytics</h1>
         <div ref={exportRef} className="space-y-2">
           <div data-testid="viz-section">
             {state.viz === 'line' && (
