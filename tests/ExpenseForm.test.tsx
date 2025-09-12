@@ -30,18 +30,28 @@ const renderForm = () => {
       expect((expenseSelect as HTMLSelectElement).value).toBe('Mortgage interest');
     });
 
-    it('disables the alternative field when one is filled', async () => {
+    it('hides the alternative field when one is filled', async () => {
       renderForm();
       fireEvent.change(screen.getByLabelText('Category'), {
         target: { value: 'FinanceHolding' },
       });
-      const expenseSelect = await screen.findByLabelText('Expense');
+      expect(screen.getByLabelText('Expense')).toBeInTheDocument();
       const customInput = screen.getByLabelText('Custom label');
-      fireEvent.change(customInput, { target: { value: 'Other' } });
-      expect(expenseSelect).toBeDisabled();
-      fireEvent.change(customInput, { target: { value: '' } });
-      expect(expenseSelect).toBeEnabled();
-      fireEvent.change(expenseSelect, { target: { value: 'Mortgage interest' } });
-      expect(customInput).toBeDisabled();
+      expect(customInput).toBeInTheDocument();
+
+      fireEvent.change(customInput, {
+        target: { value: 'Other' },
+      });
+      expect(screen.queryByLabelText('Expense')).toBeNull();
+
+      fireEvent.change(customInput, {
+        target: { value: '' },
+      });
+      expect(screen.getByLabelText('Expense')).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText('Expense'), {
+        target: { value: 'Mortgage interest' },
+      });
+      expect(screen.queryByLabelText('Custom label')).toBeNull();
     });
   });
