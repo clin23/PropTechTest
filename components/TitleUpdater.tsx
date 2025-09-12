@@ -6,6 +6,9 @@ import { useEffect } from "react";
 const titleMap: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/analytics": "Analytics",
+  "/analytics/overview": "Analytics Overview",
+  "/analytics/custom": "Custom Analytics",
+  "/analytics/builder": "Analytics Builder",
   "/tasks": "Tasks",
   "/tasks/archive": "Tasks Archive",
   "/properties": "Properties",
