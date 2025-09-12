@@ -19,8 +19,8 @@ export default function AnalyticsPage() {
             className="absolute inset-0"
             aria-label="Go to overview"
           />
-          <div className="flex-1 flex items-center justify-center pointer-events-none">
-            <span>Overview</span>
+          <div className="relative z-10 pointer-events-none">
+            <span className="text-5xl font-bold">Overview</span>
           </div>
           <div
             className="mt-4 relative z-10"
@@ -42,13 +42,13 @@ export default function AnalyticsPage() {
         </div>
         <Link
           href="/analytics/custom"
-          className="col-start-3 row-start-1 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg"
+          className="col-start-3 row-start-1 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-3xl font-bold"
         >
           Custom Analytics
         </Link>
         <Link
           href="/analytics/builder"
-          className="col-start-3 row-start-2 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg"
+          className="col-start-3 row-start-2 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-3xl font-bold"
         >
           Analytics Builder
         </Link>
