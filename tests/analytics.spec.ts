@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-test('analytics page loads', async ({ page }) => {
-  await page.goto('/analytics');
+test('analytics builder page loads', async ({ page }) => {
+  await page.goto('/analytics/builder');
   await expect(page.getByTestId('date-range-filter')).toBeVisible();
   await expect(page.getByTestId('viz-section')).toBeVisible();
 });
