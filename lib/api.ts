@@ -111,6 +111,14 @@ export const deleteProperty = (id: string) =>
   api(`/properties/${id}`, { method: 'DELETE' });
 export const listLedger = (propertyId: string) =>
   api<LedgerEntry[]>(`/rent-ledger?propertyId=${propertyId}`);
+export const updateLedgerEntry = (
+  id: string,
+  payload: { amount?: number; date?: string }
+) =>
+  api(`/rent-ledger/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
 export const listTenantNotes = (propertyId: string) =>
   api<TenantNote[]>(`/tenant-crm?propertyId=${propertyId}`);
 export const addTenantNote = (propertyId: string, text: string) =>

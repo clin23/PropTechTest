@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { listLedger } from "../lib/api";
+import { listLedger, updateLedgerEntry } from "../lib/api";
 import type { LedgerEntry } from "../types/property";
 import EditLedgerEntryModal from "./EditLedgerEntryModal";
 
@@ -34,8 +34,14 @@ export default function RentLedgerTable({
     setEntries(calculateBalances(data));
   }, [data]);
 
-  const handleSave = (entry: LedgerEntry) => {
-    const updated = entries.map((e) => (e.id === entry.id ? entry : e));
+  const handleSave = async (entry: LedgerEntry) => {
+    await updateLedgerEntry(entry.id, {
+      amount: entry.amount,
+      date: entry.date,
+    });
+    const updated = entries
+      .map((e) => (e.id === entry.id ? entry : e))
+      .sort((a, b) => a.date.localeCompare(b.date));
     setEntries(calculateBalances(updated));
     setSelected(null);
   };
