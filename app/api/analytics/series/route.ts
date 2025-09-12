@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { incomes, expenses, rentLedger } from '../../store';
+import { incomes, expenses, rentLedger, properties } from '../../store';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../../../../lib/categories';
 
 function monthKey(d: Date) {
@@ -50,11 +50,16 @@ export async function GET(req: Request) {
   });
 
   const incomeByMonth = new Map<string, number>();
+  const incomeItemsByMonth = new Map<string, any[]>();
   for (const i of incomeEntries) {
     const d = new Date(i.date);
     if (d < from || d > to) continue;
     const key = monthKey(d);
     incomeByMonth.set(key, (incomeByMonth.get(key) || 0) + i.amount);
+    const prop = properties.find((p) => p.id === i.propertyId);
+    const arr = incomeItemsByMonth.get(key) || [];
+    arr.push({ amount: i.amount, propertyId: i.propertyId, property: prop?.address });
+    incomeItemsByMonth.set(key, arr);
   }
 
   const expenseEntries = expenses.filter((e) => {
@@ -63,11 +68,16 @@ export async function GET(req: Request) {
     return true;
   });
   const expenseByMonth = new Map<string, number>();
+  const expenseItemsByMonth = new Map<string, any[]>();
   for (const e of expenseEntries) {
     const d = new Date(e.date);
     if (d < from || d > to) continue;
     const key = monthKey(d);
     expenseByMonth.set(key, (expenseByMonth.get(key) || 0) + e.amount);
+    const prop = properties.find((p) => p.id === e.propertyId);
+    const arr = expenseItemsByMonth.get(key) || [];
+    arr.push({ amount: e.amount, vendor: e.vendor, gst: e.gst, category: e.category, propertyId: e.propertyId, property: prop?.address });
+    expenseItemsByMonth.set(key, arr);
   }
 
   const labels = Array.from(new Set([...incomeByMonth.keys(), ...expenseByMonth.keys()])).sort();
@@ -75,7 +85,14 @@ export async function GET(req: Request) {
     const income = incomeByMonth.get(label) || 0;
     const expenses = expenseByMonth.get(label) || 0;
     const net = income - expenses;
-    return { label, income, expenses, net };
+    return {
+      label,
+      income,
+      expenses,
+      net,
+      incomeItems: incomeItemsByMonth.get(label) || [],
+      expenseItems: expenseItemsByMonth.get(label) || [],
+    };
   });
   const total = buckets.reduce((sum, b) => sum + b[metric as 'income' | 'expenses' | 'net'], 0);
   return NextResponse.json({ total, buckets });
