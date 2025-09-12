@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import QuickActionsBar from "../../../../components/QuickActionsBar";
 import ExpenseForm from "../../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../../components/DocumentUploadModal";
@@ -35,12 +34,12 @@ export default function PropertyPage() {
         onUploadDocument={() => setDocOpen(true)}
         onMessageTenant={() => setMessageOpen(true)}
       />
-      <Link
-        href={`/properties/${id}/edit`}
+      <button
+        onClick={() => setEditOpen(true)}
         className="inline-block px-2 py-1 border rounded dark:border-gray-700"
       >
         Edit Property
-      </Link>
+      </button>
       <ExpenseForm
         propertyId={id}
         open={expenseOpen}

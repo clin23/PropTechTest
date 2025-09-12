@@ -22,6 +22,7 @@ export default function PropertyForm({ property, onSaved }: Props) {
     leaseEnd: property?.leaseEnd ?? "",
     rent: property ? String(property.rent) : "",
   });
+  const [confirm, setConfirm] = useState("");
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -126,8 +127,22 @@ export default function PropertyForm({ property, onSaved }: Props) {
           onChange={(e) => setForm({ ...form, rent: e.target.value })}
         />
       </label>
+      {isEdit && (
+        <label className="block">
+          Type 'confirm' to save changes
+          <input
+            className="border p-1 w-full bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+        </label>
+      )}
       <div className="space-x-2">
-        <button type="submit" className="px-2 py-1 bg-blue-500 text-white dark:bg-blue-600">
+        <button
+          type="submit"
+          className="px-2 py-1 bg-blue-500 text-white dark:bg-blue-600 disabled:opacity-50"
+          disabled={isEdit && confirm !== "confirm"}
+        >
           {isEdit ? "Save" : "Create"}
         </button>
         {isEdit && (
