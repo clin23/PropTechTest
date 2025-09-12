@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 
 interface Props {
   data: { label: string; income: number; expenses: number; net: number }[];
@@ -21,21 +21,23 @@ export default function VizLine({ data, showIncome = true, showExpenses = true, 
     <div data-testid="viz-line" className="h-64">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData}>
-          <XAxis dataKey="label" tickFormatter={formatLabel} />
-          <YAxis />
+          <CartesianGrid stroke="rgba(255,255,255,0.06)" />
+          <XAxis dataKey="label" tickFormatter={formatLabel} stroke="var(--text-secondary)" />
+          <YAxis stroke="var(--text-secondary)" />
           <Tooltip
             labelFormatter={formatLabel}
             formatter={(value: number, name: string) => [value, name.charAt(0).toUpperCase() + name.slice(1)]}
+            contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
           />
           <Legend />
           {showNet && hasData && (
-            <Line type="monotone" dataKey="net" stroke="#10b981" name="Net" dot={false} />
+            <Line type="monotone" dataKey="net" stroke="var(--chart-1)" name="Net" dot={false} />
           )}
           {showIncome && hasData && (
-            <Line type="monotone" dataKey="income" stroke="#3b82f6" name="Income" dot={false} />
+            <Line type="monotone" dataKey="income" stroke="var(--chart-2)" name="Income" dot={false} />
           )}
           {showExpenses && hasData && (
-            <Line type="monotone" dataKey="expenses" stroke="#ef4444" name="Expenses" dot={false} />
+            <Line type="monotone" dataKey="expenses" stroke="var(--chart-5)" name="Expenses" dot={false} />
           )}
         </LineChart>
       </ResponsiveContainer>

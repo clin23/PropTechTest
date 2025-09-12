@@ -134,3 +134,27 @@ Retrieve profit and loss figures for a single property over a specific date rang
 
 The response contains total `income`, `expenses`, `net` amount and a `buckets` array of monthly breakdowns.
 
+
+## Dark theme tokens
+
+The dark theme is driven by CSS variables defined in `app/globals.css`:
+
+```
+--bg-base: #0B0F1A;
+--bg-surface: #111826;
+--bg-elevated: #161E2E;
+--border: #2A3448;
+--text-primary: #E6EAF2;
+--text-secondary: #B1B7C6;
+--text-muted: #8A93A5;
+--text-disabled: #5C667A;
+--primary: #4EA8FF;
+--success: #10B981;
+--warning: #F59E0B;
+--danger: #EF4444;
+```
+
+### Usage
+
+- **Do:** `className="bg-bg-surface text-text-primary"`
+- **Don't:** `className="bg-slate-900 text-gray-300"`

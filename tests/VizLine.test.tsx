@@ -17,18 +17,18 @@ describe('VizLine', () => {
     const { container } = render(
       <VizLine data={sample} showIncome showExpenses={false} showNet={false} />
     );
-    expect(container.querySelector('path[stroke="#3b82f6"]')).not.toBeNull();
-    expect(container.querySelector('path[stroke="#ef4444"]')).toBeNull();
-    expect(container.querySelector('path[stroke="#10b981"]')).toBeNull();
+    expect(container.querySelector('path[stroke="var(--chart-2)"]')).not.toBeNull();
+    expect(container.querySelector('path[stroke="var(--chart-5)"]')).toBeNull();
+    expect(container.querySelector('path[stroke="var(--chart-1)"]')).toBeNull();
   });
 
   it('renders axes without data', () => {
     const { container } = render(
       <VizLine data={[]} showIncome={false} showExpenses={false} showNet={false} />
     );
-    expect(container.querySelector('path[stroke="#3b82f6"]')).toBeNull();
-    expect(container.querySelector('path[stroke="#ef4444"]')).toBeNull();
-    expect(container.querySelector('path[stroke="#10b981"]')).toBeNull();
+    expect(container.querySelector('path[stroke="var(--chart-2)"]')).toBeNull();
+    expect(container.querySelector('path[stroke="var(--chart-5)"]')).toBeNull();
+    expect(container.querySelector('path[stroke="var(--chart-1)"]')).toBeNull();
     expect(container.querySelectorAll('.recharts-cartesian-axis').length).toBe(2);
   });
 });

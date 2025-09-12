@@ -28,7 +28,7 @@ export default function DashboardPnlMiniChart() {
 
   if (!data || data.series.length === 0) {
     return (
-      <div className="p-4 border rounded">
+      <div className="p-4 bg-bg-surface border border-[var(--border)] rounded shadow-sm">
         <h2 className="font-semibold mb-2">P&L Trend (Last 6 months)</h2>
         <EmptyState message="Not enough data yet" />
       </div>
@@ -39,7 +39,7 @@ export default function DashboardPnlMiniChart() {
 
   return (
     <div
-      className="p-4 border rounded group cursor-pointer"
+      className="p-4 bg-bg-surface border border-[var(--border)] rounded shadow-sm group cursor-pointer"
       data-testid="pnl-mini"
       onClick={() => router.push("/analytics")}
       role="link"
@@ -50,23 +50,23 @@ export default function DashboardPnlMiniChart() {
           <AreaChart data={series}>
             <Tooltip
               contentStyle={{
-                backgroundColor: "var(--tooltip-bg, #ffffff)",
-                borderColor: "var(--tooltip-border, #e5e7eb)",
-                color: "var(--tooltip-text, #000000)",
+                backgroundColor: "var(--bg-elevated)",
+                borderColor: "var(--border)",
+                color: "var(--text-primary)",
               }}
               formatter={(_, __, props) => [props.payload.net, props.payload.month]}
             />
             <Area
               type="monotone"
               dataKey="net"
-              stroke="currentColor"
-              fill="currentColor"
+              stroke="var(--chart-1)"
+              fill="var(--chart-1)"
               fillOpacity={0.3}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex justify-between text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex justify-between text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-text-secondary">
         <div>Income: {totals.income}</div>
         <div>Expenses: {totals.expenses}</div>
         <div>Net: {totals.net}</div>

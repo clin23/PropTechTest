@@ -12,34 +12,26 @@ interface ThemeContextValue {
 }
 
 export const ThemeContext = createContext<ThemeContextValue>({
-  theme: 'light',
+  theme: 'dark',
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   toggleTheme: () => {},
 });
 
 export default function Providers({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const applySystemTheme = () => {
-      if (!localStorage.getItem('theme')) {
-        const hour = new Date().getHours();
-        const isDark = hour >= 18 || hour < 6;
-        setTheme(isDark ? 'dark' : 'light');
-      }
-    };
     const stored = localStorage.getItem('theme') as Theme | null;
     if (stored) {
       setTheme(stored);
     } else {
-      applySystemTheme();
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark ? 'dark' : 'light');
     }
-    const id = setInterval(applySystemTheme, 60_000);
-    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   const toggleTheme = () =>
