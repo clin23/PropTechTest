@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-export default function AnalyticsHome() {
+// Landing page for the analytics section. Provides quick links to the
+// overview, custom analytics and builder areas, along with a placeholder for
+// the planned AI-powered search feature.
+export default function AnalyticsLandingPage() {
   const [query, setQuery] = useState('');
 
 export default function AnalyticsHome() {
@@ -12,11 +15,18 @@ export default function AnalyticsHome() {
       <h1 className="text-2xl font-semibold mb-6">Analytics</h1>
       <div className="grid grid-cols-3 grid-rows-2 gap-4 h-full">
         <div className="relative col-span-2 row-span-2 flex flex-col border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
-          <Link href="/analytics/overview" className="absolute inset-0" aria-label="Go to overview" />
+          <Link
+            href="/analytics/overview"
+            className="absolute inset-0"
+            aria-label="Go to overview"
+          />
           <div className="flex-1 flex items-center justify-center pointer-events-none">
             <span>Overview</span>
           </div>
-          <div className="mt-4 relative z-10" onClick={e => e.stopPropagation()}>
+          <div
+            className="mt-4 relative z-10"
+            onClick={e => e.stopPropagation()}
+          >
             <input
               type="text"
               value={query}
