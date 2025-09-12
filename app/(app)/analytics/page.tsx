@@ -4,6 +4,7 @@ import { useState } from 'react';
 export default function AnalyticsHome() {
   const [query, setQuery] = useState('');
 
+export default function AnalyticsHome() {
   return (
     <div className="p-6 h-full">
       <h1 className="text-2xl font-semibold mb-6">Analytics</h1>
