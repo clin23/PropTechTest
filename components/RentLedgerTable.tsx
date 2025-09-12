@@ -48,8 +48,8 @@ export default function RentLedgerTable({
 
   return (
     <>
-      <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
-        <thead className="bg-gray-100 dark:bg-gray-700">
+      <table className="min-w-full border rounded card">
+        <thead>
           <tr>
             <th className="p-2 text-left">Date</th>
             <th className="p-2 text-left">Description</th>
@@ -61,7 +61,7 @@ export default function RentLedgerTable({
           {entries.map((e) => (
             <tr
               key={e.id}
-              className="cursor-pointer border-t hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+              className="cursor-pointer border-t border-[var(--border)] hover:bg-[var(--hover)]"
               onClick={() => setSelected(e)}
             >
               <td className="p-2">{e.date}</td>

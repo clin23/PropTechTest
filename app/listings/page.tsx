@@ -23,18 +23,18 @@ export default function ListingsPage() {
       ) : error ? (
         <ErrorState message={(error as Error).message} />
       ) : (
-        <table className="min-w-full bg-white">
+        <table className="min-w-full border rounded card">
           <thead>
             <tr>
-              <th className="border px-2 py-1 text-left">Property</th>
-              <th className="border px-2 py-1 text-left">Rent</th>
+              <th className="border-[var(--border)] px-2 py-1 text-left">Property</th>
+              <th className="border-[var(--border)] px-2 py-1 text-left">Rent</th>
             </tr>
           </thead>
           <tbody>
             {listings?.map((l) => (
               <tr key={l.id}>
-                <td className="border px-2 py-1">{l.property}</td>
-                <td className="border px-2 py-1">${l.rent}</td>
+                <td className="border-[var(--border)] px-2 py-1">{l.property}</td>
+                <td className="border-[var(--border)] px-2 py-1">${l.rent}</td>
               </tr>
             ))}
           </tbody>
