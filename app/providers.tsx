@@ -12,13 +12,13 @@ interface ThemeContextValue {
 }
 
 export const ThemeContext = createContext<ThemeContextValue>({
-  theme: 'light',
+  theme: 'dark',
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   toggleTheme: () => {},
 });
 
 export default function Providers({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
     const stored = localStorage.getItem('theme') as Theme | null;
