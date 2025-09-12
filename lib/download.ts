@@ -10,14 +10,16 @@ export function downloadCsv(data: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-// Placeholder image export; real implementation may use html2canvas or similar
 export async function downloadPng(node: HTMLElement, filename: string) {
-  const canvas = document.createElement('canvas');
-  canvas.width = node.clientWidth;
-  canvas.height = node.clientHeight;
-  const url = canvas.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
+  const { toPng } = await import('html-to-image');
+  try {
+    const dataUrl = await toPng(node);
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    link.click();
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('PNG export failed', err);
+  }
 }
