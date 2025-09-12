@@ -2,31 +2,77 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import SearchExpensesPanel from '../app/(app)/analytics/components/SearchExpensesPanel';
 import SearchIncomePanel from '../app/(app)/analytics/components/SearchIncomePanel';
-
-vi.mock('../components/ExpenseForm', () => ({ __esModule: true, default: () => null }));
-vi.mock('../components/IncomeForm', () => ({ __esModule: true, default: () => null }));
+import AppliedFiltersPanel from '../app/(app)/analytics/components/AppliedFiltersPanel';
+import {
+  INCOME_CATEGORIES,
+  EXPENSE_CATEGORIES,
+} from '../lib/categories';
+import type { AnalyticsStateType } from '../lib/schemas';
 
 describe('SearchExpensesPanel', () => {
-  it('shows categories and allows expanding to items', () => {
-    render(<SearchExpensesPanel />);
+  it('shows categories, expands, and adds items', () => {
+    const onAdd = vi.fn();
+    render(<SearchExpensesPanel onAdd={onAdd} />);
     const category = screen.getByText('Finance Holding');
     expect(category).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText('Toggle Finance Holding'));
+    fireEvent.click(screen.getByLabelText('Expand Finance Holding'));
     expect(screen.getByText('Mortgage interest')).toBeInTheDocument();
-    expect(category).toHaveAttribute('draggable', 'true');
-    expect(screen.getByText('Mortgage interest')).toHaveAttribute('draggable', 'true');
+    fireEvent.click(screen.getByLabelText('Add Mortgage interest'));
+    expect(onAdd).toHaveBeenCalledWith('Mortgage interest');
   });
 });
 
 describe('SearchIncomePanel', () => {
-  it('shows categories and allows expanding to items', () => {
-    render(<SearchIncomePanel />);
+  it('shows categories, expands, and adds items', () => {
+    const onAdd = vi.fn();
+    render(<SearchIncomePanel onAdd={onAdd} />);
     const category = screen.getByText('Core Rent');
     expect(category).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText('Toggle Core Rent'));
+    fireEvent.click(screen.getByLabelText('Expand Core Rent'));
     expect(screen.getByText('Base rent')).toBeInTheDocument();
-    expect(category).toHaveAttribute('draggable', 'true');
-    expect(screen.getByText('Base rent')).toHaveAttribute('draggable', 'true');
+    fireEvent.click(screen.getByLabelText('Add Base rent'));
+    expect(onAdd).toHaveBeenCalledWith('Base rent');
+  });
+});
+
+describe('AppliedFiltersPanel', () => {
+  it('collapses all income and expenses into single tags', () => {
+    const onRemove = vi.fn();
+    const allIncome = Object.keys(INCOME_CATEGORIES).map(g =>
+      g.replace(/([A-Z])/g, ' $1').trim()
+    );
+    const allExpenses = Object.keys(EXPENSE_CATEGORIES).map(g =>
+      g.replace(/([A-Z])/g, ' $1').trim()
+    );
+    const state: AnalyticsStateType = {
+      viz: 'line',
+      metric: 'net',
+      groupBy: 'time',
+      granularity: 'month',
+      from: '',
+      to: '',
+      filters: {
+        properties: [],
+        categories: [],
+        incomeTypes: allIncome,
+        expenseTypes: allExpenses,
+        tenants: [],
+        tags: [],
+      },
+    };
+    render(
+      <AppliedFiltersPanel state={state} onAdd={() => {}} onRemove={onRemove} />
+    );
+    expect(screen.getByText('All Income')).toBeInTheDocument();
+    expect(screen.getByText('All Expenses')).toBeInTheDocument();
+    expect(screen.queryByText('Core Rent')).not.toBeInTheDocument();
+    expect(screen.queryByText('Finance Holding')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Remove All Income'));
+    expect(onRemove).toHaveBeenCalledTimes(allIncome.length);
+    fireEvent.click(screen.getByLabelText('Remove All Expenses'));
+    expect(onRemove).toHaveBeenCalledTimes(
+      allIncome.length + allExpenses.length
+    );
   });
 });
 

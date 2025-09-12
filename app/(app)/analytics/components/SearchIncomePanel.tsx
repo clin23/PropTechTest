@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import IncomeForm from '../../../../components/IncomeForm';
 import { INCOME_CATEGORIES } from '../../../../lib/categories';
 
-export default function SearchIncomePanel() {
+interface Props {
+  onAdd: (value: string) => void;
+}
+
+export default function SearchIncomePanel({ onAdd }: Props) {
   const [q, setQ] = useState('');
-  const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const qLower = q.toLowerCase();
   const entries = Object.entries(INCOME_CATEGORIES).filter(([group, items]) => {
@@ -14,16 +16,24 @@ export default function SearchIncomePanel() {
       items.some(i => i.toLowerCase().includes(qLower))
     );
   });
+
+  const handleAddAll = () => {
+    Object.keys(INCOME_CATEGORIES).forEach(group => {
+      const label = group.replace(/([A-Z])/g, ' $1').trim();
+      onAdd(label);
+    });
+  };
+
   return (
     <div
       data-testid="search-income"
       className="p-4 border rounded-2xl shadow-sm space-y-2 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
     >
       <div className="flex items-center justify-between">
-        <div className="font-semibold">Search Income</div>
+        <div className="font-semibold">Income</div>
         <button
-          aria-label="Add custom income"
-          onClick={() => setOpen(true)}
+          aria-label="Add all income"
+          onClick={handleAddAll}
           className="text-xl leading-none text-blue-600 dark:text-blue-400"
         >
           +
@@ -46,46 +56,45 @@ export default function SearchIncomePanel() {
           return (
             <div key={group} className="space-y-1">
               <div
-                draggable
-                onDragStart={e =>
-                  e.dataTransfer.setData(
-                    'application/json',
-                    JSON.stringify({ type: 'incomeTypes', value: label })
-                  )
-                }
-                className="p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded cursor-grab flex items-center justify-between text-gray-900 dark:text-gray-100"
+                className="p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
               >
                 <span>{label}</span>
-                <button
-                  aria-label={`Toggle ${label}`}
-                  onClick={() =>
-                    setExpanded(prev => ({
-                      ...prev,
-                      [group]: !prev[group],
-                    }))
-                  }
-                  className="ml-2 text-xs"
-                >
-                  {expanded[group] || qLower.length > 0 ? '-' : '+'}
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    aria-label={`${expanded[group] ? 'Collapse' : 'Expand'} ${label}`}
+                    onClick={() =>
+                      setExpanded(prev => ({
+                        ...prev,
+                        [group]: !prev[group],
+                      }))
+                    }
+                    className="text-xs"
+                  >
+                    {expanded[group] || qLower.length > 0 ? '▾' : '▸'}
+                  </button>
+                  <button
+                    aria-label={`Add ${label}`}
+                    onClick={() => onAdd(label)}
+                    className="text-xs"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
               {showItems &&
                 filteredItems.map(item => (
                   <div
                     key={item}
-                    draggable
-                    onDragStart={e =>
-                      e.dataTransfer.setData(
-                        'application/json',
-                        JSON.stringify({
-                          type: 'incomeTypes',
-                          value: item,
-                        })
-                      )
-                    }
-                    className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded cursor-grab text-gray-900 dark:text-gray-100"
+                    className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
                   >
-                    {item}
+                    <span>{item}</span>
+                    <button
+                      aria-label={`Add ${item}`}
+                      onClick={() => onAdd(item)}
+                      className="text-xs"
+                    >
+                      +
+                    </button>
                   </div>
                 ))}
             </div>
@@ -95,7 +104,6 @@ export default function SearchIncomePanel() {
           <div className="text-sm text-gray-500 dark:text-gray-400">No results</div>
         )}
       </div>
-      <IncomeForm open={open} onOpenChange={setOpen} showTrigger={false} />
     </div>
   );
 }
