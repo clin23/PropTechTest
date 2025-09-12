@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import ExpensesTable from "./ExpensesTable";
 import RentLedgerTable from "./RentLedgerTable";
 import PropertyDocumentsTable from "./PropertyDocumentsTable";
@@ -54,6 +55,23 @@ export default function PropertyDetailTabs({ propertyId }: Props) {
             {t.label}
           </button>
         ))}
+        <Link
+          href={`/properties/${propertyId}/inspections`}
+          className="pb-2"
+          role="tab"
+        >
+          Inspections
+        </Link>
+        <Link
+          href={`/properties/${propertyId}/listing`}
+          className="pb-2"
+          role="tab"
+        >
+          Create Listing
+        </Link>
+        <Link href="/vendors" className="pb-2" role="tab">
+          Vendors
+        </Link>
       </div>
       {active === "rent-ledger" && <RentLedgerTable propertyId={propertyId} />}
       {active === "expenses" && <ExpensesTable propertyId={propertyId} />}
