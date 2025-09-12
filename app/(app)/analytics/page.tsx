@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import DateRangeFilter from './components/DateRangeFilter';
 import AppliedFiltersPanel from './components/AppliedFiltersPanel';
 import SearchIncomePanel from './components/SearchIncomePanel';
@@ -23,6 +23,7 @@ export default function AnalyticsPage() {
   const [state, setState] = useState<AnalyticsStateType>(defaultState);
   useUrlState(state, setState);
   const { data } = useSeries(state);
+  const vizRef = useRef<HTMLDivElement>(null);
 
   const filtersApplied = Object.values(state.filters).some(arr => (arr || []).length > 0);
   const hasIncomeFilters = (state.filters.incomeTypes || []).length > 0;
@@ -47,7 +48,7 @@ export default function AnalyticsPage() {
     <div className="flex">
       <div className="flex-1 p-6 space-y-4">
         <h1 className="text-2xl font-semibold mb-4">Analytics</h1>
-        <div data-testid="viz-section">
+        <div data-testid="viz-section" ref={vizRef}>
           {state.viz === 'line' && (
             <VizLine
               data={lineData}
@@ -59,7 +60,7 @@ export default function AnalyticsPage() {
           {state.viz === 'pie' && <VizPie data={pieData} />}
           {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
         </div>
-        <ExportButtons csvData={JSON.stringify(lineData)} />
+        <ExportButtons csvData={JSON.stringify(lineData)} targetRef={vizRef} />
       </div>
       <div className="w-80 p-4 space-y-4 hidden lg:block">
         <DateRangeFilter state={state} onChange={(s) => setState(prev => ({ ...prev, ...s }))} />
