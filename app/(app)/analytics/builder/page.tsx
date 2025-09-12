@@ -109,8 +109,32 @@ export default function AnalyticsBuilderPage() {
             }))
           }
         />
-        <SearchIncomePanel />
-        <SearchExpensesPanel />
+        <SearchIncomePanel
+          onAdd={value =>
+            setState(prev => ({
+              ...prev,
+              filters: {
+                ...prev.filters,
+                incomeTypes: Array.from(
+                  new Set([...(prev.filters.incomeTypes || []), value])
+                ),
+              },
+            }))
+          }
+        />
+        <SearchExpensesPanel
+          onAdd={value =>
+            setState(prev => ({
+              ...prev,
+              filters: {
+                ...prev.filters,
+                expenseTypes: Array.from(
+                  new Set([...(prev.filters.expenseTypes || []), value])
+                ),
+              },
+            }))
+          }
+        />
         <PresetMenu />
       </div>
     </div>
