@@ -5,7 +5,7 @@ import type { LedgerEntry } from "../types/property";
 
 interface Props {
   entry: LedgerEntry;
-  onSave: (entry: LedgerEntry) => void;
+  onSave: (entry: LedgerEntry) => void | Promise<void>;
   onClose: () => void;
 }
 
@@ -26,8 +26,8 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
     )
   );
 
-  const handleSave = () => {
-    onSave({ ...entry, date: datePaid, amount: parseFloat(amount) || 0 });
+  const handleSave = async () => {
+    await onSave({ ...entry, date: datePaid, amount: parseFloat(amount) || 0 });
   };
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
