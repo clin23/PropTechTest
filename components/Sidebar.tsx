@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { listProperties } from "../lib/api";
 import type { PropertySummary } from "../types/property";
+import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const { data: propertyList = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
     queryFn: listProperties,
@@ -99,43 +101,49 @@ export default function Sidebar() {
     <div
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      className={`relative h-screen bg-white dark:bg-gray-800 border-r dark:border-gray-700 transition-all ${
+      className={`relative h-screen bg-bg-base border-r border-[var(--border)] transition-all ${
         open ? "w-64" : "w-16"
       }`}
     >
       <div className="flex flex-col h-full justify-between">
         <nav className="mt-12 space-y-1">
-          {links.map((link) => (
-            <div key={link.href}>
-              <Link
-                href={link.href}
-                className={`flex items-center px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  open ? "" : "justify-center"
-                }`}
-              >
-                <span className="h-6 w-6">{link.icon}</span>
-                {open && <span className="ml-3">{link.label}</span>}
-              </Link>
-              {open && link.children && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {link.children.map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      className="block px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+          {links.map((link) => {
+            const active = pathname === link.href;
+            return (
+              <div key={link.href}>
+                <Link
+                  href={link.href}
+                  className={`relative flex items-center px-4 py-2 rounded hover:bg-[var(--hover)] text-text-primary ${
+                    open ? "" : "justify-center"
+                  } ${active ? "bg-bg-elevated" : ""}`}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary)]" />
+                  )}
+                  <span className="h-6 w-6">{link.icon}</span>
+                  {open && <span className="ml-3">{link.label}</span>}
+                </Link>
+                {open && link.children && (
+                  <div className="ml-8 mt-1 space-y-1">
+                    {link.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className="block px-2 py-1 text-sm rounded hover:bg-[var(--hover)]"
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
-        <div className="p-4 border-t dark:border-gray-700 flex justify-center">
+        <div className="p-4 border-t border-[var(--border)] flex justify-center">
           <Link
             href="/settings"
-            className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-2 rounded hover:bg-[var(--hover)]"
             aria-label="Settings"
           >
             <svg
@@ -164,4 +172,3 @@ export default function Sidebar() {
     </div>
   );
 }
-

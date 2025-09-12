@@ -2,30 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global scrollbar styling for light and dark modes */
-* {
+:root[data-theme="dark"]{
+  --bg-base:#0B0F1A;
+  --bg-surface:#111826;
+  --bg-elevated:#161E2E;
+  --border:#2A3448;
+
+  --text-primary:#E6EAF2;
+  --text-secondary:#B1B7C6;
+  --text-muted:#8A93A5;
+  --text-disabled:#5C667A;
+  --placeholder:#6B7280;
+
+  --primary:#4EA8FF;
+  --primary-hover:#79BFFF;
+  --primary-active:#2D7ECD;
+  --focus:#93C5FD;
+
+  --success:#10B981;
+  --warning:#F59E0B;
+  --danger:#EF4444;
+  --info:#60A5FA;
+
+  --shadow-1:0 1px 0 rgba(255,255,255,0.03),0 4px 16px rgba(0,0,0,0.6);
+  --zebra:rgba(255,255,255,0.02);
+  --hover:rgba(255,255,255,0.04);
+
+  --chart-1:#60A5FA; --chart-2:#34D399; --chart-3:#F59E0B; --chart-4:#A78BFA;
+  --chart-5:#F87171; --chart-6:#22D3EE; --chart-7:#F472B6; --chart-8:#94A3B8;
+}
+@media (prefers-color-scheme: dark){
+  html{ color-scheme: dark; }
+}
+
+[data-theme="dark"] body{ background:var(--bg-base); color:var(--text-primary); }
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea{ background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); }
+[data-theme="dark"] ::placeholder{ color:var(--placeholder); opacity:1; }
+
+[data-theme="dark"] *{
   scrollbar-width: thin;
-  scrollbar-color: #9ca3af transparent; /* gray-400 */
+  scrollbar-color: var(--border) var(--bg-base);
 }
-
-.dark * {
-  scrollbar-color: #4b5563 transparent; /* gray-600 */
-}
-
-*::-webkit-scrollbar {
+[data-theme="dark"] *::-webkit-scrollbar{
   width: 8px;
   height: 8px;
 }
-
-*::-webkit-scrollbar-track {
-  background: transparent;
+[data-theme="dark"] *::-webkit-scrollbar-track{
+  background: var(--bg-base);
 }
-
-*::-webkit-scrollbar-thumb {
-  background-color: #9ca3af; /* gray-400 */
+[data-theme="dark"] *::-webkit-scrollbar-thumb{
+  background-color: var(--border);
   border-radius: 4px;
 }
-
-.dark *::-webkit-scrollbar-thumb {
-  background-color: #4b5563; /* gray-600 */
+[data-theme="dark"] *::-webkit-scrollbar-thumb:hover{
+  background-color: #3A4761;
 }

@@ -87,7 +87,14 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
                     key={item}
                     className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100"
                   >
-                    {item}
+                    <span>{item}</span>
+                    <button
+                      aria-label={`Add ${item}`}
+                      onClick={() => onAdd(item)}
+                      className="text-xs"
+                    >
+                      +
+                    </button>
                   </div>
                 ))}
             </div>
