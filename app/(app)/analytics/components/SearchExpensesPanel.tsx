@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type DragEvent } from 'react';
+import React, { useState, type DragEvent } from 'react';
 import {
   DragDropContext,
   Droppable,
