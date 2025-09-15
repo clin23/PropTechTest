@@ -124,12 +124,26 @@ export default function AnalyticsBuilderPage() {
               Date range: {new Date(state.from).toLocaleDateString()} - {new Date(state.to).toLocaleDateString()}
             </div>
             {filtersApplied && (
-              <div>
-                Filters:{' '}
+              <div className="flex flex-wrap items-center gap-2">
+                <span>Filters:</span>
                 {Object.entries(state.filters)
                   .filter(([, arr]) => (arr || []).length > 0)
-                  .map(([key, arr]) => `${key}: ${(arr || []).join(', ')}`)
-                  .join('; ')}
+                  .map(([key, arr]) =>
+                    (arr || []).map(value => (
+                      <span
+                        key={`${key}-${value}`}
+                        className={`px-2 py-0.5 rounded-full text-sm cursor-default ${
+                          key === 'incomeTypes'
+                            ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-800 dark:text-green-100 dark:hover:bg-green-700'
+                            : key === 'expenseTypes'
+                              ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-800 dark:text-red-100 dark:hover:bg-red-700'
+                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {value}
+                      </span>
+                    ))
+                  )}
               </div>
             )}
           </div>
