@@ -58,7 +58,7 @@ export default function AnalyticsBuilderPage() {
         <div ref={exportRef} className="space-y-2">
           <div data-testid="viz-section">
             {state.viz === 'line' && (
-              <>
+              <div className="border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4 space-y-4">
                 <VizLine
                   data={lineData}
                   showIncome={showIncome}
@@ -71,7 +71,7 @@ export default function AnalyticsBuilderPage() {
                   showExpenses={showExpenses}
                   showNet={showNet}
                 />
-              </>
+              </div>
             )}
             {state.viz === 'pie' && <VizPie data={pieData} />}
             {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
