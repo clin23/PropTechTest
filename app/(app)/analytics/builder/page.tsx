@@ -97,19 +97,23 @@ export default function AnalyticsBuilderPage() {
         <div ref={exportRef} className="space-y-2">
           <div data-testid="viz-section">
             {state.viz === 'line' && (
-              <div className="border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4 space-y-4">
-                <VizLine
-                  data={lineData}
-                  showIncome={showIncome}
-                  showExpenses={showExpenses}
-                  showNet={showNet}
-                />
-                <VizSpreadsheet
-                  data={lineData}
-                  showIncome={showIncome}
-                  showExpenses={showExpenses}
-                  showNet={showNet}
-                />
+              <div className="space-y-4">
+                <div className="border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
+                  <VizLine
+                    data={lineData}
+                    showIncome={showIncome}
+                    showExpenses={showExpenses}
+                    showNet={showNet}
+                  />
+                </div>
+                <div className="border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
+                  <VizSpreadsheet
+                    data={lineData}
+                    showIncome={showIncome}
+                    showExpenses={showExpenses}
+                    showNet={showNet}
+                  />
+                </div>
               </div>
             )}
             {state.viz === 'pie' && <VizPie data={pieData} />}
