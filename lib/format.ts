@@ -1,12 +1,16 @@
 export const formatCurrency = (n: number) =>
   new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(n);
 
-export const formatDate = (d: string | Date) =>
-  new Intl.DateTimeFormat('en-AU', {
+export const formatDate = (d?: string | Date) => {
+  if (!d) return '';
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-AU', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(d));
+  }).format(date);
+};
 
 export const formatMoney = (cents: number) => formatCurrency(cents / 100);
 
