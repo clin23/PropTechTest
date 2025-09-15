@@ -9,7 +9,6 @@ import VizLine from '../components/VizLine';
 import VizPie from '../components/VizPie';
 import CustomGraphBuilder from '../components/CustomGraphBuilder';
 import ExportButtons from '../components/ExportButtons';
-import PresetMenu from '../components/PresetMenu';
 import VizSpreadsheet from '../components/VizSpreadsheet';
 import { AnalyticsState, AnalyticsStateType } from '../../../../lib/schemas';
 import { useUrlState } from '../../../../lib/urlState';
@@ -143,7 +142,6 @@ export default function AnalyticsBuilderPage() {
             }))
           }
         />
-        <PresetMenu />
       </div>
     </div>
   );
