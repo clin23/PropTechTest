@@ -9,7 +9,6 @@ import VizLine from '../components/VizLine';
 import VizPie from '../components/VizPie';
 import CustomGraphBuilder from '../components/CustomGraphBuilder';
 import ExportButtons from '../components/ExportButtons';
-import PresetMenu from '../components/PresetMenu';
 import VizSpreadsheet from '../components/VizSpreadsheet';
 import { AnalyticsState, AnalyticsStateType } from '../../../../lib/schemas';
 import { useUrlState } from '../../../../lib/urlState';
@@ -59,20 +58,24 @@ export default function AnalyticsBuilderPage() {
         <div ref={exportRef} className="space-y-2">
           <div data-testid="viz-section">
             {state.viz === 'line' && (
-              <>
-                <VizLine
-                  data={lineData}
-                  showIncome={showIncome}
-                  showExpenses={showExpenses}
-                  showNet={showNet}
-                />
-                <VizSpreadsheet
-                  data={lineData}
-                  showIncome={showIncome}
-                  showExpenses={showExpenses}
-                  showNet={showNet}
-                />
-              </>
+              <div className="space-y-4">
+                <div className="border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
+                  <VizLine
+                    data={lineData}
+                    showIncome={showIncome}
+                    showExpenses={showExpenses}
+                    showNet={showNet}
+                  />
+                </div>
+                <div className="border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
+                  <VizSpreadsheet
+                    data={lineData}
+                    showIncome={showIncome}
+                    showExpenses={showExpenses}
+                    showNet={showNet}
+                  />
+                </div>
+              </div>
             )}
             {state.viz === 'pie' && <VizPie data={pieData} />}
             {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
@@ -143,7 +146,6 @@ export default function AnalyticsBuilderPage() {
             }))
           }
         />
-        <PresetMenu />
       </div>
     </div>
   );

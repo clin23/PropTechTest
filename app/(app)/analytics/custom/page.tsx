@@ -6,7 +6,7 @@ export default function CustomAnalytics() {
       <Link href="/analytics" className="text-sm text-blue-600 hover:underline">
         &larr; Back to Analytics
       </Link>
-      <h1 className="text-2xl font-semibold mb-4 mt-2">Custom Analytics</h1>
+      <h1 className="text-2xl font-semibold mb-4 mt-2">My Custom Analytics</h1>
       <p>Saved analytics will be accessible here.</p>
     </div>
   );

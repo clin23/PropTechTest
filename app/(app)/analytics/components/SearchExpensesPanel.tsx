@@ -50,6 +50,24 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
     );
   });
 
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+    if (!destination) return;
+
+    const visible = entries;
+    const sourceKey = visible[source.index];
+    const destKey = visible[destination.index];
+
+    setOrder(prev => {
+      const newOrder = Array.from(prev);
+      const fromIndex = newOrder.indexOf(sourceKey);
+      const [removed] = newOrder.splice(fromIndex, 1);
+      const toIndex = destKey ? newOrder.indexOf(destKey) : newOrder.length;
+      newOrder.splice(toIndex, 0, removed);
+      return newOrder;
+    });
+  };
+
   const handleAddAll = () => {
     Object.keys(EXPENSE_CATEGORIES).forEach(group => {
       const label = group.replace(/([A-Z])/g, ' $1').trim();
@@ -138,12 +156,9 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
                   ))}
               </div>
             </div>
-          );
-        })}
-        {entries.length === 0 && (
-          <div className="text-sm text-gray-500 dark:text-gray-400">No results</div>
-        )}
-      </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 }
