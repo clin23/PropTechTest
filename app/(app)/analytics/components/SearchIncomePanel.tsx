@@ -1,4 +1,10 @@
-import { useState } from 'react';
+import { useState, type DragEvent } from 'react';
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from '@hello-pangea/dnd';
 import { INCOME_CATEGORIES } from '../../../../lib/categories';
 
 interface Props {
@@ -8,14 +14,46 @@ interface Props {
 export default function SearchIncomePanel({ onAdd }: Props) {
   const [q, setQ] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // keep track of category order so users can reorder via drag and drop
+  const [order, setOrder] = useState<string[]>(
+    Object.keys(INCOME_CATEGORIES)
+  );
+
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, value: string) => {
+    e.dataTransfer.setData(
+      'application/json',
+      JSON.stringify({ type: 'incomeTypes', value })
+    );
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
   const qLower = q.toLowerCase();
-  const entries = Object.entries(INCOME_CATEGORIES).filter(([group, items]) => {
+  const entries = order.filter(group => {
+    const items = INCOME_CATEGORIES[group as keyof typeof INCOME_CATEGORIES];
     const label = group.replace(/([A-Z])/g, ' $1').trim();
     return (
       label.toLowerCase().includes(qLower) ||
       items.some(i => i.toLowerCase().includes(qLower))
     );
   });
+
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+    if (!destination) return;
+
+    const visible = entries;
+    const sourceKey = visible[source.index];
+    const destKey = visible[destination.index];
+
+    setOrder(prev => {
+      const newOrder = Array.from(prev);
+      const fromIndex = newOrder.indexOf(sourceKey);
+      const [removed] = newOrder.splice(fromIndex, 1);
+      const toIndex = destKey ? newOrder.indexOf(destKey) : newOrder.length;
+      newOrder.splice(toIndex, 0, removed);
+      return newOrder;
+    });
+  };
 
   const handleAddAll = () => {
     Object.keys(INCOME_CATEGORIES).forEach(group => {
@@ -46,64 +84,92 @@ export default function SearchIncomePanel({ onAdd }: Props) {
         placeholder="Search categories"
         className="w-full border rounded p-1 text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
       />
-      <div className="space-y-1 max-h-40 overflow-y-auto">
-        {entries.map(([group, items]) => {
-          const label = group.replace(/([A-Z])/g, ' $1').trim();
-          const showItems = expanded[group] || qLower.length > 0;
-          const filteredItems = items.filter(i =>
-            i.toLowerCase().includes(qLower)
-          );
-          return (
-            <div key={group} className="space-y-1">
-              <div
-                className="p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
-              >
-                <span>{label}</span>
-                <div className="flex items-center gap-1">
-                  <button
-                    aria-label={`${expanded[group] ? 'Collapse' : 'Expand'} ${label}`}
-                    onClick={() =>
-                      setExpanded(prev => ({
-                        ...prev,
-                        [group]: !prev[group],
-                      }))
-                    }
-                    className="text-xs"
-                  >
-                    {expanded[group] || qLower.length > 0 ? '▾' : '▸'}
-                  </button>
-                  <button
-                    aria-label={`Add ${label}`}
-                    onClick={() => onAdd(label)}
-                    className="text-xs"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              {showItems &&
-                filteredItems.map(item => (
-                  <div
-                    key={item}
-                    className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
-                  >
-                    <span>{item}</span>
-                    <button
-                      aria-label={`Add ${item}`}
-                      onClick={() => onAdd(item)}
-                      className="text-xs"
-                    >
-                      +
-                    </button>
-                  </div>
-                ))}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="income-groups">
+          {provided => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="space-y-1 max-h-40 overflow-y-auto"
+            >
+              {entries.map((group, index) => {
+                const items = INCOME_CATEGORIES[group as keyof typeof INCOME_CATEGORIES];
+                const label = group.replace(/([A-Z])/g, ' $1').trim();
+                const showItems = expanded[group] || qLower.length > 0;
+                const filteredItems = items.filter(i =>
+                  i.toLowerCase().includes(qLower)
+                );
+                return (
+                  <Draggable key={group} draggableId={group} index={index}>
+                    {prov => (
+                      <div
+                        ref={prov.innerRef}
+                        {...prov.draggableProps}
+                        onDragStart={e => {
+                          prov.draggableProps.onDragStart?.(e);
+                          handleDragStart(e, label);
+                        }}
+                      >
+                        <div className="space-y-1">
+                          <div
+                            className="p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
+                            {...prov.dragHandleProps}
+                          >
+                            <span>{label}</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                aria-label={`${expanded[group] ? 'Collapse' : 'Expand'} ${label}`}
+                                onClick={() =>
+                                  setExpanded(prev => ({
+                                    ...prev,
+                                    [group]: !prev[group],
+                                  }))
+                                }
+                                className="text-xs"
+                              >
+                                {expanded[group] || qLower.length > 0 ? '▾' : '▸'}
+                              </button>
+                              <button
+                                aria-label={`Add ${label}`}
+                                onClick={() => onAdd(label)}
+                                className="text-xs"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                          {showItems &&
+                            filteredItems.map(item => (
+                              <div
+                                key={item}
+                                draggable
+                                onDragStart={e => handleDragStart(e, item)}
+                                className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
+                              >
+                                <span>{item}</span>
+                                <button
+                                  aria-label={`Add ${item}`}
+                                  onClick={() => onAdd(item)}
+                                  className="text-xs"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
+              {entries.length === 0 && (
+                <div className="text-sm text-gray-500 dark:text-gray-400">No results</div>
+              )}
             </div>
-          );
-        })}
-        {entries.length === 0 && (
-          <div className="text-sm text-gray-500 dark:text-gray-400">No results</div>
-        )}
-      </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 }
