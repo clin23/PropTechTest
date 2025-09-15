@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { DragEvent } from 'react';
 import {
   DragDropContext,
@@ -32,8 +32,8 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
     );
     e.dataTransfer.effectAllowed = 'copy';
   };
-
-  const handleDragEnd = (result: DropResult) => {
+  
+  const handleReorder = (result: DropResult) => {
     if (!result.destination) return;
     if (result.destination.index === result.source.index) return;
     setOrder(prev => {
@@ -101,7 +101,7 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
         placeholder="Search categories"
         className="w-full border rounded p-1 text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
       />
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragEnd={handleReorder}>
         <Droppable droppableId="expense-groups">
           {provided => (
             <div
