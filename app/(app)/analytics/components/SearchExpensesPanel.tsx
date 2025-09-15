@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type DragEvent } from 'react';
 import {
   DragDropContext,
   Droppable,
@@ -18,6 +18,14 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
   const [order, setOrder] = useState<string[]>(
     Object.keys(EXPENSE_CATEGORIES)
   );
+
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, value: string) => {
+    e.dataTransfer.setData(
+      'application/json',
+      JSON.stringify({ type: 'expenseTypes', value })
+    );
+    e.dataTransfer.effectAllowed = 'copy';
+  };
 
   const qLower = q.toLowerCase();
   const entries = order.filter(group => {
@@ -99,6 +107,10 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
                           <div
                             className="p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
                             {...prov.dragHandleProps}
+                            onDragStart={e => {
+                              prov.dragHandleProps?.onDragStart?.(e);
+                              handleDragStart(e, label);
+                            }}
                           >
                             <span>{label}</span>
                             <div className="flex items-center gap-1">
@@ -127,6 +139,8 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
                             filteredItems.map(item => (
                               <div
                                 key={item}
+                                draggable
+                                onDragStart={e => handleDragStart(e, item)}
                                 className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100"
                               >
                                 <span>{item}</span>
