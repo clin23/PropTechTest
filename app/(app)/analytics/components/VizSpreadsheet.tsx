@@ -38,39 +38,38 @@ export default function VizSpreadsheet({ data, showIncome = true, showExpenses =
   const [ytd, setYtd] = useState<number>(0);
   const both = showIncome && showExpenses;
   const colClass = both ? 'w-1/2' : 'w-full';
+
+  function openBucket(b: Bucket) {
+    const [year, month] = b.label.split('-').map(Number);
+    const cumulative = data
+      .filter((d) => {
+        const [y, m] = d.label.split('-').map(Number);
+        return y === year && m <= month;
+      })
+      .reduce((sum, d) => sum + d.income - d.expenses, 0);
+    setYtd(cumulative);
+    setSelected(b);
+  }
   return (
     <div className="overflow-x-auto" data-testid="viz-spreadsheet">
       <table className="w-full text-sm">
         <thead>
           <tr>
-            <th className="w-24 text-left">Month</th>
-            {showIncome && <th className={`${colClass} text-left`}>Income</th>}
-            {showExpenses && <th className={`${colClass} text-left`}>Expenses</th>}
+            <th className="w-24 text-left px-4">Month</th>
+            {showIncome && <th className={`${colClass} text-left px-4`}>Income</th>}
+            {showExpenses && <th className={`${colClass} text-left px-4`}>Expenses</th>}
           </tr>
         </thead>
         <tbody>
           {data.map((b) => (
-            <tr key={b.label} className="border-t hover:bg-gray-100 dark:hover:bg-gray-800">
-              <td className="align-top">
-                <button
-                  className="underline text-left"
-                  onClick={() => {
-                    const [year, month] = b.label.split('-').map(Number);
-                    const cumulative = data
-                      .filter((d) => {
-                        const [y, m] = d.label.split('-').map(Number);
-                        return y === year && m <= month;
-                      })
-                      .reduce((sum, d) => sum + d.income - d.expenses, 0);
-                    setYtd(cumulative);
-                    setSelected(b);
-                  }}
-                >
-                  {formatLabel(b.label)}
-                </button>
-              </td>
+            <tr
+              key={b.label}
+              className="border-t hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              onClick={() => openBucket(b)}
+            >
+              <td className="align-top px-4">{formatLabel(b.label)}</td>
               {showIncome && (
-                <td className="align-top">
+                <td className="align-top px-4">
                   {b.incomeItems && b.incomeItems.length > 0
                     ? b.incomeItems.map((i, idx) => (
                         <div key={idx}>${i.amount} {i.property}</div>
@@ -79,7 +78,7 @@ export default function VizSpreadsheet({ data, showIncome = true, showExpenses =
                 </td>
               )}
               {showExpenses && (
-                <td className="align-top">
+                <td className="align-top px-4">
                   {b.expenseItems && b.expenseItems.length > 0
                     ? b.expenseItems.map((e, idx) => (
                         <div key={idx}>${e.amount} {e.vendor}</div>
