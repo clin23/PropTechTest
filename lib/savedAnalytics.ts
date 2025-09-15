@@ -37,3 +37,10 @@ export function saveProject(name: string, state: AnalyticsStateType): SavedProje
 export function getProject(id: string): SavedProject | undefined {
   return loadProjects().find(p => p.id === id);
 }
+
+export function deleteProject(id: string) {
+  const projects = loadProjects().filter(p => p.id !== id);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(KEY, JSON.stringify(projects));
+  }
+}
