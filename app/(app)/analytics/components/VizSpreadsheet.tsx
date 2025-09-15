@@ -10,6 +10,7 @@ interface ExpenseItem {
   vendor: string;
   gst: number;
   category: string;
+  property?: string;
 }
 
 interface Bucket {
@@ -37,7 +38,6 @@ export default function VizSpreadsheet({ data, showIncome = true, showExpenses =
   const [selected, setSelected] = useState<Bucket | null>(null);
   const [ytd, setYtd] = useState<number>(0);
   const both = showIncome && showExpenses;
-  const colClass = both ? 'w-1/2' : 'w-full';
 
   function openBucket(b: Bucket) {
     const [year, month] = b.label.split('-').map(Number);
@@ -56,8 +56,18 @@ export default function VizSpreadsheet({ data, showIncome = true, showExpenses =
         <thead>
           <tr>
             <th className="w-24 text-left px-4">Month</th>
-            {showIncome && <th className={`${colClass} text-left px-4`}>Income</th>}
-            {showExpenses && <th className={`${colClass} text-left px-4`}>Expenses</th>}
+            {showIncome && (
+              <>
+                <th className="text-right px-4">Income</th>
+                <th className="text-left px-4">Property</th>
+              </>
+            )}
+            {showExpenses && (
+              <>
+                <th className="text-right px-4">Expenses</th>
+                <th className="text-left px-4">Property</th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -69,22 +79,40 @@ export default function VizSpreadsheet({ data, showIncome = true, showExpenses =
             >
               <td className="align-top px-4">{formatLabel(b.label)}</td>
               {showIncome && (
-                <td className="align-top px-4">
-                  {b.incomeItems && b.incomeItems.length > 0
-                    ? b.incomeItems.map((i, idx) => (
-                        <div key={idx}>${i.amount} {i.property}</div>
-                      ))
-                    : <div>${b.income}</div>}
-                </td>
+                <>
+                  <td className="align-top px-4 text-right">
+                    {b.incomeItems && b.incomeItems.length > 0
+                      ? b.incomeItems.map((i, idx) => (
+                          <div key={idx}>${i.amount}</div>
+                        ))
+                      : <div>${b.income}</div>}
+                  </td>
+                  <td className="align-top px-4">
+                    {b.incomeItems && b.incomeItems.length > 0
+                      ? b.incomeItems.map((i, idx) => (
+                          <div key={idx}>{i.property}</div>
+                        ))
+                      : null}
+                  </td>
+                </>
               )}
               {showExpenses && (
-                <td className="align-top px-4">
-                  {b.expenseItems && b.expenseItems.length > 0
-                    ? b.expenseItems.map((e, idx) => (
-                        <div key={idx}>${e.amount} {e.vendor}</div>
-                      ))
-                    : <div>${b.expenses}</div>}
-                </td>
+                <>
+                  <td className="align-top px-4 text-right">
+                    {b.expenseItems && b.expenseItems.length > 0
+                      ? b.expenseItems.map((e, idx) => (
+                          <div key={idx}>${e.amount}</div>
+                        ))
+                      : <div>${b.expenses}</div>}
+                  </td>
+                  <td className="align-top px-4">
+                    {b.expenseItems && b.expenseItems.length > 0
+                      ? b.expenseItems.map((e, idx) => (
+                          <div key={idx}>{e.property}</div>
+                        ))
+                      : null}
+                  </td>
+                </>
               )}
             </tr>
           ))}
