@@ -9,7 +9,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       <aside className="w-64 border-r p-6 space-y-4">
         <PageHeader title="Settings" />
         <label className="flex items-center justify-between">
-          <span>Dark Mode</span>
+          <span className="sr-only">Dark Mode</span>
           <DarkModeToggle />
         </label>
         <ul className="list-disc pl-6 space-y-1">
