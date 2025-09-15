@@ -8,12 +8,12 @@ interface Props {
 
 export default function CashflowLineChart({ data }: Props) {
   return (
-    <div className="p-4 rounded-2xl shadow bg-white">
+    <div className="p-4 rounded-2xl card">
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" tickFormatter={(d) => formatDate(d)} />
-          <YAxis tickFormatter={(v) => formatMoney(v)} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="date" tickFormatter={(d) => formatDate(d)} tick={{ fill: 'var(--text-secondary)' }} />
+          <YAxis tickFormatter={(v) => formatMoney(v)} tick={{ fill: 'var(--text-secondary)' }} />
           <Tooltip formatter={(v: number) => formatMoney(v)} labelFormatter={(l) => formatDate(l)} />
           <Legend />
           <Line type="monotone" dataKey="cashInCents" name="Cash In" stroke="#22c55e" />
