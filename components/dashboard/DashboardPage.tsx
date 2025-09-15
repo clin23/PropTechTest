@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { startOfMonth, formatISO } from 'date-fns';
 import MetricCard from './MetricCard';
 import CashflowLineChart from './CashflowLineChart';
 import PieCard from './PieCard';
@@ -10,13 +9,16 @@ import { getDashboard } from '../../lib/dashboard';
 import { formatMoney } from '../../lib/format';
 import Header from './Header';
 
+const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+const formatISODate = (d: Date) => d.toISOString().split('T')[0];
+
 export default function DashboardPage() {
   const [from] = useState(() => startOfMonth(new Date()));
   const [to] = useState(() => new Date());
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard', from, to],
-    queryFn: () => getDashboard(formatISO(from, { representation: 'date' }), formatISO(to, { representation: 'date' })),
+    queryFn: () => getDashboard(formatISODate(from), formatISODate(to)),
   });
 
   if (isLoading) return <div className="p-6">Loading...</div>;
