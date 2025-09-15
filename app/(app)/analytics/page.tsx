@@ -44,7 +44,7 @@ export default function AnalyticsPage() {
           href="/analytics/custom"
           className="col-start-3 row-start-1 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-3xl font-bold"
         >
-          Custom Analytics
+          My Custom Analytics
         </Link>
         <Link
           href="/analytics/builder"
