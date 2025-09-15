@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, type DragEvent } from 'react';
 import {
   DragDropContext,
