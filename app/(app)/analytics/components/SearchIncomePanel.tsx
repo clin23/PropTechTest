@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import type { DragEvent } from 'react';
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from '@hello-pangea/dnd';
 import { INCOME_CATEGORIES } from '../../../../lib/categories';
 
 interface Props {
@@ -11,36 +17,31 @@ interface Props {
 export default function SearchIncomePanel({ onAdd }: Props) {
   const [q, setQ] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  // keep track of category order and currently dragged index for manual reordering
-  const [order, setOrder] = useState<string[]>(Object.keys(INCOME_CATEGORIES));
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  // track user defined order of income groups
+  const [order, setOrder] = useState<string[]>(
+    Object.keys(INCOME_CATEGORIES)
+  );
 
   const handleDragStart = (
     e: DragEvent<HTMLDivElement>,
-    value: string,
-    index?: number
+    value: string
   ) => {
     e.dataTransfer.setData(
       'application/json',
       JSON.stringify({ type: 'incomeTypes', value })
     );
     e.dataTransfer.effectAllowed = 'copy';
-    if (typeof index === 'number') setDragIndex(index);
   };
 
-  const handleDragOver = (
-    e: DragEvent<HTMLDivElement>,
-    index: number
-  ) => {
-    e.preventDefault();
-    if (dragIndex === null || dragIndex === index) return;
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    if (result.destination.index === result.source.index) return;
     setOrder(prev => {
       const newOrder = Array.from(prev);
-      const [removed] = newOrder.splice(dragIndex, 1);
-      newOrder.splice(index, 0, removed);
+      const [removed] = newOrder.splice(result.source.index, 1);
+      newOrder.splice(result.destination.index, 0, removed);
       return newOrder;
     });
-    setDragIndex(index);
   };
 
   const qLower = q.toLowerCase();
@@ -100,64 +101,89 @@ export default function SearchIncomePanel({ onAdd }: Props) {
         placeholder="Search categories"
         className="w-full border rounded p-1 text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
       />
-      <div className="space-y-1 max-h-40 overflow-y-auto">
-        {entries.map((group, index) => {
-          const items = INCOME_CATEGORIES[group as keyof typeof INCOME_CATEGORIES];
-          const label = group.replace(/([A-Z])/g, ' $1').trim();
-          const showItems = expanded[group] || qLower.length > 0;
-          const filteredItems = items.filter(i => i.toLowerCase().includes(qLower));
-          return (
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="income-groups">
+          {provided => (
             <div
-              key={group}
-              draggable
-              onDragStart={e => handleDragStart(e, label, index)}
-              onDragOver={e => handleDragOver(e, index)}
-              onDragEnd={() => setDragIndex(null)}
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="space-y-1 max-h-40 overflow-y-auto"
             >
-              <div className="space-y-1">
-                <div className="p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100">
-                  <span>{label}</span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      aria-label={`${expanded[group] ? 'Collapse' : 'Expand'} ${label}`}
-                      onClick={() =>
-                        setExpanded(prev => ({
-                          ...prev,
-                          [group]: !prev[group],
-                        }))
-                      }
-                      className="text-xs"
-                    >
-                      {expanded[group] || qLower.length > 0 ? '▾' : '▸'}
-                    </button>
-                    <button
-                      aria-label={`Add ${label}`}
-                      onClick={() => onAdd(label)}
-                      className="text-xs"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                {showItems &&
-                  filteredItems.map(item => (
-                    <div
-                      key={item}
-                      draggable
-                      onDragStart={e => handleDragStart(e, item)}
-                      className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
-                    >
-                      <span>{item}</span>
-                      <button
-                        aria-label={`Add ${item}`}
-                        onClick={() => onAdd(item)}
-                        className="text-xs"
+              {entries.map((group, index) => {
+                const items =
+                  INCOME_CATEGORIES[group as keyof typeof INCOME_CATEGORIES];
+                const label = group.replace(/([A-Z])/g, ' $1').trim();
+                const showItems = expanded[group] || qLower.length > 0;
+                const filteredItems = items.filter(i =>
+                  i.toLowerCase().includes(qLower)
+                );
+                return (
+                  <Draggable draggableId={group} index={index} key={group}>
+                    {providedItem => (
+                      <div
+                        ref={providedItem.innerRef}
+                        {...providedItem.draggableProps}
+                        {...providedItem.dragHandleProps}
+                        onDragStart={e => handleDragStart(e, label)}
+                        className="space-y-1"
                       >
-                        +
-                      </button>
-                    </div>
-                  ))}
-              </div>
+                        <div className="p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100">
+                          <span>{label}</span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              aria-label={`${
+                                expanded[group] ? 'Collapse' : 'Expand'
+                              } ${label}`}
+                              onClick={() =>
+                                setExpanded(prev => ({
+                                  ...prev,
+                                  [group]: !prev[group],
+                                }))
+                              }
+                              className="text-xs"
+                            >
+                              {expanded[group] || qLower.length > 0
+                                ? '▾'
+                                : '▸'}
+                            </button>
+                            <button
+                              aria-label={`Add ${label}`}
+                              onClick={() => onAdd(label)}
+                              className="text-xs"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        {showItems &&
+                          filteredItems.map(item => (
+                            <div
+                              key={item}
+                              draggable
+                              onDragStart={e => handleDragStart(e, item)}
+                              className="ml-4 p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
+                            >
+                              <span>{item}</span>
+                              <button
+                                aria-label={`Add ${item}`}
+                                onClick={() => onAdd(item)}
+                                className="text-xs"
+                              >
+                                +
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
+              {entries.length === 0 && (
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  No results
+                </div>
+              )}
             </div>
           )}
         </Droppable>
