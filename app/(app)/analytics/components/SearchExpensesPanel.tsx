@@ -1,7 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import type { DragEvent } from 'react';
+import React, { useState, type DragEvent } from 'react';
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from '@hello-pangea/dnd';
 import { EXPENSE_CATEGORIES } from '../../../../lib/categories';
 
 interface Props {
