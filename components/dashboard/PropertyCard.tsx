@@ -7,16 +7,16 @@ interface Props {
 
 export default function PropertyCard({ data }: Props) {
   return (
-    <div className="p-4 rounded-2xl shadow bg-white space-y-4">
+    <div className="p-4 rounded-2xl card space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="font-semibold">{data.name}</h3>
       </div>
-      <div className="p-3 rounded-lg bg-gray-50">
+      <div className="p-3 rounded-lg bg-bg-elevated">
         <div className="flex justify-between items-center">
           <div>
-            <div className="text-sm text-gray-500">Next Rent Due</div>
-            <div className="text-lg font-bold">{formatMoney(data.rentDue.amountCents)}</div>
-            <div className="text-xs text-gray-500">{formatDate(data.rentDue.nextDueDate)}</div>
+            <div className="text-sm text-text-secondary">Next Rent Due</div>
+            <div className="text-lg font-bold text-text-primary">{formatMoney(data.rentDue.amountCents)}</div>
+            <div className="text-xs text-text-muted">{formatDate(data.rentDue.nextDueDate)}</div>
           </div>
           <span className={`px-2 py-1 text-xs rounded ${statusToBadgeColor(data.rentDue.status)}`}>
             {data.rentDue.status}
