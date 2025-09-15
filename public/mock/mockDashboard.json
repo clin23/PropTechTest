@@ -1,0 +1,33 @@
+{
+  "portfolio": { "propertiesCount": 3, "occupiedCount": 3, "vacancyCount": 0 },
+  "cashflow": { "ytdNet": { "amountCents": 1823400, "currency": "AUD" }, "mtdNet": { "amountCents": 154200, "currency": "AUD" } },
+  "lineSeries": {
+    "points": [
+      { "date": "2025-09-01", "cashInCents": 420000, "cashOutCents": 120000, "netCents": 300000 },
+      { "date": "2025-09-02", "cashInCents": 0, "cashOutCents": 15000, "netCents": -15000 }
+    ]
+  },
+  "incomeByProperty": [
+    { "propertyId": "p1", "propertyName": "12 Smith St", "incomeCents": 280000 },
+    { "propertyId": "p2", "propertyName": "8 Brown Ave", "incomeCents": 270000 },
+    { "propertyId": "p3", "propertyName": "3/61 Park Rd", "incomeCents": 250000 }
+  ],
+  "expensesByCategory": [
+    { "category": "Maintenance", "amountCents": 42000 },
+    { "category": "Insurance", "amountCents": 18000 },
+    { "category": "Rates", "amountCents": 36000 }
+  ],
+  "properties": [
+    {
+      "propertyId": "p1",
+      "name": "12 Smith St, Chatswood NSW",
+      "rentDue": { "nextDueDate": "2025-09-15", "amountCents": 70000, "status": "Upcoming" },
+      "alerts": [
+        { "id": "a1", "label": "Smoke alarm check due", "date": "2025-09-20", "severity": "med" }
+      ],
+      "tasks": [
+        { "id": "t1", "title": "Approve plumber quote", "status": "in_progress", "dueDate": "2025-09-16", "priority": "high" }
+      ]
+    }
+  ]
+}
