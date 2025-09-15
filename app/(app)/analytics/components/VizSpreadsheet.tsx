@@ -125,7 +125,7 @@ export default function VizSpreadsheet({ data, showIncome = true, showExpenses =
           onClick={() => setSelected(null)}
         >
           <div
-            className="bg-white dark:bg-gray-900 p-4 rounded shadow max-h-[80vh] overflow-auto"
+            className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow max-h-[80vh] overflow-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg mb-2">{formatLabel(selected.label)} Details</h2>
