@@ -39,7 +39,7 @@ export default function VizSpreadsheet({ data, showIncome = true, showExpenses =
   const both = showIncome && showExpenses;
   const colClass = both ? 'w-1/2' : 'w-full';
   return (
-    <div className="overflow-x-auto mt-4" data-testid="viz-spreadsheet">
+    <div className="overflow-x-auto" data-testid="viz-spreadsheet">
       <table className="w-full text-sm">
         <thead>
           <tr>
