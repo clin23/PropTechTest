@@ -1,6 +1,7 @@
-"use client";
+'use client';
 
-import { useState, type DragEvent } from 'react';
+import { useState } from 'react';
+import type { DragEvent } from 'react';
 import { INCOME_CATEGORIES } from '../../../../lib/categories';
 
 interface Props {
