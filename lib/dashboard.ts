@@ -1,10 +1,7 @@
 import type { DashboardDTO } from '../types/dashboard';
+import { api } from './api';
 
-// TODO: replace with real API call
+// Fetch dashboard data between date range
 export async function getDashboard(from: string, to: string): Promise<DashboardDTO> {
-  const res = await fetch('/mock/mockDashboard.json');
-  if (!res.ok) {
-    throw new Error('Failed to load dashboard');
-  }
-  return (await res.json()) as DashboardDTO;
+  return api<DashboardDTO>(`/dashboard?from=${from}&to=${to}`);
 }
