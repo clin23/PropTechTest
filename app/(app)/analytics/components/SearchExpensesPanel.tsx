@@ -102,15 +102,18 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
                 return (
                   <Draggable key={group} draggableId={group} index={index}>
                     {prov => (
-                      <div ref={prov.innerRef} {...prov.draggableProps}>
+                      <div
+                        ref={prov.innerRef}
+                        {...prov.draggableProps}
+                        onDragStart={e => {
+                          prov.draggableProps.onDragStart?.(e);
+                          handleDragStart(e, label);
+                        }}
+                      >
                         <div className="space-y-1">
                           <div
                             className="p-1 text-sm bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between text-gray-900 dark:text-gray-100"
                             {...prov.dragHandleProps}
-                            onDragStart={e => {
-                              prov.dragHandleProps?.onDragStart?.(e);
-                              handleDragStart(e, label);
-                            }}
                           >
                             <span>{label}</span>
                             <div className="flex items-center gap-1">
