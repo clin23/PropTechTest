@@ -54,6 +54,24 @@ export default function SearchIncomePanel({ onAdd }: Props) {
     );
   });
 
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+    if (!destination) return;
+
+    const visible = entries;
+    const sourceKey = visible[source.index];
+    const destKey = visible[destination.index];
+
+    setOrder(prev => {
+      const newOrder = Array.from(prev);
+      const fromIndex = newOrder.indexOf(sourceKey);
+      const [removed] = newOrder.splice(fromIndex, 1);
+      const toIndex = destKey ? newOrder.indexOf(destKey) : newOrder.length;
+      newOrder.splice(toIndex, 0, removed);
+      return newOrder;
+    });
+  };
+
   const handleAddAll = () => {
     Object.keys(INCOME_CATEGORIES).forEach(group => {
       const label = group.replace(/([A-Z])/g, ' $1').trim();

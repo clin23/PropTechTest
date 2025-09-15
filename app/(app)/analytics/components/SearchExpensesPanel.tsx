@@ -32,7 +32,7 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
     );
     e.dataTransfer.effectAllowed = 'copy';
   };
-
+  
   const handleReorder = (result: DropResult) => {
     if (!result.destination) return;
     if (result.destination.index === result.source.index) return;
@@ -53,6 +53,24 @@ export default function SearchExpensesPanel({ onAdd }: Props) {
       items.some(i => i.toLowerCase().includes(qLower))
     );
   });
+
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+    if (!destination) return;
+
+    const visible = entries;
+    const sourceKey = visible[source.index];
+    const destKey = visible[destination.index];
+
+    setOrder(prev => {
+      const newOrder = Array.from(prev);
+      const fromIndex = newOrder.indexOf(sourceKey);
+      const [removed] = newOrder.splice(fromIndex, 1);
+      const toIndex = destKey ? newOrder.indexOf(destKey) : newOrder.length;
+      newOrder.splice(toIndex, 0, removed);
+      return newOrder;
+    });
+  };
 
   const handleAddAll = () => {
     Object.keys(EXPENSE_CATEGORIES).forEach(group => {
