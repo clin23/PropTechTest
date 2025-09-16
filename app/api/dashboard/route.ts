@@ -25,7 +25,9 @@ const toCents = (value: number) => Math.round(value * 100);
 
 type DashboardTask = PropertyCardData['tasks'][number];
 
-const normalizeTaskStatus = (status?: string): DashboardTask['status'] => {
+const normalizeTaskStatus = (
+  status?: TaskDto['status']
+): DashboardTask['status'] => {
   const value = (status ?? '').toLowerCase();
   if (value === 'in_progress' || value === 'in-progress' || value === 'in progress') {
     return 'in_progress';
@@ -35,7 +37,9 @@ const normalizeTaskStatus = (status?: string): DashboardTask['status'] => {
   return 'todo';
 };
 
-const normalizeTaskPriority = (priority?: string): DashboardTask['priority'] => {
+const normalizeTaskPriority = (
+  priority?: TaskDto['priority']
+): DashboardTask['priority'] => {
   const value = (priority ?? '').toLowerCase();
   if (value === 'high') return 'high';
   if (value === 'normal' || value === 'medium' || value === 'med') return 'med';
@@ -43,7 +47,7 @@ const normalizeTaskPriority = (priority?: string): DashboardTask['priority'] => 
 };
 
 const mapTaskToDashboardTask = (
-  task: ReturnType<typeof listTasks>[number]
+  task: TaskDto
 ): DashboardTask => ({
   id: task.id,
   title: task.title,
