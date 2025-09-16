@@ -9,12 +9,15 @@ import type {
   RentDue,
   AlertItem,
 } from '../../../types/dashboard';
-import type {
-  Expense,
-  Income,
-  Property,
-  Reminder,
-  RentEntry,
+import {
+  properties,
+  expenses,
+  incomes,
+  rentLedger,
+  reminders,
+  listTasks,
+  isActiveProperty,
+  seedIfEmpty,
 } from '../store';
 import type { TaskDto } from '../../../types/tasks';
 
@@ -236,14 +239,8 @@ export async function GET(req: Request) {
         severity: (r.severity || 'low') as AlertItem['severity'],
       }));
 
-    const taskItems = tasks
-      .filter(
-        (t) =>
-          !t.archived &&
-          t.status !== 'done' &&
-          Array.isArray(t.properties) &&
-          t.properties.some((pr) => pr.id === property.id)
-      )
+    const taskItems = listTasks({ propertyId: p.id })
+      .filter((t) => t.status !== 'done')
       .map((t) => ({
         id: t.id,
         title: t.title,
