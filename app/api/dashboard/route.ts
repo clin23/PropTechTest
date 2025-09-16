@@ -13,12 +13,30 @@ import {
   incomes,
   rentLedger,
   reminders,
-  tasks,
-  isActiveProperty,
+  listTasks,
+  isActiveProperty as storeIsActiveProperty,
   seedIfEmpty,
 } from '../store';
+import type { TaskDto } from '../../../types/tasks';
 
 const toCents = (value: number) => Math.round(value * 100);
+
+const mapTaskStatus = (
+  status: TaskDto['status']
+): PropertyCardData['tasks'][number]['status'] => {
+  if (status === 'in_progress' || status === 'in-progress') return 'in_progress';
+  if (status === 'blocked') return 'blocked';
+  if (status === 'done' || status === 'completed') return 'done';
+  return 'todo';
+};
+
+const mapTaskPriority = (
+  priority: TaskDto['priority']
+): PropertyCardData['tasks'][number]['priority'] => {
+  if (priority === 'high') return 'high';
+  if (priority === 'normal') return 'med';
+  return 'low';
+};
 
 export async function GET(req: Request) {
   seedIfEmpty();
@@ -146,7 +164,7 @@ export async function GET(req: Request) {
   }));
 
   const today = new Date().toISOString().split('T')[0];
-  const activeProps = properties.filter(isActiveProperty);
+  const activeProps = properties.filter(storeIsActiveProperty);
   const propertyCards: PropertyCardData[] = activeProps.map((p) => {
     const rentEntries = rentLedger
       .filter((r) => r.propertyId === p.id)
@@ -180,21 +198,15 @@ export async function GET(req: Request) {
         severity: r.severity,
       }));
 
-    const taskItems = tasks
-      .filter(
-        (t) =>
-          t.properties.some((pr) => pr.id === p.id) && t.status !== 'done'
-      )
+    const taskItems = listTasks({ propertyId: p.id })
       .map((t) => ({
         id: t.id,
         title: t.title,
-        status: t.status as PropertyCardData['tasks'][number]['status'],
+        status: mapTaskStatus(t.status),
         dueDate: t.dueDate,
-        priority:
-          t.priority === 'normal'
-            ? 'med'
-            : (t.priority as PropertyCardData['tasks'][number]['priority']),
-      }));
+        priority: mapTaskPriority(t.priority),
+      }))
+      .filter((t) => t.status !== 'done');
 
     return {
       propertyId: p.id,
