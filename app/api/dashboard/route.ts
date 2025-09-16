@@ -13,7 +13,7 @@ import {
   incomes,
   rentLedger,
   reminders,
-  tasks,
+  listTasks,
   isActiveProperty,
   seedIfEmpty,
 } from '../store';
@@ -145,6 +145,27 @@ export async function GET(req: Request) {
     amountCents,
   }));
 
+  const normalizeTaskStatus = (
+    status?: string
+  ): PropertyCardData['tasks'][number]['status'] => {
+    const value = (status ?? '').toLowerCase();
+    if (value === 'in_progress' || value === 'in-progress' || value === 'in progress') {
+      return 'in_progress';
+    }
+    if (value === 'blocked') return 'blocked';
+    if (value === 'done' || value === 'completed' || value === 'complete') return 'done';
+    return 'todo';
+  };
+
+  const normalizeTaskPriority = (
+    priority?: string
+  ): PropertyCardData['tasks'][number]['priority'] => {
+    const value = (priority ?? '').toLowerCase();
+    if (value === 'high') return 'high';
+    if (value === 'normal' || value === 'medium' || value === 'med') return 'med';
+    return 'low';
+  };
+
   const today = new Date().toISOString().split('T')[0];
   const activeProps = properties.filter(isActiveProperty);
   const propertyCards: PropertyCardData[] = activeProps.map((p) => {
@@ -180,21 +201,21 @@ export async function GET(req: Request) {
         severity: r.severity,
       }));
 
-    const taskItems = tasks
-      .filter(
-        (t) =>
-          t.properties.some((pr) => pr.id === p.id) && t.status !== 'done'
-      )
-      .map((t) => ({
-        id: t.id,
-        title: t.title,
-        status: t.status as PropertyCardData['tasks'][number]['status'],
-        dueDate: t.dueDate,
-        priority:
-          t.priority === 'normal'
-            ? 'med'
-            : (t.priority as PropertyCardData['tasks'][number]['priority']),
-      }));
+    const taskItems = listTasks({ propertyId: p.id })
+      .map((task) => ({
+        id: task.id,
+        title: task.title,
+        status: normalizeTaskStatus(task.status),
+        dueDate: task.dueDate,
+        priority: normalizeTaskPriority(task.priority),
+      }))
+      .filter((task) => task.status !== 'done')
+      .sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      });
 
     return {
       propertyId: p.id,
