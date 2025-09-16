@@ -19,6 +19,7 @@ if (process.env.MOCK_MODE === 'true') {
     rent: store.rentLedger,
     rentLedger: store.rentLedger,
     notification: store.notifications,
+    task: store.tasks,
   };
   const extras: Record<string, any[]> = {};
   const getCollection = (type: string) => collections[type] ?? (extras[type] ??= []);

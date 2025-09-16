@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '../../../lib/prisma';
 import type {
   DashboardDTO,
   TimeSeriesPoint,
@@ -6,6 +7,7 @@ import type {
   ExpenseByCategorySlice,
   PropertyCardData,
   RentDue,
+  AlertItem,
 } from '../../../types/dashboard';
 import {
   properties,
@@ -17,39 +19,105 @@ import {
   isActiveProperty,
   seedIfEmpty,
 } from '../store';
+import type { TaskDto } from '../../../types/tasks';
 
 const toCents = (value: number) => Math.round(value * 100);
+
+type DashboardTask = PropertyCardData['tasks'][number];
+
+const normalizeTaskStatus = (
+  status?: TaskDto['status']
+): DashboardTask['status'] => {
+  const value = (status ?? '').toLowerCase();
+  if (value === 'in_progress' || value === 'in-progress' || value === 'in progress') {
+    return 'in_progress';
+  }
+  if (value === 'blocked') return 'blocked';
+  if (value === 'done' || value === 'completed' || value === 'complete') return 'done';
+  return 'todo';
+};
+
+const normalizeTaskPriority = (
+  priority?: TaskDto['priority']
+): DashboardTask['priority'] => {
+  const value = (priority ?? '').toLowerCase();
+  if (value === 'high') return 'high';
+  if (value === 'normal' || value === 'medium' || value === 'med') return 'med';
+  return 'low';
+};
+
+const mapTaskToDashboardTask = (
+  task: TaskDto
+): DashboardTask => ({
+  id: task.id,
+  title: task.title,
+  status: normalizeTaskStatus(task.status),
+  dueDate: task.dueDate,
+  priority: normalizeTaskPriority(task.priority),
+});
 
 export async function GET(req: Request) {
   seedIfEmpty();
 
+export async function GET(req: Request) {
   const url = new URL(req.url);
   const from = url.searchParams.get('from') ?? '1970-01-01';
   const to = url.searchParams.get('to') ?? new Date().toISOString().split('T')[0];
+
+  const [propertyRows, incomeRows, expenseRows, rentRows, reminderRows, taskRows] =
+    await Promise.all([
+      prisma.mockData.findMany({ where: { type: 'property' } }),
+      prisma.mockData.findMany({ where: { type: 'income' } }),
+      prisma.mockData.findMany({ where: { type: 'expense' } }),
+      prisma.mockData
+        .findMany({ where: { type: 'rentLedger' } })
+        .then(async (rows: any[]) => {
+          if (rows.length > 0) return rows;
+          return prisma.mockData.findMany({ where: { type: 'rent' } });
+        }),
+      prisma.mockData.findMany({ where: { type: 'reminder' } }),
+      prisma.mockData.findMany({ where: { type: 'task' } }),
+    ]);
+
+  const properties = recordData<Property>(propertyRows);
+  const propertyMap = new Map(properties.map((p) => [p.id, p]));
+  const activeProps = properties.filter(isActiveProperty);
+
+  const incomes = recordData<Income>(incomeRows).filter(
+    (income) => !!income.propertyId
+  );
+  const expenseEntries = recordData<Expense>(expenseRows).filter(
+    (expense) => !!expense.propertyId
+  );
+  const rentLedgerEntries = recordData<RentEntry>(rentRows).filter(
+    (entry) => !!entry.propertyId
+  );
+  const reminders = recordData<Reminder>(reminderRows);
+  const tasks = recordData<TaskDto>(taskRows);
 
   const inRange = (date: string, start: string, end: string) =>
     date >= start && date <= end;
 
   const incomeEntries = [
-    ...rentLedger
+    ...rentLedgerEntries
       .filter((r) => r.status === 'paid')
       .map((r) => ({
         date: r.paidDate || r.dueDate,
         propertyId: r.propertyId,
-        amount: r.amount,
+        amount: Number(r.amount) || 0,
       })),
     ...incomes.map((i) => ({
       date: i.date,
       propertyId: i.propertyId,
-      amount: i.amount,
+      amount: Number(i.amount) || 0,
     })),
   ];
 
-  const expenseEntries = expenses.map((e) => ({
+  const expensesWithCategory = expenseEntries.map((e) => ({
     date: e.date,
     propertyId: e.propertyId,
     category: e.category,
-    amount: e.amount,
+    amount: Number(e.amount) || 0,
   }));
 
   const yearStart = to.slice(0, 4) + '-01-01';
@@ -60,7 +128,7 @@ export async function GET(req: Request) {
       .filter((e) => inRange(e.date, start, end))
       .reduce((s, e) => s + toCents(e.amount), 0);
   const sumExpense = (start: string, end: string) =>
-    expenseEntries
+    expensesWithCategory
       .filter((e) => inRange(e.date, start, end))
       .reduce((s, e) => s + toCents(e.amount), 0);
 
@@ -79,7 +147,7 @@ export async function GET(req: Request) {
     const cashInCents = incomeEntries
       .filter((e) => e.date === date)
       .reduce((s, e) => s + toCents(e.amount), 0);
-    const cashOutCents = expenseEntries
+    const cashOutCents = expensesWithCategory
       .filter((e) => e.date === date)
       .reduce((s, e) => s + toCents(e.amount), 0);
     points.push({
@@ -101,8 +169,7 @@ export async function GET(req: Request) {
     incomeByPropertyMap
   ).map(([propertyId, incomeCents]) => ({
     propertyId,
-    propertyName:
-      properties.find((p) => p.id === propertyId)?.address || propertyId,
+    propertyName: getPropertyName(propertyMap.get(propertyId), propertyId),
     incomeCents,
   }));
 
@@ -131,10 +198,10 @@ export async function GET(req: Request) {
   };
 
   const expenseByCategoryMap: Record<string, number> = {};
-  expenseEntries
+  expensesWithCategory
     .filter((e) => inRange(e.date, from, to))
     .forEach((e) => {
-      const cat = mapCategory(e.category);
+      const cat = mapCategory(e.category || '');
       expenseByCategoryMap[cat] =
         (expenseByCategoryMap[cat] ?? 0) + toCents(e.amount);
     });
@@ -167,7 +234,7 @@ export async function GET(req: Request) {
   };
 
   const today = new Date().toISOString().split('T')[0];
-  const activeProps = properties.filter(isActiveProperty);
+  const activeProps = properties.filter(storeIsActiveProperty);
   const propertyCards: PropertyCardData[] = activeProps.map((p) => {
     const rentEntries = rentLedger
       .filter((r) => r.propertyId === p.id)
@@ -185,7 +252,7 @@ export async function GET(req: Request) {
       else status = 'Upcoming';
       rentDue = {
         nextDueDate: nextRent.dueDate,
-        amountCents: toCents(nextRent.amount),
+        amountCents: toCents(Number(nextRent.amount) || 0),
         status,
       };
     } else {
@@ -193,12 +260,12 @@ export async function GET(req: Request) {
     }
 
     const alerts = reminders
-      .filter((r) => r.propertyId === p.id)
+      .filter((r) => r.propertyId === property.id)
       .map((r) => ({
         id: r.id,
-        label: r.title,
+        label: (r as any).title || (r as any).message || '',
         date: r.dueDate,
-        severity: r.severity,
+        severity: (r.severity || 'low') as AlertItem['severity'],
       }));
 
     const taskItems = listTasks({ propertyId: p.id })
@@ -218,8 +285,8 @@ export async function GET(req: Request) {
       });
 
     return {
-      propertyId: p.id,
-      name: p.address,
+      propertyId: property.id,
+      name: getPropertyName(property, property.id),
       rentDue,
       alerts,
       tasks: taskItems,
@@ -229,8 +296,8 @@ export async function GET(req: Request) {
   const data: DashboardDTO = {
     portfolio: {
       propertiesCount: activeProps.length,
-      occupiedCount: activeProps.filter((p) => !!p.tenant).length,
-      vacancyCount: activeProps.filter((p) => !p.tenant).length,
+      occupiedCount: activeProps.filter((p) => !!(p as any).tenant).length,
+      vacancyCount: activeProps.filter((p) => !(p as any).tenant).length,
     },
     cashflow: {
       ytdNet: { amountCents: ytdIncome - ytdExpense, currency: 'AUD' },
