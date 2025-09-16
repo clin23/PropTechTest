@@ -9,11 +9,12 @@ import { getDashboard } from '../../lib/dashboard';
 import { formatMoney } from '../../lib/format';
 import Header from './Header';
 
-const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+// Use the first day of the previous month to show a two-month window ending today.
+const startOfPreviousMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() - 1, 1);
 const formatISODate = (d: Date) => d.toISOString().split('T')[0];
 
 export default function DashboardPage() {
-  const [from] = useState(() => startOfMonth(new Date()));
+  const [from] = useState(() => startOfPreviousMonth(new Date()));
   const [to] = useState(() => new Date());
 
   const { data, isLoading, error } = useQuery({
