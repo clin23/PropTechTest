@@ -23,22 +23,34 @@ import type { TaskDto } from '../../../types/tasks';
 
 const toCents = (value: number) => Math.round(value * 100);
 
-const mapTaskStatus = (
-  status: TaskDto['status']
-): PropertyCardData['tasks'][number]['status'] => {
-  if (status === 'in_progress' || status === 'in-progress') return 'in_progress';
-  if (status === 'blocked') return 'blocked';
-  if (status === 'done' || status === 'completed') return 'done';
+type DashboardTask = PropertyCardData['tasks'][number];
+
+const normalizeTaskStatus = (status?: string): DashboardTask['status'] => {
+  const value = (status ?? '').toLowerCase();
+  if (value === 'in_progress' || value === 'in-progress' || value === 'in progress') {
+    return 'in_progress';
+  }
+  if (value === 'blocked') return 'blocked';
+  if (value === 'done' || value === 'completed' || value === 'complete') return 'done';
   return 'todo';
 };
 
-const mapTaskPriority = (
-  priority: TaskDto['priority']
-): PropertyCardData['tasks'][number]['priority'] => {
-  if (priority === 'high') return 'high';
-  if (priority === 'normal') return 'med';
+const normalizeTaskPriority = (priority?: string): DashboardTask['priority'] => {
+  const value = (priority ?? '').toLowerCase();
+  if (value === 'high') return 'high';
+  if (value === 'normal' || value === 'medium' || value === 'med') return 'med';
   return 'low';
 };
+
+const mapTaskToDashboardTask = (
+  task: ReturnType<typeof listTasks>[number]
+): DashboardTask => ({
+  id: task.id,
+  title: task.title,
+  status: normalizeTaskStatus(task.status),
+  dueDate: task.dueDate,
+  priority: normalizeTaskPriority(task.priority),
+});
 
 export async function GET(req: Request) {
   seedIfEmpty();
@@ -232,14 +244,14 @@ export async function GET(req: Request) {
       }));
 
     const taskItems = listTasks({ propertyId: p.id })
-      .map((t) => ({
-        id: t.id,
-        title: t.title,
-        status: mapTaskStatus(t.status),
-        dueDate: t.dueDate,
-        priority: mapTaskPriority(t.priority),
-      }))
-      .filter((t) => t.status !== 'done');
+      .map(mapTaskToDashboardTask)
+      .filter((t) => t.status !== 'done')
+      .sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      });
 
     return {
       propertyId: property.id,
