@@ -13,7 +13,7 @@ import {
   incomes,
   rentLedger,
   reminders,
-  tasks,
+  listTasks,
   isActiveProperty,
   seedIfEmpty,
 } from '../store';
@@ -180,11 +180,8 @@ export async function GET(req: Request) {
         severity: r.severity,
       }));
 
-    const taskItems = tasks
-      .filter(
-        (t) =>
-          t.properties.some((pr) => pr.id === p.id) && t.status !== 'done'
-      )
+    const taskItems = listTasks({ propertyId: p.id })
+      .filter((t) => t.status !== 'done')
       .map((t) => ({
         id: t.id,
         title: t.title,
