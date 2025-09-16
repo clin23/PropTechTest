@@ -13,12 +13,46 @@ import {
   incomes,
   rentLedger,
   reminders,
-  tasks,
-  isActiveProperty,
+  listTasks,
+  isActiveProperty as storeIsActiveProperty,
   seedIfEmpty,
 } from '../store';
+import type { TaskDto } from '../../../types/tasks';
 
 const toCents = (value: number) => Math.round(value * 100);
+
+type DashboardTask = PropertyCardData['tasks'][number];
+
+const normalizeTaskStatus = (
+  status?: TaskDto['status']
+): DashboardTask['status'] => {
+  const value = (status ?? '').toLowerCase();
+  if (value === 'in_progress' || value === 'in-progress' || value === 'in progress') {
+    return 'in_progress';
+  }
+  if (value === 'blocked') return 'blocked';
+  if (value === 'done' || value === 'completed' || value === 'complete') return 'done';
+  return 'todo';
+};
+
+const normalizeTaskPriority = (
+  priority?: TaskDto['priority']
+): DashboardTask['priority'] => {
+  const value = (priority ?? '').toLowerCase();
+  if (value === 'high') return 'high';
+  if (value === 'normal' || value === 'medium' || value === 'med') return 'med';
+  return 'low';
+};
+
+const mapTaskToDashboardTask = (
+  task: TaskDto
+): DashboardTask => ({
+  id: task.id,
+  title: task.title,
+  status: normalizeTaskStatus(task.status),
+  dueDate: task.dueDate,
+  priority: normalizeTaskPriority(task.priority),
+});
 
 export async function GET(req: Request) {
   seedIfEmpty();
@@ -146,7 +180,7 @@ export async function GET(req: Request) {
   }));
 
   const today = new Date().toISOString().split('T')[0];
-  const activeProps = properties.filter(isActiveProperty);
+  const activeProps = properties.filter(storeIsActiveProperty);
   const propertyCards: PropertyCardData[] = activeProps.map((p) => {
     const rentEntries = rentLedger
       .filter((r) => r.propertyId === p.id)
@@ -180,21 +214,15 @@ export async function GET(req: Request) {
         severity: r.severity,
       }));
 
-    const taskItems = tasks
-      .filter(
-        (t) =>
-          t.properties.some((pr) => pr.id === p.id) && t.status !== 'done'
-      )
-      .map((t) => ({
-        id: t.id,
-        title: t.title,
-        status: t.status as PropertyCardData['tasks'][number]['status'],
-        dueDate: t.dueDate,
-        priority:
-          t.priority === 'normal'
-            ? 'med'
-            : (t.priority as PropertyCardData['tasks'][number]['priority']),
-      }));
+    const taskItems = listTasks({ propertyId: p.id })
+      .map(mapTaskToDashboardTask)
+      .filter((t) => t.status !== 'done')
+      .sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      });
 
     return {
       propertyId: p.id,
