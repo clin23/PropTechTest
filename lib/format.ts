@@ -12,6 +12,18 @@ export const formatDate = (d?: string | Date) => {
   }).format(date);
 };
 
+export const formatChartDate = (d?: string | Date) => {
+  if (!d) return '';
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return '';
+  const formatted = new Intl.DateTimeFormat('en-AU', {
+    day: '2-digit',
+    month: 'short',
+    year: '2-digit',
+  }).format(date);
+  return `${formatted}'`;
+};
+
 export const formatMoney = (cents: number) => formatCurrency(cents / 100);
 
 export const statusToBadgeColor = (status: string) => {
