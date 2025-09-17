@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '../../../lib/prisma';
 import type {
   DashboardDTO,
   TimeSeriesPoint,
@@ -6,6 +7,7 @@ import type {
   ExpenseByCategorySlice,
   PropertyCardData,
   RentDue,
+  AlertItem,
 } from '../../../types/dashboard';
 import {
   properties,
@@ -201,6 +203,27 @@ export async function GET(req: Request) {
     amountCents,
   }));
 
+  const normalizeTaskStatus = (
+    status?: string
+  ): PropertyCardData['tasks'][number]['status'] => {
+    const value = (status ?? '').toLowerCase();
+    if (value === 'in_progress' || value === 'in-progress' || value === 'in progress') {
+      return 'in_progress';
+    }
+    if (value === 'blocked') return 'blocked';
+    if (value === 'done' || value === 'completed' || value === 'complete') return 'done';
+    return 'todo';
+  };
+
+  const normalizeTaskPriority = (
+    priority?: string
+  ): PropertyCardData['tasks'][number]['priority'] => {
+    const value = (priority ?? '').toLowerCase();
+    if (value === 'high') return 'high';
+    if (value === 'normal' || value === 'medium' || value === 'med') return 'med';
+    return 'low';
+  };
+
   const today = new Date().toISOString().split('T')[0];
   const propertyCards: PropertyCardData[] = activeProperties.map((property) => {
     const rentEntries = rentLedger
@@ -219,7 +242,7 @@ export async function GET(req: Request) {
       else status = 'Upcoming';
       rentDue = {
         nextDueDate: nextRent.dueDate,
-        amountCents: toCents(nextRent.amount),
+        amountCents: toCents(Number(nextRent.amount) || 0),
         status,
       };
     } else {
