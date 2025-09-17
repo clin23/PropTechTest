@@ -3,10 +3,14 @@
 import Link from "next/link";
 import type { PropertySummary } from "../../../../../types/property";
 import { Button } from "../../../../../components/ui/button";
+import ActionButtons from "./ActionButtons";
 
 interface PropertyHeroProps {
   property: PropertySummary;
   onEdit: () => void;
+  onAddIncome: () => void;
+  onAddExpense: () => void;
+  onUploadDocument: () => void;
 }
 
 const rentFormatter = new Intl.NumberFormat(undefined, {
@@ -38,7 +42,13 @@ function formatDate(value?: string) {
   return dateFormatter.format(parsed);
 }
 
-export default function PropertyHero({ property, onEdit }: PropertyHeroProps) {
+export default function PropertyHero({
+  property,
+  onEdit,
+  onAddIncome,
+  onAddExpense,
+  onUploadDocument,
+}: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
   const nextEvent = property.events?.[0];
 
@@ -103,6 +113,13 @@ export default function PropertyHero({ property, onEdit }: PropertyHeroProps) {
             </div>
           ))}
         </dl>
+      </div>
+      <div className="border-t bg-gray-50 px-6 py-4 dark:border-gray-800 dark:bg-gray-900/60">
+        <ActionButtons
+          onAddIncome={onAddIncome}
+          onAddExpense={onAddExpense}
+          onUploadDocument={onUploadDocument}
+        />
       </div>
     </section>
   );
