@@ -10,7 +10,7 @@ export default function CashflowLineChart({ data }: Props) {
   return (
     <div className="p-4 rounded-2xl card">
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data} margin={{ top: 16, right: 24, bottom: 0, left: 56 }}>
+        <LineChart data={data} margin={{ top: 16, right: 84, bottom: 0, left: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis
             dataKey="date"
@@ -18,11 +18,13 @@ export default function CashflowLineChart({ data }: Props) {
             tick={{ fill: 'var(--text-secondary)' }}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
+            tickMargin={12}
           />
           <YAxis
             tickFormatter={(v) => formatMoney(v)}
-            tick={{ fill: 'var(--text-secondary)' }}
-            width={88}
+            tick={{ fill: 'var(--text-secondary)', textAnchor: 'end' }}
+            tickMargin={12}
+            width={76}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
           />
