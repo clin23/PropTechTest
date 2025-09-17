@@ -26,6 +26,19 @@ import ColumnRenameModal from "./ColumnRenameModal";
 import ColumnDeleteModal from "./ColumnDeleteModal";
 import ColumnCreateModal from "./ColumnCreateModal";
 
+const TAB_BASE_CLASSES =
+  "rounded-full border px-4 py-1.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600";
+const TAB_ACTIVE_CLASSES =
+  "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900";
+const TAB_INACTIVE_CLASSES =
+  "bg-white text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700";
+
+const tabClassName = (isActive: boolean) =>
+  [
+    TAB_BASE_CLASSES,
+    isActive ? TAB_ACTIVE_CLASSES : TAB_INACTIVE_CLASSES,
+  ].join(" ");
+
 type Column = { id: string; title: string };
 
 const DEFAULT_COLUMNS: Column[] = [
@@ -198,35 +211,13 @@ export default function TasksKanban({
     ? `+ New task for ${activeProperty.address}`
     : "+ New task";
 
-  let propertyTabs: PropertySummary[] = [];
-  if (allowPropertySwitching) {
-    propertyTabs = properties;
-  } else if (activeProperty) {
-    propertyTabs = [activeProperty];
-  }
+  const propertyTabs: PropertySummary[] = allowPropertySwitching
+    ? properties
+    : activeProperty
+      ? [activeProperty]
+      : [];
 
   const showPropertiesOnCards = !selectedPropertyId;
-
-  const tabBaseClasses = [
-    "rounded-full border px-4 py-1.5 text-sm transition",
-    "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300",
-    "dark:focus:ring-gray-600",
-  ].join(" ");
-  const tabActiveClasses = [
-    "bg-gray-900 text-white border-gray-900",
-    "dark:bg-gray-100 dark:text-gray-900",
-  ].join(" ");
-  const tabInactiveClasses = [
-    "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
-    "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700",
-  ].join(" ");
-
-  const getTabClassName = (isActive: boolean) => {
-    return [
-      tabBaseClasses,
-      isActive ? tabActiveClasses : tabInactiveClasses,
-    ].join(" ");
-  };
 
   return (
     <>
@@ -334,7 +325,8 @@ export default function TasksKanban({
             <button
               type="button"
               onClick={() => handleTabSelect(undefined)}
-              className={getTabClassName(!selectedPropertyId)}
+              className={tabClassName(!selectedPropertyId)}
+
               aria-pressed={!selectedPropertyId}
             >
               All
@@ -347,7 +339,7 @@ export default function TasksKanban({
                 key={property.id}
                 type="button"
                 onClick={() => handleTabSelect(property.id)}
-                className={getTabClassName(isActive)}
+                className={tabClassName(isActive)}
                 aria-pressed={isActive}
                 aria-disabled={!allowPropertySwitching}
               >
