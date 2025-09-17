@@ -1,6 +1,11 @@
 {
   "portfolio": { "propertiesCount": 3, "occupiedCount": 3, "vacancyCount": 0 },
-  "cashflow": { "ytdNet": { "amountCents": 1823400, "currency": "AUD" }, "mtdNet": { "amountCents": 154200, "currency": "AUD" } },
+  "cashflow": {
+    "ytdNet": { "amountCents": 1823400, "currency": "AUD" },
+    "mtdNet": { "amountCents": 154200, "currency": "AUD" },
+    "fyIncome": { "amountCents": 5489000, "currency": "AUD" },
+    "fyExpense": { "amountCents": 3665600, "currency": "AUD" }
+  },
   "lineSeries": {
     "points": [
       { "date": "2025-09-01", "cashInCents": 420000, "cashOutCents": 120000, "netCents": 300000 },

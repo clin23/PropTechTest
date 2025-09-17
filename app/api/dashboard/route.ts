@@ -20,6 +20,14 @@ import {
 
 const toCents = (value: number) => Math.round(value * 100);
 
+const getAustralianFinancialYearStart = (isoDate: string) => {
+  const [yearStr, monthStr] = isoDate.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const fyStartYear = month >= 7 ? year : year - 1;
+  return `${fyStartYear.toString().padStart(4, '0')}-07-01`;
+};
+
 export async function GET(req: Request) {
   seedIfEmpty();
 
@@ -54,6 +62,7 @@ export async function GET(req: Request) {
 
   const yearStart = to.slice(0, 4) + '-01-01';
   const monthStart = to.slice(0, 7) + '-01';
+  const fyStart = getAustralianFinancialYearStart(to);
 
   const sumIncome = (start: string, end: string) =>
     incomeEntries
@@ -68,6 +77,8 @@ export async function GET(req: Request) {
   const ytdExpense = sumExpense(yearStart, to);
   const mtdIncome = sumIncome(monthStart, to);
   const mtdExpense = sumExpense(monthStart, to);
+  const fyIncome = sumIncome(fyStart, to);
+  const fyExpense = sumExpense(fyStart, to);
 
   const points: TimeSeriesPoint[] = [];
   for (
@@ -214,6 +225,8 @@ export async function GET(req: Request) {
     cashflow: {
       ytdNet: { amountCents: ytdIncome - ytdExpense, currency: 'AUD' },
       mtdNet: { amountCents: mtdIncome - mtdExpense, currency: 'AUD' },
+      fyIncome: { amountCents: fyIncome, currency: 'AUD' },
+      fyExpense: { amountCents: fyExpense, currency: 'AUD' },
     },
     lineSeries: { points },
     incomeByProperty,

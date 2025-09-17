@@ -14,6 +14,8 @@ export interface PortfolioSummary {
 export interface CashflowSnapshot {
   ytdNet: Money;
   mtdNet: Money;
+  fyIncome: Money;
+  fyExpense: Money;
 }
 
 export interface TimeSeriesPoint {
