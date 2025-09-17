@@ -19,7 +19,9 @@ export default function TaskQuickNew({
   };
   return (
     <input
-      className={`w-full border rounded p-2 mb-2 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white ${className}`.trim()}
+      className={["w-full border rounded p-2 mb-2 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white", className]
+        .filter(Boolean)
+        .join(" ")}
       placeholder={placeholder}
       value={title}
       onChange={(e) => setTitle(e.target.value)}

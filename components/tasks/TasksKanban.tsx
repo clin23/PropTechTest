@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -37,16 +38,19 @@ const DEFAULT_COLUMNS: Column[] = [
 const STORAGE_KEY = "task-columns";
 
 type PropertyContext = Pick<PropertySummary, "id" | "address">;
+export type TasksKanbanContext = PropertyContext;
+
+type TasksKanbanProps = {
+  initialPropertyId?: string;
+  allowPropertySwitching?: boolean;
+  onContextChange?: (property: PropertyContext | null) => void;
+};
 
 export default function TasksKanban({
   initialPropertyId,
   allowPropertySwitching = true,
   onContextChange,
-}: {
-  initialPropertyId?: string;
-  allowPropertySwitching?: boolean;
-  onContextChange?: (property: PropertyContext | null) => void;
-}) {
+}: TasksKanbanProps) {
   const qc = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<string>(
     initialPropertyId ?? "all"
@@ -72,44 +76,40 @@ export default function TasksKanban({
   useEffect(() => {
     if (!allowPropertySwitching) return;
     if (activeFilter === "all") return;
-    const exists = properties.some((p) => p.id === activeFilter);
+    if (!properties.length) return;
+    const exists = properties.some((property) => property.id === activeFilter);
     if (!exists) {
       setActiveFilter("all");
     }
-  }, [activeFilter, properties, allowPropertySwitching]);
+  }, [activeFilter, allowPropertySwitching, properties]);
 
-  const selectedPropertyId =
-    activeFilter !== "all" ? activeFilter : undefined;
-
-  const propertyIdFilter = allowPropertySwitching
-    ? selectedPropertyId
-    : initialPropertyId ?? selectedPropertyId;
+  const selectedPropertyId = activeFilter !== "all" ? activeFilter : undefined;
 
   const { data: tasks = [] } = useQuery<TaskDto[]>({
-    queryKey: ["tasks", { propertyId: propertyIdFilter ?? null }],
+    queryKey: ["tasks", { propertyId: selectedPropertyId ?? null }],
     queryFn: () =>
-      listTasks(
-        propertyIdFilter ? { propertyId: propertyIdFilter } : undefined
-      ),
+      selectedPropertyId
+        ? listTasks({ propertyId: selectedPropertyId })
+        : listTasks(),
   });
 
-  const activeProperty = propertyIdFilter
-    ? properties.find((p) => p.id === propertyIdFilter)
+  const activeProperty = selectedPropertyId
+    ? properties.find((property) => property.id === selectedPropertyId)
     : undefined;
 
   useEffect(() => {
     if (!onContextChange) return;
-    if (propertyIdFilter && activeProperty) {
+    if (activeProperty) {
       onContextChange({
         id: activeProperty.id,
         address: activeProperty.address,
       });
-    } else if (!propertyIdFilter) {
+    } else {
       onContextChange(null);
     }
-  }, [activeProperty, propertyIdFilter, onContextChange]);
+  }, [activeProperty, onContextChange]);
 
-  const defaultPropertyForCreation = propertyIdFilter
+  const defaultPropertyForCreation = selectedPropertyId
     ? activeProperty ?? null
     : properties[0] ?? null;
 
@@ -185,18 +185,6 @@ export default function TasksKanban({
       );
   };
 
-  const newTaskPlaceholder = activeProperty
-    ? `+ New task for ${activeProperty.address}`
-    : "+ New task";
-
-  const propertyTabs = allowPropertySwitching
-    ? properties
-    : activeProperty
-    ? [activeProperty]
-    : [];
-
-  const showPropertiesOnCards = !propertyIdFilter;
-
   const handleTabSelect = (propertyId?: string) => {
     if (!allowPropertySwitching) return;
     if (!propertyId) {
@@ -205,6 +193,16 @@ export default function TasksKanban({
       setActiveFilter(propertyId);
     }
   };
+
+  const newTaskPlaceholder = activeProperty
+    ? `+ New task for ${activeProperty.address}`
+    : "+ New task";
+  const propertyTabs = allowPropertySwitching
+    ? properties
+    : activeProperty
+    ? [activeProperty]
+    : [];
+  const showPropertiesOnCards = !selectedPropertyId;
 
   const tabBaseClasses = [
     "rounded-full border px-4 py-1.5 text-sm transition",
@@ -219,12 +217,8 @@ export default function TasksKanban({
     "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
     "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700",
   ].join(" ");
-  const getTabClassName = (isActive: boolean) => {
-    return [
-      tabBaseClasses,
-      isActive ? tabActiveClasses : tabInactiveClasses,
-    ].join(" ");
-  };
+  const getTabClassName = (isActive: boolean) =>
+    [tabBaseClasses, isActive ? tabActiveClasses : tabInactiveClasses].join(" ");
 
   return (
     <>
@@ -318,10 +312,7 @@ export default function TasksKanban({
             + Add Column
           </button>
         </div>
-        <Link
-          href="/tasks/archive"
-          className="w-64 flex-shrink-0"
-        >
+        <Link href="/tasks/archive" className="w-64 flex-shrink-0">
           <span className="block w-full border rounded p-2 text-sm text-center">Archive</span>
         </Link>
       </div>
@@ -335,14 +326,14 @@ export default function TasksKanban({
             <button
               type="button"
               onClick={() => handleTabSelect(undefined)}
-              className={getTabClassName(showPropertiesOnCards)}
-              aria-pressed={showPropertiesOnCards}
+              className={getTabClassName(!selectedPropertyId)}
+              aria-pressed={!selectedPropertyId}
             >
               All
             </button>
           )}
           {propertyTabs.map((property) => {
-            const isActive = propertyIdFilter === property.id;
+            const isActive = selectedPropertyId === property.id;
             return (
               <button
                 key={property.id}
@@ -357,7 +348,7 @@ export default function TasksKanban({
             );
           })}
         </div>
-        {propertyIdFilter && activeProperty && (
+        {selectedPropertyId && activeProperty && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Creating tasks for{" "}
             <span className="font-medium text-gray-700 dark:text-gray-200">
@@ -414,4 +405,3 @@ export default function TasksKanban({
     </>
   );
 }
-

@@ -23,11 +23,13 @@ import TenantCRM from "./sections/TenantCRM";
 import Inspections from "./sections/Inspections";
 import CreateListing from "./sections/CreateListing";
 import Vendors from "./sections/Vendors";
+import TasksSection from "./sections/Tasks";
 
 const TABS = [
   { id: "rent-ledger", label: "Rent Ledger" },
   { id: "expenses", label: "Expenses" },
   { id: "documents", label: "Documents" },
+  { id: "tasks", label: "Tasks" },
   { id: "rent-review", label: "Rent Review" },
   { id: "key-dates", label: "Key Dates" },
   { id: "tasks", label: "Tasks" },
@@ -79,6 +81,13 @@ export default function PropertyPage() {
         return <Expenses propertyId={id} />;
       case "documents":
         return <Documents propertyId={id} />;
+      case "tasks":
+        return (
+          <TasksSection
+            propertyId={id}
+            propertyAddress={property.address}
+          />
+        );
       case "rent-review":
         return <RentReview propertyId={id} />;
       case "key-dates":
