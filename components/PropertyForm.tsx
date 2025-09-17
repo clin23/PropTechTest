@@ -114,8 +114,11 @@ export default function PropertyForm({ property, onSaved }: Props) {
           }}
         />
       </label>
-      <div className="flex items-center gap-4">
-        <div className="h-24 w-32 overflow-hidden rounded border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <div
+          className="w-full overflow-hidden rounded border bg-gray-100 dark:border-gray-700 dark:bg-gray-800 md:w-[32rem]"
+          style={{ aspectRatio: "16 / 9" }}
+        >
           <img
             src={form.imageUrl || "/default-house.svg"}
             alt={form.address ? `Preview of ${form.address}` : "Property image preview"}
