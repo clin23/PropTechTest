@@ -77,73 +77,50 @@ export async function GET(req: Request) {
   const from = url.searchParams.get('from') ?? '1970-01-01';
   const to = url.searchParams.get('to') ?? new Date().toISOString().split('T')[0];
 
-  const [propertyRows, incomeRows, expenseRows, rentRows, reminderRows, taskRows] =
-    await Promise.all([
-      prisma.mockData.findMany({ where: { type: 'property' } }),
-      prisma.mockData.findMany({ where: { type: 'income' } }),
-      prisma.mockData.findMany({ where: { type: 'expense' } }),
-      prisma.mockData
-        .findMany({ where: { type: 'rentLedger' } })
-        .then(async (rows: any[]) => {
-          if (rows.length > 0) return rows;
-          return prisma.mockData.findMany({ where: { type: 'rent' } });
-        }),
-      prisma.mockData.findMany({ where: { type: 'reminder' } }),
-      prisma.mockData.findMany({ where: { type: 'task' } }),
-    ]);
-
-  const properties = recordData<Property>(propertyRows);
-  const propertyMap = new Map(properties.map((p) => [p.id, p]));
-  const activeProps = properties.filter(isActiveProperty);
-
-  const incomes = recordData<Income>(incomeRows).filter(
-    (income) => !!income.propertyId
-  );
-  const expenseEntries = recordData<Expense>(expenseRows).filter(
-    (expense) => !!expense.propertyId
-  );
-  const rentLedgerEntries = recordData<RentEntry>(rentRows).filter(
-    (entry) => !!entry.propertyId
-  );
-  const reminders = recordData<Reminder>(reminderRows);
-  const tasks = recordData<TaskDto>(taskRows);
+  const activeProperties = properties.filter(isActiveProperty);
+  const activePropertyIds = new Set(activeProperties.map((property) => property.id));
+  const propertyById = new Map(properties.map((property) => [property.id, property]));
 
   const inRange = (date: string, start: string, end: string) =>
     date >= start && date <= end;
 
   const incomeEntries = [
-    ...rentLedgerEntries
-      .filter((r) => r.status === 'paid')
-      .map((r) => ({
-        date: r.paidDate || r.dueDate,
-        propertyId: r.propertyId,
-        amount: Number(r.amount) || 0,
+    ...rentLedger
+      .filter((entry) => entry.status === 'paid' && activePropertyIds.has(entry.propertyId))
+      .map((entry) => ({
+        date: entry.paidDate || entry.dueDate,
+        propertyId: entry.propertyId,
+        amount: entry.amount,
       })),
-    ...incomes.map((i) => ({
-      date: i.date,
-      propertyId: i.propertyId,
-      amount: Number(i.amount) || 0,
-    })),
+    ...incomes
+      .filter((income) => activePropertyIds.has(income.propertyId))
+      .map((income) => ({
+        date: income.date,
+        propertyId: income.propertyId,
+        amount: income.amount,
+      })),
   ];
 
-  const expensesWithCategory = expenseEntries.map((e) => ({
-    date: e.date,
-    propertyId: e.propertyId,
-    category: e.category,
-    amount: Number(e.amount) || 0,
-  }));
+  const expenseEntries = expenses
+    .filter((expense) => activePropertyIds.has(expense.propertyId))
+    .map((expense) => ({
+      date: expense.date,
+      propertyId: expense.propertyId,
+      category: expense.category,
+      amount: expense.amount,
+    }));
 
   const yearStart = to.slice(0, 4) + '-01-01';
   const monthStart = to.slice(0, 7) + '-01';
 
   const sumIncome = (start: string, end: string) =>
     incomeEntries
-      .filter((e) => inRange(e.date, start, end))
-      .reduce((s, e) => s + toCents(e.amount), 0);
+      .filter((entry) => inRange(entry.date, start, end))
+      .reduce((sum, entry) => sum + toCents(entry.amount), 0);
   const sumExpense = (start: string, end: string) =>
-    expensesWithCategory
-      .filter((e) => inRange(e.date, start, end))
-      .reduce((s, e) => s + toCents(e.amount), 0);
+    expenseEntries
+      .filter((entry) => inRange(entry.date, start, end))
+      .reduce((sum, entry) => sum + toCents(entry.amount), 0);
 
   const ytdIncome = sumIncome(yearStart, to);
   const ytdExpense = sumExpense(yearStart, to);
@@ -152,17 +129,17 @@ export async function GET(req: Request) {
 
   const points: TimeSeriesPoint[] = [];
   for (
-    let d = new Date(from + 'T00:00:00');
-    d <= new Date(to + 'T00:00:00');
-    d.setDate(d.getDate() + 1)
+    let day = new Date(from + 'T00:00:00');
+    day <= new Date(to + 'T00:00:00');
+    day.setDate(day.getDate() + 1)
   ) {
-    const date = d.toISOString().split('T')[0];
+    const date = day.toISOString().split('T')[0];
     const cashInCents = incomeEntries
-      .filter((e) => e.date === date)
-      .reduce((s, e) => s + toCents(e.amount), 0);
-    const cashOutCents = expensesWithCategory
-      .filter((e) => e.date === date)
-      .reduce((s, e) => s + toCents(e.amount), 0);
+      .filter((entry) => entry.date === date)
+      .reduce((sum, entry) => sum + toCents(entry.amount), 0);
+    const cashOutCents = expenseEntries
+      .filter((entry) => entry.date === date)
+      .reduce((sum, entry) => sum + toCents(entry.amount), 0);
     points.push({
       date,
       cashInCents,
@@ -171,55 +148,56 @@ export async function GET(req: Request) {
     });
   }
 
-  const incomeByPropertyMap: Record<string, number> = {};
+  const incomeByPropertyTotals: Record<string, number> = {};
   incomeEntries
-    .filter((e) => inRange(e.date, from, to))
-    .forEach((e) => {
-      incomeByPropertyMap[e.propertyId] =
-        (incomeByPropertyMap[e.propertyId] ?? 0) + toCents(e.amount);
+    .filter((entry) => inRange(entry.date, from, to))
+    .forEach((entry) => {
+      incomeByPropertyTotals[entry.propertyId] =
+        (incomeByPropertyTotals[entry.propertyId] ?? 0) + toCents(entry.amount);
     });
   const incomeByProperty: IncomeByPropertySlice[] = Object.entries(
-    incomeByPropertyMap
+    incomeByPropertyTotals
   ).map(([propertyId, incomeCents]) => ({
     propertyId,
-    propertyName: getPropertyName(propertyMap.get(propertyId), propertyId),
+    propertyName:
+      propertyById.get(propertyId)?.address || propertyId,
     incomeCents,
   }));
 
   const mapCategory = (
     cat: string
   ): ExpenseByCategorySlice['category'] => {
-    const c = cat.toLowerCase();
-    if (c.includes('insurance')) return 'Insurance';
-    if (c.includes('rate')) return 'Rates';
-    if (c.includes('utility') || c.includes('water') || c.includes('electric'))
+    const lower = cat.toLowerCase();
+    if (lower.includes('insurance')) return 'Insurance';
+    if (lower.includes('rate')) return 'Rates';
+    if (lower.includes('utility') || lower.includes('water') || lower.includes('electric'))
       return 'Utilities';
     if (
-      c.includes('maint') ||
-      c.includes('repair') ||
-      c.includes('plumb') ||
-      c.includes('electrical') ||
-      c.includes('garden') ||
-      c.includes('landscaping') ||
-      c.includes('clean')
+      lower.includes('maint') ||
+      lower.includes('repair') ||
+      lower.includes('plumb') ||
+      lower.includes('electrical') ||
+      lower.includes('garden') ||
+      lower.includes('landscaping') ||
+      lower.includes('clean')
     )
       return 'Maintenance';
-    if (c.includes('strata')) return 'Strata';
-    if (c.includes('mortgage')) return 'Mortgage Interest';
-    if (c.includes('manage')) return 'Property Mgmt';
+    if (lower.includes('strata')) return 'Strata';
+    if (lower.includes('mortgage')) return 'Mortgage Interest';
+    if (lower.includes('manage')) return 'Property Mgmt';
     return 'Other';
   };
 
-  const expenseByCategoryMap: Record<string, number> = {};
-  expensesWithCategory
-    .filter((e) => inRange(e.date, from, to))
-    .forEach((e) => {
-      const cat = mapCategory(e.category || '');
-      expenseByCategoryMap[cat] =
-        (expenseByCategoryMap[cat] ?? 0) + toCents(e.amount);
+  const expenseByCategoryTotals: Record<string, number> = {};
+  expenseEntries
+    .filter((entry) => inRange(entry.date, from, to))
+    .forEach((entry) => {
+      const category = mapCategory(entry.category || '');
+      expenseByCategoryTotals[category] =
+        (expenseByCategoryTotals[category] ?? 0) + toCents(entry.amount);
     });
   const expensesByCategory: ExpenseByCategorySlice[] = Object.entries(
-    expenseByCategoryMap
+    expenseByCategoryTotals
   ).map(([category, amountCents]) => ({
     category: category as ExpenseByCategorySlice['category'],
     amountCents,
@@ -247,13 +225,12 @@ export async function GET(req: Request) {
   };
 
   const today = new Date().toISOString().split('T')[0];
-  const activeProps = properties.filter(storeIsActiveProperty);
-  const propertyCards: PropertyCardData[] = activeProps.map((p) => {
+  const propertyCards: PropertyCardData[] = activeProperties.map((property) => {
     const rentEntries = rentLedger
-      .filter((r) => r.propertyId === p.id)
+      .filter((entry) => entry.propertyId === property.id)
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
     const nextRent = rentEntries.find(
-      (r) => r.status !== 'paid' || r.dueDate >= today
+      (entry) => entry.status !== 'paid' || entry.dueDate >= today
     );
 
     let rentDue: RentDue;
@@ -273,30 +250,30 @@ export async function GET(req: Request) {
     }
 
     const alerts = reminders
-      .filter((r) => r.propertyId === property.id)
-      .map((r) => ({
-        id: r.id,
-        label: (r as any).title || (r as any).message || '',
-        date: r.dueDate,
-        severity: (r.severity || 'low') as AlertItem['severity'],
+      .filter((reminder) => reminder.propertyId === property.id)
+      .map((reminder) => ({
+        id: reminder.id,
+        label: reminder.title,
+        date: reminder.dueDate,
+        severity: reminder.severity,
       }));
 
-    const taskItems = listDashboardTasks(p.id);
+    const tasks = listDashboardTasks(property.id);
 
     return {
       propertyId: property.id,
-      name: getPropertyName(property, property.id),
+      name: property.address,
       rentDue,
       alerts,
-      tasks: taskItems,
+      tasks,
     };
   });
 
   const data: DashboardDTO = {
     portfolio: {
-      propertiesCount: activeProps.length,
-      occupiedCount: activeProps.filter((p) => !!(p as any).tenant).length,
-      vacancyCount: activeProps.filter((p) => !(p as any).tenant).length,
+      propertiesCount: activeProperties.length,
+      occupiedCount: activeProperties.filter((property) => !!property.tenant).length,
+      vacancyCount: activeProperties.filter((property) => !property.tenant).length,
     },
     cashflow: {
       ytdNet: { amountCents: ytdIncome - ytdExpense, currency: 'AUD' },
