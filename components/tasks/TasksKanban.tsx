@@ -206,12 +206,19 @@ export default function TasksKanban({
     }
   };
 
-  const tabBaseClasses =
-    "rounded-full border px-4 py-1.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600";
-  const tabActiveClasses =
-    "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900";
-  const tabInactiveClasses =
-    "bg-white text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700";
+  const tabBaseClasses = [
+    "rounded-full border px-4 py-1.5 text-sm transition",
+    "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300",
+    "dark:focus:ring-gray-600",
+  ].join(" ");
+  const tabActiveClasses = [
+    "bg-gray-900 text-white border-gray-900",
+    "dark:bg-gray-100 dark:text-gray-900",
+  ].join(" ");
+  const tabInactiveClasses = [
+    "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
+    "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700",
+  ].join(" ");
 
   return (
     <>
