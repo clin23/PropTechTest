@@ -220,7 +220,10 @@ export default function TasksKanban({
     "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700",
   ].join(" ");
   const getTabClassName = (isActive: boolean) => {
-    return [tabBaseClasses, isActive ? tabActiveClasses : tabInactiveClasses].join(" ");
+    return [
+      tabBaseClasses,
+      isActive ? tabActiveClasses : tabInactiveClasses,
+    ].join(" ");
   };
 
   return (
