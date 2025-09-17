@@ -219,6 +219,10 @@ export default function TasksKanban({
     "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
     "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700",
   ].join(" ");
+  const getTabClassName = (isActive: boolean) =>
+    [tabBaseClasses, isActive ? tabActiveClasses : tabInactiveClasses].join(
+      " "
+    );
 
   return (
     <>
@@ -329,9 +333,7 @@ export default function TasksKanban({
             <button
               type="button"
               onClick={() => handleTabSelect(undefined)}
-              className={`${tabBaseClasses} ${
-                showPropertiesOnCards ? tabActiveClasses : tabInactiveClasses
-              }`}
+              className={getTabClassName(showPropertiesOnCards)}
               aria-pressed={showPropertiesOnCards}
             >
               All
@@ -344,9 +346,7 @@ export default function TasksKanban({
                 key={property.id}
                 type="button"
                 onClick={() => handleTabSelect(property.id)}
-                className={`${tabBaseClasses} ${
-                  isActive ? tabActiveClasses : tabInactiveClasses
-                }`}
+                className={getTabClassName(isActive)}
                 aria-pressed={isActive}
                 aria-disabled={!allowPropertySwitching}
               >
