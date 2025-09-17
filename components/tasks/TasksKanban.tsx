@@ -213,138 +213,149 @@ export default function TasksKanban({
   const tabInactiveClasses =
     "bg-white text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700";
 
-  return (<>
-    <div className="flex gap-4 overflow-x-auto p-1">
-      <DragDropContext onDragEnd={handleDragEnd}>
-        {columns.map((col) => (
-          <div key={col.id} className="w-64 flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-semibold">{col.title}</h2>
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setMenuColumn(menuColumn === col.id ? null : col.id)
-                  }
-                  className="px-1"
-                >
-                  ⋯
-                </button>
-                {menuColumn === col.id && (
-                  <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
-                    <button
-                      className="block w-full px-3 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => {
-                        setMenuColumn(null);
-                        setRenaming(col);
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                      onClick={() => {
-                        setMenuColumn(null);
-                        setDeleting(col);
-                      }}
-                    >
-                      Delete
-                    </button>
-                )}
-              </div>
-            </div>
-            <Droppable droppableId={col.id}>
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className="space-y-2"
-                >
-                  {tasks
-                    .filter((t) => t.status === col.id)
-                    .map((task, idx) => (
-                      <Draggable
-                        key={task.id}
-                        draggableId={task.id}
-                        index={idx}
-                      >
-                        {(prov) => (
-                          <div
-                            ref={prov.innerRef}
-                            {...prov.draggableProps}
-                            {...prov.dragHandleProps}
-                          >
-                            <TaskCard
-                              task={task}
-                              onClick={() => setEditingTask(task)}
-                              showProperties={showPropertiesOnCards}
-                            />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                  {provided.placeholder}
-                  <TaskQuickNew
-                    onCreate={(title) =>
-                      createMut.mutate({ title, status: col.id })
+  return (
+    <>
+      <div className="flex gap-4 overflow-x-auto p-1">
+        <DragDropContext onDragEnd={handleDragEnd}>
+          {columns.map((col) => (
+            <div key={col.id} className="w-64 flex-shrink-0">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-semibold">{col.title}</h2>
+                <div className="relative">
+                  <button
+                    onClick={() =>
+                      setMenuColumn(menuColumn === col.id ? null : col.id)
                     }
-                    placeholder={newTaskPlaceholder}
-                  />
+                    className="px-1"
+                  >
+                    ⋯
+                  </button>
+                  {menuColumn === col.id && (
+                    <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+                      <button
+                        className="block w-full px-3 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                        onClick={() => {
+                          setMenuColumn(null);
+                          setRenaming(col);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                        onClick={() => {
+                          setMenuColumn(null);
+                          setDeleting(col);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </Droppable>
-          </div>
-        ))}
-      </DragDropContext>
-      <div className="w-64 flex-shrink-0">
-        <button
-          onClick={() => setCreating(true)}
-          className="w-full border rounded p-2 text-sm"
-        >
-          + Add Column
-        </button>
-      </div>
-      <Link
-        href="/tasks/archive"
-        className="w-64 flex-shrink-0"
-      >
-        <span className="block w-full border rounded p-2 text-sm text-center">Archive</span>
-      </Link>
-    </div>
-    <div className="mt-10 flex flex-col items-center gap-2">
-      <div
-        className="flex flex-wrap justify-center gap-2"
-        role="tablist"
-        aria-label="Task property filters"
-      >
-        {allowPropertySwitching && (
+              </div>
+              <Droppable droppableId={col.id}>
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="space-y-2"
+                  >
+                    {tasks
+                      .filter((t) => t.status === col.id)
+                      .map((task, idx) => (
+                        <Draggable
+                          key={task.id}
+                          draggableId={task.id}
+                          index={idx}
+                        >
+                          {(prov) => (
+                            <div
+                              ref={prov.innerRef}
+                              {...prov.draggableProps}
+                              {...prov.dragHandleProps}
+                            >
+                              <TaskCard
+                                task={task}
+                                onClick={() => setEditingTask(task)}
+                                showProperties={showPropertiesOnCards}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                    {provided.placeholder}
+                    <TaskQuickNew
+                      onCreate={(title) =>
+                        createMut.mutate({ title, status: col.id })
+                      }
+                      placeholder={newTaskPlaceholder}
+                    />
+                  </div>
+                )}
+              </Droppable>
+            </div>
+          ))}
+        </DragDropContext>
+        <div className="w-64 flex-shrink-0">
           <button
-            type="button"
-            onClick={() => handleTabSelect(undefined)}
-            className={`${tabBaseClasses} ${
-              showPropertiesOnCards ? tabActiveClasses : tabInactiveClasses
-            }`}
-            aria-pressed={showPropertiesOnCards}
+            onClick={() => setCreating(true)}
+            className="w-full border rounded p-2 text-sm"
           >
-            All
+            + Add Column
           </button>
-        )}
-        {propertyTabs.map((property) => {
-          const isActive = propertyIdFilter === property.id;
-          return (
+        </div>
+        <Link
+          href="/tasks/archive"
+          className="w-64 flex-shrink-0"
+        >
+          <span className="block w-full border rounded p-2 text-sm text-center">Archive</span>
+        </Link>
+      </div>
+      <div className="mt-10 flex flex-col items-center gap-2">
+        <div
+          className="flex flex-wrap justify-center gap-2"
+          role="tablist"
+          aria-label="Task property filters"
+        >
+          {allowPropertySwitching && (
             <button
-              key={property.id}
               type="button"
-              onClick={() => handleTabSelect(property.id)}
+              onClick={() => handleTabSelect(undefined)}
               className={`${tabBaseClasses} ${
-                isActive ? tabActiveClasses : tabInactiveClasses
+                showPropertiesOnCards ? tabActiveClasses : tabInactiveClasses
               }`}
-              aria-pressed={isActive}
-              aria-disabled={!allowPropertySwitching}
+              aria-pressed={showPropertiesOnCards}
             >
-              {property.address}
+              All
             </button>
-          );
-        })}
+          )}
+          {propertyTabs.map((property) => {
+            const isActive = propertyIdFilter === property.id;
+            return (
+              <button
+                key={property.id}
+                type="button"
+                onClick={() => handleTabSelect(property.id)}
+                className={`${tabBaseClasses} ${
+                  isActive ? tabActiveClasses : tabInactiveClasses
+                }`}
+                aria-pressed={isActive}
+                aria-disabled={!allowPropertySwitching}
+              >
+                {property.address}
+              </button>
+            );
+          })}
+        </div>
+        {propertyIdFilter && activeProperty && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Creating tasks for{" "}
+            <span className="font-medium text-gray-700 dark:text-gray-200">
+              {activeProperty.address}
+            </span>
+          </p>
+        )}
       </div>
       {propertyIdFilter && activeProperty && (
         <p className="text-xs text-gray-500 dark:text-gray-400">

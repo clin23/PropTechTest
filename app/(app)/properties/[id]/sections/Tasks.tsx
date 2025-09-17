@@ -11,7 +11,7 @@ interface TasksProps {
 }
 
 export default function Tasks({ propertyId, propertyAddress }: TasksProps) {
-  const [activeProperty, setActiveProperty] = useState<PropertyContext>({
+  const [activeProperty, setActiveProperty] = useState<PropertyContext | null>({
     id: propertyId,
     address: propertyAddress,
   });
