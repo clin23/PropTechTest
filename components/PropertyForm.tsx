@@ -61,6 +61,22 @@ export default function PropertyForm({ property, onSaved }: Props) {
       toast({ title: "Failed to delete property", description: e.message }),
   });
 
+  const handleImageUpload = (file: File | null) => {
+    if (!file) {
+      setForm((prev) => ({ ...prev, imageUrl: "" }));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === "string") {
+        setForm((prev) => ({ ...prev, imageUrl: result }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <form
       className="space-y-2"
@@ -85,13 +101,45 @@ export default function PropertyForm({ property, onSaved }: Props) {
         />
       </label>
       <label className="block">
-        Image URL
+        Property Image
         <input
-          className="border p-1 w-full bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          value={form.imageUrl}
-          onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+          type="file"
+          accept="image/*"
+          className="block w-full text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-100"
+          onChange={(e) => {
+            const file = e.target.files?.[0] ?? null;
+            handleImageUpload(file);
+            // allow selecting the same file again if desired
+            e.target.value = "";
+          }}
         />
       </label>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <div
+          className="w-full overflow-hidden rounded border bg-gray-100 dark:border-gray-700 dark:bg-gray-800 md:w-[32rem]"
+          style={{ aspectRatio: "16 / 9" }}
+        >
+          <img
+            src={form.imageUrl || "/default-house.svg"}
+            alt={form.address ? `Preview of ${form.address}` : "Property image preview"}
+            className="h-full w-full object-cover"
+          />
+        </div>
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          <p>
+            Upload a JPG or PNG image from your computer to replace the default property photo.
+          </p>
+          {form.imageUrl && (
+            <button
+              type="button"
+              onClick={() => handleImageUpload(null)}
+              className="mt-2 inline-flex items-center rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              Remove image
+            </button>
+          )}
+        </div>
+      </div>
       <label className="block">
         Tenant
         <input
