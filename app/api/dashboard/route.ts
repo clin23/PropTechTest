@@ -23,52 +23,13 @@ import type { TaskDto } from '../../../types/tasks';
 
 const toCents = (value: number) => Math.round(value * 100);
 
-const normalizeTaskStatus = (
-  status?: TaskDto['status']
-): PropertyCardData['tasks'][number]['status'] => {
-  const value = (status ?? '').toLowerCase();
-  if (value === 'in_progress' || value === 'in-progress' || value === 'in progress') {
-    return 'in_progress';
-  }
-  if (value === 'blocked') return 'blocked';
-  if (value === 'done' || value === 'completed' || value === 'complete') return 'done';
-  return 'todo';
+const getAustralianFinancialYearStart = (isoDate: string) => {
+  const [yearStr, monthStr] = isoDate.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const fyStartYear = month >= 7 ? year : year - 1;
+  return `${fyStartYear.toString().padStart(4, '0')}-07-01`;
 };
-
-const normalizeTaskPriority = (
-  priority?: TaskDto['priority']
-): PropertyCardData['tasks'][number]['priority'] => {
-  const value = (priority ?? '').toLowerCase();
-  if (value === 'high') return 'high';
-  if (value === 'normal' || value === 'medium' || value === 'med') return 'med';
-  return 'low';
-};
-
-const toDashboardTask = (
-  task: TaskDto
-): PropertyCardData['tasks'][number] => ({
-  id: task.id,
-  title: task.title,
-  status: normalizeTaskStatus(task.status),
-  dueDate: task.dueDate,
-  priority: normalizeTaskPriority(task.priority),
-});
-
-const sortByDueDate = (
-  a: PropertyCardData['tasks'][number],
-  b: PropertyCardData['tasks'][number]
-) => {
-  if (!a.dueDate && !b.dueDate) return 0;
-  if (!a.dueDate) return 1;
-  if (!b.dueDate) return -1;
-  return a.dueDate.localeCompare(b.dueDate);
-};
-
-const listDashboardTasks = (propertyId: string) =>
-  listTasks({ propertyId })
-    .map(toDashboardTask)
-    .filter((task) => task.status !== 'done')
-    .sort(sortByDueDate);
 
 export async function GET(req: Request) {
   seedIfEmpty();
@@ -112,6 +73,7 @@ export async function GET(req: Request) {
 
   const yearStart = to.slice(0, 4) + '-01-01';
   const monthStart = to.slice(0, 7) + '-01';
+  const fyStart = getAustralianFinancialYearStart(to);
 
   const sumIncome = (start: string, end: string) =>
     incomeEntries
@@ -126,6 +88,8 @@ export async function GET(req: Request) {
   const ytdExpense = sumExpense(yearStart, to);
   const mtdIncome = sumIncome(monthStart, to);
   const mtdExpense = sumExpense(monthStart, to);
+  const fyIncome = sumIncome(fyStart, to);
+  const fyExpense = sumExpense(fyStart, to);
 
   const points: TimeSeriesPoint[] = [];
   for (
@@ -278,6 +242,8 @@ export async function GET(req: Request) {
     cashflow: {
       ytdNet: { amountCents: ytdIncome - ytdExpense, currency: 'AUD' },
       mtdNet: { amountCents: mtdIncome - mtdExpense, currency: 'AUD' },
+      fyIncome: { amountCents: fyIncome, currency: 'AUD' },
+      fyExpense: { amountCents: fyExpense, currency: 'AUD' },
     },
     lineSeries: { points },
     incomeByProperty,
