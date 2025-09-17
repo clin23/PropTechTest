@@ -73,7 +73,6 @@ const listDashboardTasks = (propertyId: string) =>
 export async function GET(req: Request) {
   seedIfEmpty();
 
-export async function GET(req: Request) {
   const url = new URL(req.url);
   const from = url.searchParams.get('from') ?? '1970-01-01';
   const to = url.searchParams.get('to') ?? new Date().toISOString().split('T')[0];
