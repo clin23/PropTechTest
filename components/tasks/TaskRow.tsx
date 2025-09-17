@@ -10,12 +10,14 @@ export default function TaskRow({
   onUpdate,
   onDelete,
   onToggle,
+  showProperties = true,
 }: {
   task: TaskDto;
   properties: PropertySummary[];
   onUpdate: (data: Partial<TaskDto>) => void;
   onDelete: () => void;
   onToggle: () => void;
+  showProperties?: boolean;
 }) {
   const [title, setTitle] = useState(task.title);
   const [editing, setEditing] = useState(false);
@@ -105,9 +107,10 @@ export default function TaskRow({
             onBlur={handleBlur}
           />
           <div className="flex flex-wrap gap-1 mt-1">
-            {task.properties.map((p) => (
-              <PropertyBadge key={p.id} address={p.address} />
-            ))}
+            {showProperties &&
+              task.properties.map((p) => (
+                <PropertyBadge key={p.id} address={p.address} />
+              ))}
             {task.dueDate && (
               <span
                 className={`text-xs ${
