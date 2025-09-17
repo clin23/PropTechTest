@@ -5,9 +5,11 @@ import type { TaskDto } from "../../types/tasks";
 export default function TaskCard({
   task,
   onClick,
+  showProperties = true,
 }: {
   task: TaskDto;
   onClick?: () => void;
+  showProperties?: boolean;
 }) {
   const REMINDER_DAYS = Number(
     process.env.NEXT_PUBLIC_TASK_REMINDER_DAYS ?? 1
@@ -43,9 +45,10 @@ export default function TaskCard({
       <div className="font-medium">{task.title}</div>
       <div className="mt-1 space-y-1 text-xs">
         {task.vendor && <div>Vendor: {task.vendor.name}</div>}
-        {task.properties.map((p) => (
-          <div key={p.id}>{p.address}</div>
-        ))}
+        {showProperties &&
+          task.properties.map((p) => (
+            <div key={p.id}>{p.address}</div>
+          ))}
         {task.attachments?.length ? (
           <div>📎 {task.attachments.length}</div>
         ) : null}
