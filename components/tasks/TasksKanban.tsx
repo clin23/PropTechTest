@@ -326,6 +326,7 @@ export default function TasksKanban({
               type="button"
               onClick={() => handleTabSelect(undefined)}
               className={tabClassName(!selectedPropertyId)}
+
               aria-pressed={!selectedPropertyId}
             >
               All
@@ -356,42 +357,51 @@ export default function TasksKanban({
           </p>
         )}
       </div>
-      {editingTask && (
-        <TaskEditModal
-          task={editingTask}
-          properties={properties}
-          vendors={vendors}
-          onClose={() => setEditingTask(null)}
-          onSave={(data) => {
-            updateMut.mutate({ id: editingTask.id, data });
-            setEditingTask(null);
-          }}
-          onArchive={() => {
-            archiveMut.mutate(editingTask.id);
-            setEditingTask(null);
-          }}
-        />
+      {propertyIdFilter && activeProperty && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Creating tasks for{" "}
+          <span className="font-medium text-gray-700 dark:text-gray-200">
+            {activeProperty.address}
+          </span>
+        </p>
       )}
-      {renaming && (
-        <ColumnRenameModal
-          column={renaming}
-          onClose={() => setRenaming(null)}
-          onSave={(title) => renameColumn(renaming.id, title)}
-        />
-      )}
-      {deleting && (
-        <ColumnDeleteModal
-          column={deleting}
-          onClose={() => setDeleting(null)}
-          onConfirm={() => deleteColumn(deleting.id)}
-        />
-      )}
-      {creating && (
-        <ColumnCreateModal
-          onClose={() => setCreating(false)}
-          onSave={(title) => addColumn(title)}
-        />
-      )}
+    </div>
+    {editingTask && (
+      <TaskEditModal
+        task={editingTask}
+        properties={properties}
+        vendors={vendors}
+        onClose={() => setEditingTask(null)}
+        onSave={(data) => {
+          updateMut.mutate({ id: editingTask.id, data });
+          setEditingTask(null);
+        }}
+        onArchive={() => {
+          archiveMut.mutate(editingTask.id);
+          setEditingTask(null);
+        }}
+      />
+    )}
+    {renaming && (
+      <ColumnRenameModal
+        column={renaming}
+        onClose={() => setRenaming(null)}
+        onSave={(title) => renameColumn(renaming.id, title)}
+      />
+    )}
+    {deleting && (
+      <ColumnDeleteModal
+        column={deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleteColumn(deleting.id)}
+      />
+    )}
+    {creating && (
+      <ColumnCreateModal
+        onClose={() => setCreating(false)}
+        onSave={(title) => addColumn(title)}
+      />
+    )}
     </>
   );
 }
