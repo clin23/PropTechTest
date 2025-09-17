@@ -188,6 +188,15 @@ export async function GET(req: Request) {
     return 'low';
   };
 
+  const listDashboardTasks = (propertyId: string): PropertyCardData['tasks'] =>
+    listTasks({ propertyId }).map((task) => ({
+      id: task.id,
+      title: task.title,
+      status: normalizeTaskStatus(task.status),
+      dueDate: task.dueDate,
+      priority: normalizeTaskPriority(task.priority),
+    }));
+
   const today = new Date().toISOString().split('T')[0];
   const propertyCards: PropertyCardData[] = activeProperties.map((property) => {
     const rentEntries = rentLedger
