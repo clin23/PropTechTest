@@ -9,12 +9,22 @@ import { getDashboard } from '../../lib/dashboard';
 import { formatMoney } from '../../lib/format';
 import Header from './Header';
 
-const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+// Use the first day of the previous month to show a two-month window ending today.
+const startOfPreviousMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() - 1, 1);
 const formatISODate = (d: Date) => d.toISOString().split('T')[0];
+const getAustralianFinancialYearBounds = (date: Date) => {
+  const month = date.getMonth();
+  const year = date.getFullYear();
+  const startYear = month >= 6 ? year : year - 1;
+  return { startYear, endYear: startYear + 1 };
+};
 
 export default function DashboardPage() {
-  const [from] = useState(() => startOfMonth(new Date()));
+  const [from] = useState(() => startOfPreviousMonth(new Date()));
   const [to] = useState(() => new Date());
+  const { startYear: fyStartYear, endYear: fyEndYear } = getAustralianFinancialYearBounds(to);
+  const fyLabel = `FY${String(fyEndYear).slice(-2)}`;
+  const fyHint = `Australian Financial Year (${fyStartYear}-${fyEndYear})`;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard', from, to],
@@ -32,6 +42,16 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <MetricCard title="YTD Cashflow" value={formatMoney(data.cashflow.ytdNet.amountCents)} hint="Year to Date" />
             <MetricCard title="MTD Cashflow" value={formatMoney(data.cashflow.mtdNet.amountCents)} hint="Month to Date" />
+            <MetricCard
+              title={`${fyLabel} Income`}
+              value={formatMoney(data.cashflow.fyIncome.amountCents)}
+              hint={fyHint}
+            />
+            <MetricCard
+              title={`${fyLabel} Expenses`}
+              value={formatMoney(data.cashflow.fyExpense.amountCents)}
+              hint={fyHint}
+            />
           </div>
           <CashflowLineChart data={data.lineSeries.points} />
           <div className="grid gap-4 md:grid-cols-2">

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '../../../lib/prisma';
 import type {
   DashboardDTO,
   TimeSeriesPoint,
@@ -6,6 +7,7 @@ import type {
   ExpenseByCategorySlice,
   PropertyCardData,
   RentDue,
+  AlertItem,
 } from '../../../types/dashboard';
 import {
   properties,
@@ -13,12 +15,21 @@ import {
   incomes,
   rentLedger,
   reminders,
-  tasks,
+  listTasks,
   isActiveProperty,
   seedIfEmpty,
 } from '../store';
+import type { TaskDto } from '../../../types/tasks';
 
 const toCents = (value: number) => Math.round(value * 100);
+
+const getAustralianFinancialYearStart = (isoDate: string) => {
+  const [yearStr, monthStr] = isoDate.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const fyStartYear = month >= 7 ? year : year - 1;
+  return `${fyStartYear.toString().padStart(4, '0')}-07-01`;
+};
 
 export async function GET(req: Request) {
   seedIfEmpty();
@@ -27,61 +38,72 @@ export async function GET(req: Request) {
   const from = url.searchParams.get('from') ?? '1970-01-01';
   const to = url.searchParams.get('to') ?? new Date().toISOString().split('T')[0];
 
+  const activeProperties = properties.filter(isActiveProperty);
+  const activePropertyIds = new Set(activeProperties.map((property) => property.id));
+  const propertyById = new Map(properties.map((property) => [property.id, property]));
+
   const inRange = (date: string, start: string, end: string) =>
     date >= start && date <= end;
 
   const incomeEntries = [
     ...rentLedger
-      .filter((r) => r.status === 'paid')
-      .map((r) => ({
-        date: r.paidDate || r.dueDate,
-        propertyId: r.propertyId,
-        amount: r.amount,
+      .filter((entry) => entry.status === 'paid' && activePropertyIds.has(entry.propertyId))
+      .map((entry) => ({
+        date: entry.paidDate || entry.dueDate,
+        propertyId: entry.propertyId,
+        amount: entry.amount,
       })),
-    ...incomes.map((i) => ({
-      date: i.date,
-      propertyId: i.propertyId,
-      amount: i.amount,
-    })),
+    ...incomes
+      .filter((income) => activePropertyIds.has(income.propertyId))
+      .map((income) => ({
+        date: income.date,
+        propertyId: income.propertyId,
+        amount: income.amount,
+      })),
   ];
 
-  const expenseEntries = expenses.map((e) => ({
-    date: e.date,
-    propertyId: e.propertyId,
-    category: e.category,
-    amount: e.amount,
-  }));
+  const expenseEntries = expenses
+    .filter((expense) => activePropertyIds.has(expense.propertyId))
+    .map((expense) => ({
+      date: expense.date,
+      propertyId: expense.propertyId,
+      category: expense.category,
+      amount: expense.amount,
+    }));
 
   const yearStart = to.slice(0, 4) + '-01-01';
   const monthStart = to.slice(0, 7) + '-01';
+  const fyStart = getAustralianFinancialYearStart(to);
 
   const sumIncome = (start: string, end: string) =>
     incomeEntries
-      .filter((e) => inRange(e.date, start, end))
-      .reduce((s, e) => s + toCents(e.amount), 0);
+      .filter((entry) => inRange(entry.date, start, end))
+      .reduce((sum, entry) => sum + toCents(entry.amount), 0);
   const sumExpense = (start: string, end: string) =>
     expenseEntries
-      .filter((e) => inRange(e.date, start, end))
-      .reduce((s, e) => s + toCents(e.amount), 0);
+      .filter((entry) => inRange(entry.date, start, end))
+      .reduce((sum, entry) => sum + toCents(entry.amount), 0);
 
   const ytdIncome = sumIncome(yearStart, to);
   const ytdExpense = sumExpense(yearStart, to);
   const mtdIncome = sumIncome(monthStart, to);
   const mtdExpense = sumExpense(monthStart, to);
+  const fyIncome = sumIncome(fyStart, to);
+  const fyExpense = sumExpense(fyStart, to);
 
   const points: TimeSeriesPoint[] = [];
   for (
-    let d = new Date(from + 'T00:00:00');
-    d <= new Date(to + 'T00:00:00');
-    d.setDate(d.getDate() + 1)
+    let day = new Date(from + 'T00:00:00');
+    day <= new Date(to + 'T00:00:00');
+    day.setDate(day.getDate() + 1)
   ) {
-    const date = d.toISOString().split('T')[0];
+    const date = day.toISOString().split('T')[0];
     const cashInCents = incomeEntries
-      .filter((e) => e.date === date)
-      .reduce((s, e) => s + toCents(e.amount), 0);
+      .filter((entry) => entry.date === date)
+      .reduce((sum, entry) => sum + toCents(entry.amount), 0);
     const cashOutCents = expenseEntries
-      .filter((e) => e.date === date)
-      .reduce((s, e) => s + toCents(e.amount), 0);
+      .filter((entry) => entry.date === date)
+      .reduce((sum, entry) => sum + toCents(entry.amount), 0);
     points.push({
       date,
       cashInCents,
@@ -90,69 +112,89 @@ export async function GET(req: Request) {
     });
   }
 
-  const incomeByPropertyMap: Record<string, number> = {};
+  const incomeByPropertyTotals: Record<string, number> = {};
   incomeEntries
-    .filter((e) => inRange(e.date, from, to))
-    .forEach((e) => {
-      incomeByPropertyMap[e.propertyId] =
-        (incomeByPropertyMap[e.propertyId] ?? 0) + toCents(e.amount);
+    .filter((entry) => inRange(entry.date, from, to))
+    .forEach((entry) => {
+      incomeByPropertyTotals[entry.propertyId] =
+        (incomeByPropertyTotals[entry.propertyId] ?? 0) + toCents(entry.amount);
     });
   const incomeByProperty: IncomeByPropertySlice[] = Object.entries(
-    incomeByPropertyMap
+    incomeByPropertyTotals
   ).map(([propertyId, incomeCents]) => ({
     propertyId,
     propertyName:
-      properties.find((p) => p.id === propertyId)?.address || propertyId,
+      propertyById.get(propertyId)?.address || propertyId,
     incomeCents,
   }));
 
   const mapCategory = (
     cat: string
   ): ExpenseByCategorySlice['category'] => {
-    const c = cat.toLowerCase();
-    if (c.includes('insurance')) return 'Insurance';
-    if (c.includes('rate')) return 'Rates';
-    if (c.includes('utility') || c.includes('water') || c.includes('electric'))
+    const lower = cat.toLowerCase();
+    if (lower.includes('insurance')) return 'Insurance';
+    if (lower.includes('rate')) return 'Rates';
+    if (lower.includes('utility') || lower.includes('water') || lower.includes('electric'))
       return 'Utilities';
     if (
-      c.includes('maint') ||
-      c.includes('repair') ||
-      c.includes('plumb') ||
-      c.includes('electrical') ||
-      c.includes('garden') ||
-      c.includes('landscaping') ||
-      c.includes('clean')
+      lower.includes('maint') ||
+      lower.includes('repair') ||
+      lower.includes('plumb') ||
+      lower.includes('electrical') ||
+      lower.includes('garden') ||
+      lower.includes('landscaping') ||
+      lower.includes('clean')
     )
       return 'Maintenance';
-    if (c.includes('strata')) return 'Strata';
-    if (c.includes('mortgage')) return 'Mortgage Interest';
-    if (c.includes('manage')) return 'Property Mgmt';
+    if (lower.includes('strata')) return 'Strata';
+    if (lower.includes('mortgage')) return 'Mortgage Interest';
+    if (lower.includes('manage')) return 'Property Mgmt';
     return 'Other';
   };
 
-  const expenseByCategoryMap: Record<string, number> = {};
+  const expenseByCategoryTotals: Record<string, number> = {};
   expenseEntries
-    .filter((e) => inRange(e.date, from, to))
-    .forEach((e) => {
-      const cat = mapCategory(e.category);
-      expenseByCategoryMap[cat] =
-        (expenseByCategoryMap[cat] ?? 0) + toCents(e.amount);
+    .filter((entry) => inRange(entry.date, from, to))
+    .forEach((entry) => {
+      const category = mapCategory(entry.category || '');
+      expenseByCategoryTotals[category] =
+        (expenseByCategoryTotals[category] ?? 0) + toCents(entry.amount);
     });
   const expensesByCategory: ExpenseByCategorySlice[] = Object.entries(
-    expenseByCategoryMap
+    expenseByCategoryTotals
   ).map(([category, amountCents]) => ({
     category: category as ExpenseByCategorySlice['category'],
     amountCents,
   }));
 
+  const normalizeTaskStatus = (
+    status?: string
+  ): PropertyCardData['tasks'][number]['status'] => {
+    const value = (status ?? '').toLowerCase();
+    if (value === 'in_progress' || value === 'in-progress' || value === 'in progress') {
+      return 'in_progress';
+    }
+    if (value === 'blocked') return 'blocked';
+    if (value === 'done' || value === 'completed' || value === 'complete') return 'done';
+    return 'todo';
+  };
+
+  const normalizeTaskPriority = (
+    priority?: string
+  ): PropertyCardData['tasks'][number]['priority'] => {
+    const value = (priority ?? '').toLowerCase();
+    if (value === 'high') return 'high';
+    if (value === 'normal' || value === 'medium' || value === 'med') return 'med';
+    return 'low';
+  };
+
   const today = new Date().toISOString().split('T')[0];
-  const activeProps = properties.filter(isActiveProperty);
-  const propertyCards: PropertyCardData[] = activeProps.map((p) => {
+  const propertyCards: PropertyCardData[] = activeProperties.map((property) => {
     const rentEntries = rentLedger
-      .filter((r) => r.propertyId === p.id)
+      .filter((entry) => entry.propertyId === property.id)
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
     const nextRent = rentEntries.find(
-      (r) => r.status !== 'paid' || r.dueDate >= today
+      (entry) => entry.status !== 'paid' || entry.dueDate >= today
     );
 
     let rentDue: RentDue;
@@ -164,7 +206,7 @@ export async function GET(req: Request) {
       else status = 'Upcoming';
       rentDue = {
         nextDueDate: nextRent.dueDate,
-        amountCents: toCents(nextRent.amount),
+        amountCents: toCents(Number(nextRent.amount) || 0),
         status,
       };
     } else {
@@ -172,48 +214,36 @@ export async function GET(req: Request) {
     }
 
     const alerts = reminders
-      .filter((r) => r.propertyId === p.id)
-      .map((r) => ({
-        id: r.id,
-        label: r.title,
-        date: r.dueDate,
-        severity: r.severity,
+      .filter((reminder) => reminder.propertyId === property.id)
+      .map((reminder) => ({
+        id: reminder.id,
+        label: reminder.title,
+        date: reminder.dueDate,
+        severity: reminder.severity,
       }));
 
-    const taskItems = tasks
-      .filter(
-        (t) =>
-          t.properties.some((pr) => pr.id === p.id) && t.status !== 'done'
-      )
-      .map((t) => ({
-        id: t.id,
-        title: t.title,
-        status: t.status as PropertyCardData['tasks'][number]['status'],
-        dueDate: t.dueDate,
-        priority:
-          t.priority === 'normal'
-            ? 'med'
-            : (t.priority as PropertyCardData['tasks'][number]['priority']),
-      }));
+    const tasks = listDashboardTasks(property.id);
 
     return {
-      propertyId: p.id,
-      name: p.address,
+      propertyId: property.id,
+      name: property.address,
       rentDue,
       alerts,
-      tasks: taskItems,
+      tasks,
     };
   });
 
   const data: DashboardDTO = {
     portfolio: {
-      propertiesCount: activeProps.length,
-      occupiedCount: activeProps.filter((p) => !!p.tenant).length,
-      vacancyCount: activeProps.filter((p) => !p.tenant).length,
+      propertiesCount: activeProperties.length,
+      occupiedCount: activeProperties.filter((property) => !!property.tenant).length,
+      vacancyCount: activeProperties.filter((property) => !property.tenant).length,
     },
     cashflow: {
       ytdNet: { amountCents: ytdIncome - ytdExpense, currency: 'AUD' },
       mtdNet: { amountCents: mtdIncome - mtdExpense, currency: 'AUD' },
+      fyIncome: { amountCents: fyIncome, currency: 'AUD' },
+      fyExpense: { amountCents: fyExpense, currency: 'AUD' },
     },
     lineSeries: { points },
     incomeByProperty,
