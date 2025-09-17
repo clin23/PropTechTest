@@ -17,6 +17,7 @@ import {
   listVendors,
 } from "../../lib/api";
 import type { TaskDto } from "../../types/tasks";
+import type { PropertySummary } from "../../types/property";
 import TaskCard from "./TaskCard";
 import TaskQuickNew from "./TaskQuickNew";
 import TaskEditModal from "./TaskEditModal";
@@ -35,13 +36,31 @@ const DEFAULT_COLUMNS: Column[] = [
 
 const STORAGE_KEY = "task-columns";
 
-export default function TasksKanban() {
+type PropertyContext = Pick<PropertySummary, "id" | "address">;
+
+export default function TasksKanban({
+  initialPropertyId,
+  allowPropertySwitching = true,
+  onContextChange,
+}: {
+  initialPropertyId?: string;
+  allowPropertySwitching?: boolean;
+  onContextChange?: (property: PropertyContext | null) => void;
+}) {
   const qc = useQueryClient();
-  const { data: tasks = [] } = useQuery<TaskDto[]>({
-    queryKey: ["tasks"],
-    queryFn: () => listTasks(),
-  });
-  const { data: properties = [] } = useQuery({
+  const [activeFilter, setActiveFilter] = useState<string>(
+    initialPropertyId ?? "all"
+  );
+
+  useEffect(() => {
+    if (initialPropertyId) {
+      setActiveFilter(initialPropertyId);
+    } else if (!allowPropertySwitching) {
+      setActiveFilter("all");
+    }
+  }, [initialPropertyId, allowPropertySwitching]);
+
+  const { data: properties = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
     queryFn: () => listProperties(),
   });
@@ -49,15 +68,63 @@ export default function TasksKanban() {
     queryKey: ["vendors"],
     queryFn: () => listVendors(),
   });
-  const defaultProp = properties[0];
+
+  useEffect(() => {
+    if (!allowPropertySwitching) return;
+    if (activeFilter === "all") return;
+    const exists = properties.some((p) => p.id === activeFilter);
+    if (!exists) {
+      setActiveFilter("all");
+    }
+  }, [activeFilter, properties, allowPropertySwitching]);
+
+  const selectedPropertyId =
+    activeFilter !== "all" ? activeFilter : undefined;
+
+  const propertyIdFilter = allowPropertySwitching
+    ? selectedPropertyId
+    : initialPropertyId ?? selectedPropertyId;
+
+  const { data: tasks = [] } = useQuery<TaskDto[]>({
+    queryKey: ["tasks", { propertyId: propertyIdFilter ?? null }],
+    queryFn: () =>
+      listTasks(
+        propertyIdFilter ? { propertyId: propertyIdFilter } : undefined
+      ),
+  });
+
+  const activeProperty = propertyIdFilter
+    ? properties.find((p) => p.id === propertyIdFilter)
+    : undefined;
+
+  useEffect(() => {
+    if (!onContextChange) return;
+    if (propertyIdFilter && activeProperty) {
+      onContextChange({
+        id: activeProperty.id,
+        address: activeProperty.address,
+      });
+    } else if (!propertyIdFilter) {
+      onContextChange(null);
+    }
+  }, [activeProperty, propertyIdFilter, onContextChange]);
+
+  const defaultPropertyForCreation = propertyIdFilter
+    ? activeProperty ?? null
+    : properties[0] ?? null;
 
   const createMut = useMutation({
     mutationFn: ({ title, status }: { title: string; status: string }) =>
       createTask({
         title,
         status,
-        properties: defaultProp
-          ? [{ id: defaultProp.id, address: defaultProp.address }]
+        properties: defaultPropertyForCreation
+          ? [
+              {
+                id: defaultPropertyForCreation.id,
+                address: defaultPropertyForCreation.address,
+              },
+            ]
           : [],
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
@@ -118,6 +185,34 @@ export default function TasksKanban() {
       );
   };
 
+  const newTaskPlaceholder = activeProperty
+    ? `+ New task for ${activeProperty.address}`
+    : "+ New task";
+
+  const propertyTabs = allowPropertySwitching
+    ? properties
+    : activeProperty
+    ? [activeProperty]
+    : [];
+
+  const showPropertiesOnCards = !propertyIdFilter;
+
+  const handleTabSelect = (propertyId?: string) => {
+    if (!allowPropertySwitching) return;
+    if (!propertyId) {
+      setActiveFilter("all");
+    } else {
+      setActiveFilter(propertyId);
+    }
+  };
+
+  const tabBaseClasses =
+    "rounded-full border px-4 py-1.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600";
+  const tabActiveClasses =
+    "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900";
+  const tabInactiveClasses =
+    "bg-white text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700";
+
   return (<>
     <div className="flex gap-4 overflow-x-auto p-1">
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -154,7 +249,6 @@ export default function TasksKanban() {
                     >
                       Delete
                     </button>
-                  </div>
                 )}
               </div>
             </div>
@@ -179,7 +273,11 @@ export default function TasksKanban() {
                             {...prov.draggableProps}
                             {...prov.dragHandleProps}
                           >
-                            <TaskCard task={task} onClick={() => setEditingTask(task)} />
+                            <TaskCard
+                              task={task}
+                              onClick={() => setEditingTask(task)}
+                              showProperties={showPropertiesOnCards}
+                            />
                           </div>
                         )}
                       </Draggable>
@@ -189,6 +287,7 @@ export default function TasksKanban() {
                     onCreate={(title) =>
                       createMut.mutate({ title, status: col.id })
                     }
+                    placeholder={newTaskPlaceholder}
                   />
                 </div>
               )}
@@ -210,43 +309,88 @@ export default function TasksKanban() {
       >
         <span className="block w-full border rounded p-2 text-sm text-center">Archive</span>
       </Link>
+    </div>
+    <div className="mt-10 flex flex-col items-center gap-2">
+      <div
+        className="flex flex-wrap justify-center gap-2"
+        role="tablist"
+        aria-label="Task property filters"
+      >
+        {allowPropertySwitching && (
+          <button
+            type="button"
+            onClick={() => handleTabSelect(undefined)}
+            className={`${tabBaseClasses} ${
+              showPropertiesOnCards ? tabActiveClasses : tabInactiveClasses
+            }`}
+            aria-pressed={showPropertiesOnCards}
+          >
+            All
+          </button>
+        )}
+        {propertyTabs.map((property) => {
+          const isActive = propertyIdFilter === property.id;
+          return (
+            <button
+              key={property.id}
+              type="button"
+              onClick={() => handleTabSelect(property.id)}
+              className={`${tabBaseClasses} ${
+                isActive ? tabActiveClasses : tabInactiveClasses
+              }`}
+              aria-pressed={isActive}
+              aria-disabled={!allowPropertySwitching}
+            >
+              {property.address}
+            </button>
+          );
+        })}
       </div>
-      {editingTask && (
-        <TaskEditModal
-          task={editingTask}
-          properties={properties}
-          vendors={vendors}
-          onClose={() => setEditingTask(null)}
-          onSave={(data) => {
-            updateMut.mutate({ id: editingTask.id, data });
-            setEditingTask(null);
-          }}
-          onArchive={() => {
-            archiveMut.mutate(editingTask.id);
-            setEditingTask(null);
-          }}
-        />
+      {propertyIdFilter && activeProperty && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Creating tasks for{" "}
+          <span className="font-medium text-gray-700 dark:text-gray-200">
+            {activeProperty.address}
+          </span>
+        </p>
       )}
-      {renaming && (
-        <ColumnRenameModal
-          column={renaming}
-          onClose={() => setRenaming(null)}
-          onSave={(title) => renameColumn(renaming.id, title)}
-        />
-      )}
-      {deleting && (
-        <ColumnDeleteModal
-          column={deleting}
-          onClose={() => setDeleting(null)}
-          onConfirm={() => deleteColumn(deleting.id)}
-        />
-      )}
-      {creating && (
-        <ColumnCreateModal
-          onClose={() => setCreating(false)}
-          onSave={(title) => addColumn(title)}
-        />
-      )}
+    </div>
+    {editingTask && (
+      <TaskEditModal
+        task={editingTask}
+        properties={properties}
+        vendors={vendors}
+        onClose={() => setEditingTask(null)}
+        onSave={(data) => {
+          updateMut.mutate({ id: editingTask.id, data });
+          setEditingTask(null);
+        }}
+        onArchive={() => {
+          archiveMut.mutate(editingTask.id);
+          setEditingTask(null);
+        }}
+      />
+    )}
+    {renaming && (
+      <ColumnRenameModal
+        column={renaming}
+        onClose={() => setRenaming(null)}
+        onSave={(title) => renameColumn(renaming.id, title)}
+      />
+    )}
+    {deleting && (
+      <ColumnDeleteModal
+        column={deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleteColumn(deleting.id)}
+      />
+    )}
+    {creating && (
+      <ColumnCreateModal
+        onClose={() => setCreating(false)}
+        onSave={(title) => addColumn(title)}
+      />
+    )}
     </>
   );
 }
