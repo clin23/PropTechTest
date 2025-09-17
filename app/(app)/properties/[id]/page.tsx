@@ -96,26 +96,37 @@ export default function PropertyPage() {
   };
 
   return (
-    <div className="space-y-4 p-6">
-      <ActionButtons
-        onAddIncome={() => setIncomeOpen(true)}
-        onAddExpense={() => setExpenseOpen(true)}
-        onUploadDocument={() => setDocumentOpen(true)}
-      />
-      <PropertyHero property={property} onEdit={() => setEditOpen(true)} />
-      <ScrollableSectionBar
-        tabs={TABS}
-        activeTab={resolvedTab}
-        onTabSelect={handleTabSelect}
-      />
-      <div
-        role="tabpanel"
-        id={`panel-${resolvedTab}`}
-        aria-labelledby={`tab-${resolvedTab}`}
-        tabIndex={0}
-        className="pt-2"
-      >
-        {renderSection(resolvedTab)}
+    <div className="space-y-6 p-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[minmax(0,420px)_1fr]">
+        <div className="space-y-4">
+          <section className="rounded-lg border bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <ActionButtons
+              onAddIncome={() => setIncomeOpen(true)}
+              onAddExpense={() => setExpenseOpen(true)}
+              onUploadDocument={() => setDocumentOpen(true)}
+            />
+          </section>
+          <PropertyHero property={property} onEdit={() => setEditOpen(true)} />
+        </div>
+        <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="border-b bg-gray-50 px-3 py-3 dark:border-gray-800 dark:bg-gray-900/60">
+            <ScrollableSectionBar
+              tabs={TABS}
+              activeTab={resolvedTab}
+              onTabSelect={handleTabSelect}
+              className="w-full"
+            />
+          </div>
+          <div
+            role="tabpanel"
+            id={`panel-${resolvedTab}`}
+            aria-labelledby={`tab-${resolvedTab}`}
+            tabIndex={0}
+            className="flex-1 overflow-auto px-4 py-4"
+          >
+            {renderSection(resolvedTab)}
+          </div>
+        </section>
       </div>
       <IncomeForm
         propertyId={id}

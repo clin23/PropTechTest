@@ -17,7 +17,7 @@ function ActionButton({
   return (
     <Button
       type="button"
-      className={`whitespace-nowrap px-3 py-1 text-sm font-medium ${className}`}
+      className={`h-9 whitespace-nowrap rounded-md px-4 text-sm font-semibold ${className}`}
       {...props}
     >
       {children}

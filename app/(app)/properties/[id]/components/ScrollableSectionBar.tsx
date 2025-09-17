@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { Button } from "../../../../../components/ui/button";
 
 export interface SectionTab {
@@ -12,12 +18,14 @@ interface ScrollableSectionBarProps {
   tabs: SectionTab[];
   activeTab: string;
   onTabSelect: (tab: string) => void;
+  className?: string;
 }
 
 export default function ScrollableSectionBar({
   tabs,
   activeTab,
   onTabSelect,
+  className = "",
 }: ScrollableSectionBarProps) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -91,15 +99,19 @@ export default function ScrollableSectionBar({
     }
   };
 
+  const rootClassName = ["flex items-center gap-2", className]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="flex items-center gap-2">
+    <div className={rootClassName}>
       <Button
         type="button"
         variant="secondary"
         aria-label="Scroll left"
         onClick={() => handleArrowClick("left")}
         disabled={!canScrollLeft}
-        className="h-9 w-9 p-0"
+        className="h-9 w-9 p-0 text-lg"
       >
         <span aria-hidden>&lsaquo;</span>
       </Button>
@@ -108,6 +120,7 @@ export default function ScrollableSectionBar({
           ref={scrollContainerRef}
           className="flex overflow-x-auto whitespace-nowrap"
           role="tablist"
+          aria-label="Property sections"
           aria-orientation="horizontal"
         >
           {orderedTabs.map((tab, index) => {
@@ -126,7 +139,7 @@ export default function ScrollableSectionBar({
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => onTabSelect(tab.id)}
                 onKeyDown={(event) => handleKeyDown(event, index)}
-                className={`relative mx-1 flex-shrink-0 rounded px-4 py-2 text-sm font-medium transition-colors ${
+                className={`relative mx-1 flex-shrink-0 rounded px-4 py-2 text-sm font-semibold transition-colors ${
                   isActive
                     ? "bg-blue-600 text-white"
                     : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
@@ -144,7 +157,7 @@ export default function ScrollableSectionBar({
         aria-label="Scroll right"
         onClick={() => handleArrowClick("right")}
         disabled={!canScrollRight}
-        className="h-9 w-9 p-0"
+        className="h-9 w-9 p-0 text-lg"
       >
         <span aria-hidden>&rsaquo;</span>
       </Button>
