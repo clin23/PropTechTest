@@ -219,10 +219,12 @@ export default function TasksKanban({
     "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
     "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700",
   ].join(" ");
-  const getTabClassName = (isActive: boolean) =>
-    [tabBaseClasses, isActive ? tabActiveClasses : tabInactiveClasses].join(
-      " "
-    );
+  const getTabClassName = (isActive: boolean) => {
+    return [
+      tabBaseClasses,
+      isActive ? tabActiveClasses : tabInactiveClasses,
+    ].join(" ");
+  };
 
   return (
     <>
