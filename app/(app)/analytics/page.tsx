@@ -10,20 +10,20 @@ export default function AnalyticsPage() {
   const [query, setQuery] = useState('');
 
   return (
-    <div className="p-6 h-full">
-      <h1 className="text-2xl font-semibold mb-6">Analytics</h1>
-      <div className="grid grid-cols-3 grid-rows-2 gap-4 h-full">
-        <div className="relative col-span-2 row-span-2 flex flex-col border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
+    <div className="flex h-full flex-col gap-6 p-6">
+      <h1 className="text-2xl font-semibold">Analytics</h1>
+      <div className="grid flex-1 gap-4 md:grid-cols-3 md:grid-rows-[repeat(2,minmax(0,1fr))]">
+        <div className="relative flex h-full flex-col gap-6 rounded-lg border bg-white/10 p-6 shadow-lg backdrop-blur dark:bg-gray-900/20 md:col-span-2 md:row-span-2">
           <Link
             href="/analytics/overview"
             className="absolute inset-0"
             aria-label="Go to overview"
           />
-          <div className="relative z-10 pointer-events-none">
-            <span className="text-5xl font-bold">Overview</span>
+          <div className="pointer-events-none relative z-10">
+            <span className="text-4xl font-bold md:text-5xl">Overview</span>
           </div>
           <div
-            className="mt-4 relative z-10"
+            className="relative z-10 mt-auto"
             onClick={e => e.stopPropagation()}
           >
             <input
@@ -42,13 +42,13 @@ export default function AnalyticsPage() {
         </div>
         <Link
           href="/analytics/custom"
-          className="col-start-3 row-start-1 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-3xl font-bold"
+          className="flex items-center justify-center rounded-lg border bg-white/10 p-6 text-2xl font-semibold shadow-lg backdrop-blur dark:bg-gray-900/20 md:col-start-3 md:row-start-1 md:h-full md:text-3xl"
         >
           My Custom Analytics
         </Link>
         <Link
           href="/analytics/builder"
-          className="col-start-3 row-start-2 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-3xl font-bold"
+          className="flex items-center justify-center rounded-lg border bg-white/10 p-6 text-2xl font-semibold shadow-lg backdrop-blur dark:bg-gray-900/20 md:col-start-3 md:row-start-2 md:h-full md:text-3xl"
         >
           Analytics Builder
         </Link>
