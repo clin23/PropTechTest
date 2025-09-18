@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from "react";
-import { Button } from "../../../../../components/ui/button";
+import { useMemo, useRef, type KeyboardEvent } from "react";
 
 export interface SectionTab {
   id: string;
@@ -27,56 +20,9 @@ export default function ScrollableSectionBar({
   onTabSelect,
   className = "",
 }: ScrollableSectionBarProps) {
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const orderedTabs = useMemo(() => tabs, [tabs]);
-
-  const updateScrollButtons = () => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const { scrollLeft, scrollWidth, clientWidth } = container;
-    setCanScrollLeft(scrollLeft > 0);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
-  };
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    updateScrollButtons();
-    container.addEventListener("scroll", updateScrollButtons);
-    window.addEventListener("resize", updateScrollButtons);
-    return () => {
-      container.removeEventListener("scroll", updateScrollButtons);
-      window.removeEventListener("resize", updateScrollButtons);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderedTabs.length]);
-
-  useEffect(() => {
-    updateScrollButtons();
-  }, [activeTab]);
-
-  useEffect(() => {
-    const current = tabRefs.current[activeTab];
-    const container = scrollContainerRef.current;
-    if (current && container) {
-      const currentRect = current.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      if (currentRect.left < containerRect.left || currentRect.right > containerRect.right) {
-        current.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-      }
-    }
-  }, [activeTab]);
-
-  const handleArrowClick = (direction: "left" | "right") => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const scrollAmount = direction === "left" ? -240 : 240;
-    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
-  };
 
   const focusTab = (tabId: string) => {
     const el = tabRefs.current[tabId];
@@ -99,26 +45,15 @@ export default function ScrollableSectionBar({
     }
   };
 
-  const rootClassName = ["flex items-center gap-2", className]
+  const rootClassName = ["flex w-full justify-center", className]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div className={rootClassName}>
-      <Button
-        type="button"
-        variant="secondary"
-        aria-label="Scroll left"
-        onClick={() => handleArrowClick("left")}
-        disabled={!canScrollLeft}
-        className="h-9 w-9 p-0 text-lg"
-      >
-        <span aria-hidden>&lsaquo;</span>
-      </Button>
-      <div className="relative flex-1 overflow-hidden">
+      <div className="pointer-events-auto flex max-w-full justify-center">
         <div
-          ref={scrollContainerRef}
-          className="flex overflow-x-auto whitespace-nowrap"
+          className="flex max-w-full flex-wrap justify-center gap-2 rounded-full border border-gray-200 bg-white/90 px-4 py-2 text-center shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/75 dark:border-gray-700 dark:bg-gray-900/90"
           role="tablist"
           aria-label="Property sections"
           aria-orientation="horizontal"
@@ -139,10 +74,10 @@ export default function ScrollableSectionBar({
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => onTabSelect(tab.id)}
                 onKeyDown={(event) => handleKeyDown(event, index)}
-                className={`relative mx-1 flex-shrink-0 rounded px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600 ${
                   isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                    ? "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
+                    : "border-transparent bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 }`}
               >
                 {tab.label}
@@ -151,16 +86,6 @@ export default function ScrollableSectionBar({
           })}
         </div>
       </div>
-      <Button
-        type="button"
-        variant="secondary"
-        aria-label="Scroll right"
-        onClick={() => handleArrowClick("right")}
-        disabled={!canScrollRight}
-        className="h-9 w-9 p-0 text-lg"
-      >
-        <span aria-hidden>&rsaquo;</span>
-      </Button>
     </div>
   );
 }
