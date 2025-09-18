@@ -17,7 +17,7 @@ function ActionButton({
   return (
     <Button
       type="button"
-      className={`h-9 whitespace-nowrap rounded-md px-4 text-sm font-semibold ${className}`}
+      className={`h-9 w-full whitespace-nowrap rounded-md px-4 text-sm font-semibold sm:flex-1 sm:w-auto ${className}`}
       {...props}
     >
       {children}
@@ -31,7 +31,7 @@ export default function ActionButtons({
   onUploadDocument,
 }: ActionButtonsProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-2 sm:flex-row">
       <ActionButton
         onClick={onAddIncome}
         aria-label="Add Income"
