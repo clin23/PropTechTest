@@ -17,7 +17,7 @@ function ActionButton({
   return (
     <Button
       type="button"
-      className={`h-9 w-full whitespace-nowrap rounded-md px-4 text-sm font-semibold sm:flex-1 sm:w-auto ${className}`}
+      className={`h-9 w-full whitespace-nowrap rounded-md px-3 text-xs font-semibold sm:flex-1 sm:px-2 sm:text-xs ${className}`}
       {...props}
     >
       {children}
@@ -37,21 +37,21 @@ export default function ActionButtons({
         aria-label="Add Income"
         className="bg-green-600 text-white hover:bg-green-700"
       >
-        +Add Income
+        Add Income
       </ActionButton>
       <ActionButton
         onClick={onAddExpense}
         aria-label="Add Expense"
         className="bg-blue-600 text-white hover:bg-blue-700"
       >
-        +Add Expense
+        Add Expense
       </ActionButton>
       <ActionButton
         onClick={onUploadDocument}
         aria-label="Upload Document"
         className="bg-purple-600 text-white hover:bg-purple-700"
       >
-        +Upload Document
+        Upload Document
       </ActionButton>
     </div>
   );
