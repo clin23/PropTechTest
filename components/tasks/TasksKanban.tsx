@@ -39,6 +39,12 @@ const tabClassName = (isActive: boolean) =>
     isActive ? TAB_ACTIVE_CLASSES : TAB_INACTIVE_CLASSES,
   ].join(" ");
 
+const caretButtonClassName = [
+  TAB_BASE_CLASSES,
+  TAB_INACTIVE_CLASSES,
+  "px-2 py-1 text-base leading-none",
+].join(" ");
+
 type Column = { id: string; title: string };
 
 const DEFAULT_COLUMNS: Column[] = [
@@ -132,6 +138,7 @@ export default function TasksKanban({
   );
   const [columnsByProperty, setColumnsByProperty] = useState<ColumnMap>({});
   const [columnsLoaded, setColumnsLoaded] = useState(false);
+  const [isPropertyModalOpen, setPropertyModalOpen] = useState(false);
 
   useEffect(() => {
     if (initialPropertyId) {
@@ -176,6 +183,20 @@ export default function TasksKanban({
     if (!columnsLoaded) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnsByProperty));
   }, [columnsByProperty, columnsLoaded]);
+
+  useEffect(() => {
+    if (!isPropertyModalOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPropertyModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPropertyModalOpen]);
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
@@ -330,6 +351,11 @@ export default function TasksKanban({
     }
   };
 
+  const handlePropertySelect = (propertyId?: string) => {
+    handleTabSelect(propertyId);
+    setPropertyModalOpen(false);
+  };
+
   const newTaskPlaceholder = activeProperty
     ? `+ New task for ${activeProperty.address}`
     : "+ New task";
@@ -339,6 +365,27 @@ export default function TasksKanban({
     : activeProperty
       ? [activeProperty]
       : [];
+
+  const MAX_VISIBLE_PROPERTIES = 3;
+  const hasExtraProperties = propertyTabs.length > MAX_VISIBLE_PROPERTIES;
+
+  let visibleProperties = propertyTabs.slice(0, MAX_VISIBLE_PROPERTIES);
+
+  if (hasExtraProperties && activeProperty) {
+    const includesActive = visibleProperties.some(
+      (property) => property.id === activeProperty.id
+    );
+    if (!includesActive) {
+      visibleProperties[visibleProperties.length - 1] = activeProperty;
+    }
+  }
+
+  visibleProperties = visibleProperties.filter((property, index, array) => {
+    if (!property) return false;
+    return array.findIndex((item) => item.id === property.id) === index;
+  });
+
+  const showCaretButton = allowPropertySwitching && hasExtraProperties;
 
   const showPropertiesOnCards = !selectedPropertyId;
 
@@ -448,20 +495,20 @@ export default function TasksKanban({
             {allowPropertySwitching && (
               <button
                 type="button"
-                onClick={() => handleTabSelect(undefined)}
+                onClick={() => handlePropertySelect(undefined)}
                 className={tabClassName(!selectedPropertyId)}
                 aria-pressed={!selectedPropertyId}
               >
                 All
               </button>
             )}
-            {propertyTabs.map((property) => {
+            {visibleProperties.map((property) => {
               const isActive = selectedPropertyId === property.id;
               return (
                 <button
                   key={property.id}
                   type="button"
-                  onClick={() => handleTabSelect(property.id)}
+                  onClick={() => handlePropertySelect(property.id)}
                   className={tabClassName(isActive)}
                   aria-pressed={isActive}
                   aria-disabled={!allowPropertySwitching}
@@ -470,6 +517,19 @@ export default function TasksKanban({
                 </button>
               );
             })}
+            {showCaretButton && (
+              <button
+                type="button"
+                onClick={() => setPropertyModalOpen(true)}
+                className={caretButtonClassName}
+                aria-haspopup="dialog"
+                aria-expanded={isPropertyModalOpen}
+                title="Show all properties"
+                aria-label="Show all properties"
+              >
+                ^
+              </button>
+            )}
           </div>
           {selectedPropertyId && activeProperty && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -481,6 +541,15 @@ export default function TasksKanban({
           )}
         </div>
       </div>
+
+      <PropertySelectModal
+        open={isPropertyModalOpen}
+        onClose={() => setPropertyModalOpen(false)}
+        properties={propertyTabs}
+        selectedPropertyId={selectedPropertyId}
+        onSelect={handlePropertySelect}
+        allowAll={allowPropertySwitching}
+      />
 
       {editingTask && (
         <TaskEditModal
@@ -519,5 +588,96 @@ export default function TasksKanban({
       />
     )}
     </>
+  );
+}
+
+type PropertySelectModalProps = {
+  open: boolean;
+  properties: PropertySummary[];
+  selectedPropertyId?: string;
+  onSelect: (propertyId?: string) => void;
+  onClose: () => void;
+  allowAll: boolean;
+};
+
+function PropertySelectModal({
+  open,
+  properties,
+  selectedPropertyId,
+  onSelect,
+  onClose,
+  allowAll,
+}: PropertySelectModalProps) {
+  if (!open) return null;
+
+  const optionClassName = (isActive: boolean) =>
+    [
+      "flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-2 text-sm transition",
+      isActive
+        ? "border-gray-900 bg-gray-900 text-white shadow-sm dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
+        : "border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800",
+    ].join(" ");
+
+  const handleSelect = (propertyId?: string) => {
+    onSelect(propertyId);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label="All properties"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-full w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 dark:border-gray-800">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Select a property
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 dark:focus:ring-gray-600"
+            aria-label="Close property selector"
+          >
+            ×
+          </button>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
+          <div className="space-y-2">
+            {allowAll && (
+              <button
+                type="button"
+                onClick={() => handleSelect(undefined)}
+                className={optionClassName(!selectedPropertyId)}
+                aria-pressed={!selectedPropertyId}
+              >
+                <span>All properties</span>
+                {!selectedPropertyId && <span aria-hidden="true">✓</span>}
+              </button>
+            )}
+            {properties.map((property) => {
+              const isActive = selectedPropertyId === property.id;
+              return (
+                <button
+                  key={property.id}
+                  type="button"
+                  onClick={() => handleSelect(property.id)}
+                  className={optionClassName(isActive)}
+                  aria-pressed={isActive}
+                >
+                  <span>{property.address}</span>
+                  {isActive && <span aria-hidden="true">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
