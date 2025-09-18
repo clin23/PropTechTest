@@ -7,7 +7,6 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { Button } from "../../../../../components/ui/button";
 
 export interface SectionTab {
   id: string;
@@ -27,56 +26,12 @@ export default function ScrollableSectionBar({
   onTabSelect,
   className = "",
 }: ScrollableSectionBarProps) {
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const orderedTabs = useMemo(() => tabs, [tabs]);
-
-  const updateScrollButtons = () => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const { scrollLeft, scrollWidth, clientWidth } = container;
-    setCanScrollLeft(scrollLeft > 0);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
-  };
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    updateScrollButtons();
-    container.addEventListener("scroll", updateScrollButtons);
-    window.addEventListener("resize", updateScrollButtons);
-    return () => {
-      container.removeEventListener("scroll", updateScrollButtons);
-      window.removeEventListener("resize", updateScrollButtons);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderedTabs.length]);
-
-  useEffect(() => {
-    updateScrollButtons();
-  }, [activeTab]);
-
-  useEffect(() => {
-    const current = tabRefs.current[activeTab];
-    const container = scrollContainerRef.current;
-    if (current && container) {
-      const currentRect = current.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      if (currentRect.left < containerRect.left || currentRect.right > containerRect.right) {
-        current.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-      }
-    }
-  }, [activeTab]);
-
-  const handleArrowClick = (direction: "left" | "right") => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const scrollAmount = direction === "left" ? -240 : 240;
-    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
-  };
 
   const focusTab = (tabId: string) => {
     const el = tabRefs.current[tabId];
@@ -99,32 +54,74 @@ export default function ScrollableSectionBar({
     }
   };
 
-  const rootClassName = ["flex items-center gap-2", className]
+  const syncScrollHints = (element: HTMLDivElement) => {
+    const { scrollLeft, scrollWidth, clientWidth } = element;
+    const maxScrollLeft = scrollWidth - clientWidth;
+    setCanScrollLeft(scrollLeft > 1);
+    setCanScrollRight(scrollLeft < maxScrollLeft - 1);
+  };
+
+  useEffect(() => {
+    const element = scrollContainerRef.current;
+    if (!element) return;
+
+    const handleScroll = () => syncScrollHints(element);
+
+    syncScrollHints(element);
+
+    element.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      element.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [orderedTabs.length]);
+
+  useEffect(() => {
+    const element = scrollContainerRef.current;
+    const activeButton = tabRefs.current[activeTab];
+
+    if (!element || !activeButton) {
+      return;
+    }
+
+    activeButton.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+
+    requestAnimationFrame(() => {
+      if (element) {
+        syncScrollHints(element);
+      }
+    });
+  }, [activeTab, orderedTabs.length]);
+
+  const rootClassName = ["flex w-full justify-center", className]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div className={rootClassName}>
-      <Button
-        type="button"
-        variant="secondary"
-        aria-label="Scroll left"
-        onClick={() => handleArrowClick("left")}
-        disabled={!canScrollLeft}
-        className="h-9 w-9 p-0 text-lg"
-      >
-        <span aria-hidden>&lsaquo;</span>
-      </Button>
-      <div className="relative flex-1 overflow-hidden">
+      <div className="pointer-events-auto relative w-full max-w-full">
         <div
           ref={scrollContainerRef}
-          className="flex overflow-x-auto whitespace-nowrap"
+          className="flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap rounded-full border border-gray-200 bg-white/90 px-3 py-2 text-center shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/75 dark:border-gray-700 dark:bg-gray-900/90"
           role="tablist"
           aria-label="Property sections"
           aria-orientation="horizontal"
         >
           {orderedTabs.map((tab, index) => {
             const isActive = tab.id === activeTab;
+            const tabClassName = [
+              "flex-shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600",
+              isActive
+                ? "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
+                : "border-transparent bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+            ].join(" ");
+
             return (
               <button
                 key={tab.id}
@@ -139,28 +136,26 @@ export default function ScrollableSectionBar({
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => onTabSelect(tab.id)}
                 onKeyDown={(event) => handleKeyDown(event, index)}
-                className={`relative mx-1 flex-shrink-0 rounded px-4 py-2 text-sm font-semibold transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                }`}
+                className={tabClassName}
               >
                 {tab.label}
               </button>
             );
           })}
         </div>
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-y-1 left-1 w-6 rounded-l-full bg-gradient-to-r from-white/90 via-white/60 to-transparent transition-opacity duration-200 supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60 ${
+            canScrollLeft ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-y-1 right-1 w-6 rounded-r-full bg-gradient-to-l from-white/90 via-white/60 to-transparent transition-opacity duration-200 supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60 ${
+            canScrollRight ? "opacity-100" : "opacity-0"
+          }`}
+        />
       </div>
-      <Button
-        type="button"
-        variant="secondary"
-        aria-label="Scroll right"
-        onClick={() => handleArrowClick("right")}
-        disabled={!canScrollRight}
-        className="h-9 w-9 p-0 text-lg"
-      >
-        <span aria-hidden>&rsaquo;</span>
-      </Button>
     </div>
   );
 }
