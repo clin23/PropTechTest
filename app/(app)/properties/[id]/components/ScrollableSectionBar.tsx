@@ -133,7 +133,7 @@ export default function ScrollableSectionBar({
       root: "flex w-full justify-start",
       wrapper: "pointer-events-auto relative w-full max-w-full",
       tablist:
-        "flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap",
+        "flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap pb-4",
       tabBase:
         "flex-shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-gray-600 dark:focus:ring-offset-gray-900",
       tabActive:
@@ -157,6 +157,7 @@ export default function ScrollableSectionBar({
         <div
           ref={scrollContainerRef}
           className={styles.tablist}
+          style={{ scrollbarGutter: "stable both-edges" }}
           role="tablist"
           aria-label="Property sections"
           aria-orientation="horizontal"
