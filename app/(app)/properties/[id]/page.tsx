@@ -116,7 +116,7 @@ export default function PropertyPage() {
           />
         </div>
         <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex-shrink-0 border-b border-gray-100 px-4 py-4 sm:px-6 dark:border-gray-800">
+          <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
             <ScrollableSectionBar
               tabs={TABS}
               activeTab={resolvedTab}
