@@ -23,7 +23,6 @@ import TenantCRM from "./sections/TenantCRM";
 import Inspections from "./sections/Inspections";
 import CreateListing from "./sections/CreateListing";
 import Vendors from "./sections/Vendors";
-import TasksSection from "./sections/Tasks";
 
 const TABS = [
   { id: "rent-ledger", label: "Rent Ledger" },
@@ -32,7 +31,6 @@ const TABS = [
   { id: "tasks", label: "Tasks" },
   { id: "rent-review", label: "Rent Review" },
   { id: "key-dates", label: "Key Dates" },
-  { id: "tasks", label: "Tasks" },
   { id: "tenant-crm", label: "Tenant CRM" },
   { id: "inspections", label: "Inspections" },
   { id: "create-listing", label: "Create Listing" },
@@ -92,10 +90,6 @@ export default function PropertyPage() {
         return <RentReview propertyId={id} />;
       case "key-dates":
         return <KeyDates propertyId={id} />;
-      case "tasks":
-        return (
-          <TasksSection propertyId={id} propertyAddress={property.address} />
-        );
       case "tenant-crm":
         return <TenantCRM propertyId={id} />;
       case "inspections":
