@@ -13,11 +13,14 @@ export interface SectionTab {
   label: string;
 }
 
+type ScrollableSectionBarVariant = "floating" | "contained";
+
 interface ScrollableSectionBarProps {
   tabs: SectionTab[];
   activeTab: string;
   onTabSelect: (tab: string) => void;
   className?: string;
+  variant?: ScrollableSectionBarVariant;
 }
 
 export default function ScrollableSectionBar({
@@ -25,6 +28,7 @@ export default function ScrollableSectionBar({
   activeTab,
   onTabSelect,
   className = "",
+  variant = "floating",
 }: ScrollableSectionBarProps) {
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -99,16 +103,60 @@ export default function ScrollableSectionBar({
     });
   }, [activeTab, orderedTabs.length]);
 
-  const rootClassName = ["flex w-full justify-center", className]
-    .filter(Boolean)
-    .join(" ");
+  const variantStyles: Record<ScrollableSectionBarVariant, {
+    root: string;
+    wrapper: string;
+    tablist: string;
+    tabBase: string;
+    tabActive: string;
+    tabInactive: string;
+    fadeLeft: string;
+    fadeRight: string;
+  }> = {
+    floating: {
+      root: "flex w-full justify-center",
+      wrapper: "pointer-events-auto relative w-full max-w-full",
+      tablist:
+        "flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap rounded-full border border-gray-200 bg-white/90 px-3 py-2 text-center shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/75 dark:border-gray-700 dark:bg-gray-900/90",
+      tabBase:
+        "flex-shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600",
+      tabActive:
+        "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900",
+      tabInactive:
+        "border-transparent bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+      fadeLeft:
+        "pointer-events-none absolute inset-y-1 left-1 w-6 rounded-l-full bg-gradient-to-r from-white/90 via-white/60 to-transparent transition-opacity duration-200 supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60",
+      fadeRight:
+        "pointer-events-none absolute inset-y-1 right-1 w-6 rounded-r-full bg-gradient-to-l from-white/90 via-white/60 to-transparent transition-opacity duration-200 supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60",
+    },
+    contained: {
+      root: "flex w-full justify-start",
+      wrapper: "pointer-events-auto relative w-full max-w-full",
+      tablist:
+        "flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap",
+      tabBase:
+        "flex-shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-gray-600 dark:focus:ring-offset-gray-900",
+      tabActive:
+        "bg-gray-900 text-white shadow-sm dark:bg-gray-100 dark:text-gray-900",
+      tabInactive:
+        "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white",
+      fadeLeft:
+        "pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/70 to-transparent transition-opacity duration-200 dark:from-gray-900 dark:via-gray-900/70",
+      fadeRight:
+        "pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent transition-opacity duration-200 dark:from-gray-900 dark:via-gray-900/70",
+    },
+  };
+
+  const styles = variantStyles[variant];
+
+  const rootClassName = [styles.root, className].filter(Boolean).join(" ");
 
   return (
     <div className={rootClassName}>
-      <div className="pointer-events-auto relative w-full max-w-full">
+      <div className={styles.wrapper}>
         <div
           ref={scrollContainerRef}
-          className="flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap rounded-full border border-gray-200 bg-white/90 px-3 py-2 text-center shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/75 dark:border-gray-700 dark:bg-gray-900/90"
+          className={styles.tablist}
           role="tablist"
           aria-label="Property sections"
           aria-orientation="horizontal"
@@ -116,10 +164,8 @@ export default function ScrollableSectionBar({
           {orderedTabs.map((tab, index) => {
             const isActive = tab.id === activeTab;
             const tabClassName = [
-              "flex-shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600",
-              isActive
-                ? "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
-                : "border-transparent bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+              styles.tabBase,
+              isActive ? styles.tabActive : styles.tabInactive,
             ].join(" ");
 
             return (
@@ -145,13 +191,13 @@ export default function ScrollableSectionBar({
         </div>
         <div
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-y-1 left-1 w-6 rounded-l-full bg-gradient-to-r from-white/90 via-white/60 to-transparent transition-opacity duration-200 supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60 ${
+          className={`${styles.fadeLeft} ${
             canScrollLeft ? "opacity-100" : "opacity-0"
           }`}
         />
         <div
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-y-1 right-1 w-6 rounded-r-full bg-gradient-to-l from-white/90 via-white/60 to-transparent transition-opacity duration-200 supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60 ${
+          className={`${styles.fadeRight} ${
             canScrollRight ? "opacity-100" : "opacity-0"
           }`}
         />

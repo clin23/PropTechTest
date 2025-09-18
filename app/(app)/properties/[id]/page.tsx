@@ -115,12 +115,13 @@ export default function PropertyPage() {
             onUploadDocument={() => setDocumentOpen(true)}
           />
         </div>
-        <section className="flex min-h-[32rem] flex-col rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex-shrink-0 px-4 pb-4 pt-6 sm:px-6">
+        <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex-shrink-0 border-b border-gray-100 px-4 py-4 sm:px-6 dark:border-gray-800">
             <ScrollableSectionBar
               tabs={TABS}
               activeTab={resolvedTab}
               onTabSelect={handleTabSelect}
+              variant="contained"
             />
           </div>
           <div
@@ -128,7 +129,7 @@ export default function PropertyPage() {
             id={`panel-${resolvedTab}`}
             aria-labelledby={`tab-${resolvedTab}`}
             tabIndex={0}
-            className="flex-1 overflow-auto px-4 pb-6 pt-6 sm:px-6"
+            className="flex-1 overflow-auto px-4 pb-6 pt-4 sm:px-6"
           >
             {renderSection(resolvedTab)}
           </div>
