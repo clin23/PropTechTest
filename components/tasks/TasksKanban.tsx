@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   DragDropContext,
@@ -49,6 +49,68 @@ const DEFAULT_COLUMNS: Column[] = [
 ];
 
 const STORAGE_KEY = "task-columns";
+const DEFAULT_SCOPE = "__default__";
+
+type ColumnMap = Record<string, Column[]>;
+
+const cloneColumns = (columns: Column[]): Column[] =>
+  columns.map((column) => ({ ...column }));
+
+const createDefaultColumns = (): Column[] => cloneColumns(DEFAULT_COLUMNS);
+
+const sanitizeColumnArray = (value: unknown): Column[] | null => {
+  if (!Array.isArray(value)) return null;
+
+  const sanitized = value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const { id, title } = item as { id?: unknown; title?: unknown };
+      if (typeof id !== "string" || typeof title !== "string") return null;
+      return { id, title } as Column;
+    })
+    .filter((item): item is Column => item !== null);
+
+  return sanitized.length ? sanitized : null;
+};
+
+const resolveColumnsForKey = (map: ColumnMap, key: string): Column[] => {
+  if (map[key]?.length) {
+    return cloneColumns(map[key]!);
+  }
+
+  if (key !== DEFAULT_SCOPE && map[DEFAULT_SCOPE]?.length) {
+    return cloneColumns(map[DEFAULT_SCOPE]!);
+  }
+
+  return createDefaultColumns();
+};
+
+const getAllColumns = (map: ColumnMap): Column[] => {
+  const seen = new Set<string>();
+  const aggregated: Column[] = [];
+
+  const addColumns = (columns: Column[] | undefined) => {
+    if (!columns?.length) return;
+    columns.forEach((column) => {
+      if (seen.has(column.id)) return;
+      seen.add(column.id);
+      aggregated.push({ ...column });
+    });
+  };
+
+  addColumns(map[DEFAULT_SCOPE]?.length ? map[DEFAULT_SCOPE] : DEFAULT_COLUMNS);
+
+  Object.entries(map).forEach(([key, columns]) => {
+    if (key === DEFAULT_SCOPE) return;
+    addColumns(columns);
+  });
+
+  if (!aggregated.length) {
+    return createDefaultColumns();
+  }
+
+  return aggregated;
+};
 
 type PropertyContext = Pick<PropertySummary, "id" | "address">;
 export type TasksKanbanContext = PropertyContext;
@@ -68,6 +130,8 @@ export default function TasksKanban({
   const [activeFilter, setActiveFilter] = useState<string>(
     initialPropertyId ?? "all"
   );
+  const [columnsByProperty, setColumnsByProperty] = useState<ColumnMap>({});
+  const [columnsLoaded, setColumnsLoaded] = useState(false);
 
   useEffect(() => {
     if (initialPropertyId) {
@@ -76,6 +140,42 @@ export default function TasksKanban({
       setActiveFilter("all");
     }
   }, [initialPropertyId, allowPropertySwitching]);
+
+  useEffect(() => {
+    let parsedColumns: ColumnMap = {};
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data)) {
+          const sanitized = sanitizeColumnArray(data);
+          if (sanitized) {
+            parsedColumns[DEFAULT_SCOPE] = sanitized;
+          }
+        } else if (data && typeof data === "object") {
+          parsedColumns = Object.entries(
+            data as Record<string, unknown>
+          ).reduce((acc, [key, value]) => {
+            const sanitized = sanitizeColumnArray(value);
+            if (sanitized) {
+              acc[key] = sanitized;
+            }
+            return acc;
+          }, {} as ColumnMap);
+        }
+      } catch (error) {
+        console.warn("Failed to parse stored task columns", error);
+      }
+    }
+
+    setColumnsByProperty(parsedColumns);
+    setColumnsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!columnsLoaded) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(columnsByProperty));
+  }, [columnsByProperty, columnsLoaded]);
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
@@ -97,6 +197,18 @@ export default function TasksKanban({
   }, [activeFilter, allowPropertySwitching, properties]);
 
   const selectedPropertyId = activeFilter !== "all" ? activeFilter : undefined;
+
+  const columns = useMemo(() => {
+    if (!columnsLoaded) {
+      return createDefaultColumns();
+    }
+
+    if (!selectedPropertyId) {
+      return getAllColumns(columnsByProperty);
+    }
+
+    return resolveColumnsForKey(columnsByProperty, selectedPropertyId);
+  }, [columnsByProperty, columnsLoaded, selectedPropertyId]);
 
   const { data: tasks = [] } = useQuery<TaskDto[]>({
     queryKey: ["tasks", { propertyId: selectedPropertyId ?? null }],
@@ -157,15 +269,18 @@ export default function TasksKanban({
   const [renaming, setRenaming] = useState<Column | null>(null);
   const [deleting, setDeleting] = useState<Column | null>(null);
   const [creating, setCreating] = useState(false);
-  const [columns, setColumns] = useState<Column[]>([]);
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) setColumns(JSON.parse(stored));
-    else setColumns(DEFAULT_COLUMNS);
-  }, []);
-  useEffect(() => {
-    if (columns.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(columns));
-  }, [columns]);
+
+  const updateColumnsForCurrentScope = (
+    updater: (columns: Column[]) => Column[]
+  ) => {
+    if (!columnsLoaded) return;
+
+    const key = selectedPropertyId ?? DEFAULT_SCOPE;
+    setColumnsByProperty((prev) => ({
+      ...prev,
+      [key]: updater(resolveColumnsForKey(prev, key)),
+    }));
+  };
 
   const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -180,17 +295,25 @@ export default function TasksKanban({
 
   const addColumn = (title: string) => {
     const id = title.toLowerCase().replace(/\s+/g, "_");
-    setColumns([...columns, { id, title }]);
+    updateColumnsForCurrentScope((cols) => {
+      if (cols.some((column) => column.id === id)) {
+        return cols;
+      }
+      return [...cols, { id, title }];
+    });
   };
 
   const renameColumn = (id: string, title: string) => {
-    setColumns(columns.map((c) => (c.id === id ? { ...c, title } : c)));
+    updateColumnsForCurrentScope((cols) =>
+      cols.map((column) => (column.id === id ? { ...column, title } : column))
+    );
   };
 
   const deleteColumn = (id: string) => {
-    const remaining = columns.filter((c) => c.id !== id);
-    const fallback = remaining[0]?.id || "todo";
-    setColumns(remaining);
+    const remaining = columns.filter((column) => column.id !== id);
+    const fallbackColumns = remaining.length ? remaining : createDefaultColumns();
+    const fallback = fallbackColumns[0]?.id || "todo";
+    updateColumnsForCurrentScope(() => fallbackColumns);
     tasks
       .filter((t) => t.status === id)
       .forEach((t) =>
