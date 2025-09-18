@@ -27,12 +27,30 @@ export default function Sidebar() {
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
+          <rect
+            x={4}
+            y={4}
+            width={16}
+            height={16}
+            rx={3}
+            strokeWidth={2}
+          />
+          <line x1={12} y1={4} x2={12} y2={20} strokeWidth={2} />
+          <line x1={4} y1={12} x2={20} y2={12} strokeWidth={2} />
           <path
+            d="M6.5 11 L9 7.5 10.8 9.8 12 8.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M3 9l9-7 9 7v11a2 2 0 01-2 2h-4a2 2 0 01-2-2v-4H9v4a2 2 0 01-2 2H5a2 2 0 01-2-2z"
           />
+          <circle cx={16} cy={8} r={3} strokeWidth={2} />
+          <path
+            d="M16 5v3h3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+          />
+          <rect x={14.5} y={14.5} width={4} height={4} rx={1} strokeWidth={0} fill="currentColor" />
         </svg>
       ),
     },
