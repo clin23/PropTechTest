@@ -10,9 +10,9 @@ export default function AnalyticsPage() {
   const [query, setQuery] = useState('');
 
   return (
-    <div className="p-6 h-full">
-      <h1 className="text-2xl font-semibold mb-6">Analytics</h1>
-      <div className="grid grid-cols-3 grid-rows-2 gap-4 h-full">
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold mb-4">Analytics</h1>
+      <div className="grid grid-cols-3 grid-rows-[auto_auto] gap-4">
         <div className="relative col-span-2 row-span-2 flex flex-col border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
           <Link
             href="/analytics/overview"
@@ -20,7 +20,7 @@ export default function AnalyticsPage() {
             aria-label="Go to overview"
           />
           <div className="relative z-10 pointer-events-none">
-            <span className="text-5xl font-bold">Overview</span>
+            <span className="text-4xl font-bold md:text-5xl">Overview</span>
           </div>
           <div
             className="mt-4 relative z-10"
@@ -42,13 +42,13 @@ export default function AnalyticsPage() {
         </div>
         <Link
           href="/analytics/custom"
-          className="col-start-3 row-start-1 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-3xl font-bold"
+          className="col-start-3 row-start-1 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-2xl font-bold md:text-3xl"
         >
           My Custom Analytics
         </Link>
         <Link
           href="/analytics/builder"
-          className="col-start-3 row-start-2 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-3xl font-bold"
+          className="col-start-3 row-start-2 flex items-center justify-center border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg text-2xl font-bold md:text-3xl"
         >
           Analytics Builder
         </Link>
