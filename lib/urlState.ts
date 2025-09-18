@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AnalyticsState, AnalyticsStateType } from './schemas';
