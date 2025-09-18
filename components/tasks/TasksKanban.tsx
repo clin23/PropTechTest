@@ -221,7 +221,7 @@ export default function TasksKanban({
 
   return (
     <>
-      <div className="flex gap-4 overflow-x-auto p-1">
+      <div className="flex gap-4 overflow-x-auto p-1 pb-32">
         <DragDropContext onDragEnd={handleDragEnd}>
           {columns.map((col) => (
             <div key={col.id} className="w-64 flex-shrink-0">
@@ -315,46 +315,48 @@ export default function TasksKanban({
           <span className="block w-full border rounded p-2 text-sm text-center">Archive</span>
         </Link>
       </div>
-      <div className="mt-10 flex flex-col items-center gap-2">
-        <div
-          className="flex flex-wrap justify-center gap-2"
-          role="tablist"
-          aria-label="Task property filters"
-        >
-          {allowPropertySwitching && (
-            <button
-              type="button"
-              onClick={() => handleTabSelect(undefined)}
-              className={tabClassName(!selectedPropertyId)}
-              aria-pressed={!selectedPropertyId}
-            >
-              All
-            </button>
-          )}
-          {propertyTabs.map((property) => {
-            const isActive = selectedPropertyId === property.id;
-            return (
+      <div className="pointer-events-none fixed bottom-6 left-1/2 z-30 w-full -translate-x-1/2 px-4">
+        <div className="pointer-events-auto flex flex-col items-center gap-2">
+          <div
+            className="flex flex-wrap justify-center gap-2 rounded-full border border-gray-200 bg-white/90 px-4 py-2 shadow-lg backdrop-blur dark:border-gray-700 dark:bg-gray-900/90"
+            role="tablist"
+            aria-label="Task property filters"
+          >
+            {allowPropertySwitching && (
               <button
-                key={property.id}
                 type="button"
-                onClick={() => handleTabSelect(property.id)}
-                className={tabClassName(isActive)}
-                aria-pressed={isActive}
-                aria-disabled={!allowPropertySwitching}
+                onClick={() => handleTabSelect(undefined)}
+                className={tabClassName(!selectedPropertyId)}
+                aria-pressed={!selectedPropertyId}
               >
-                {property.address}
+                All
               </button>
-            );
-          })}
+            )}
+            {propertyTabs.map((property) => {
+              const isActive = selectedPropertyId === property.id;
+              return (
+                <button
+                  key={property.id}
+                  type="button"
+                  onClick={() => handleTabSelect(property.id)}
+                  className={tabClassName(isActive)}
+                  aria-pressed={isActive}
+                  aria-disabled={!allowPropertySwitching}
+                >
+                  {property.address}
+                </button>
+              );
+            })}
+          </div>
+          {selectedPropertyId && activeProperty && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Creating tasks for{" "}
+              <span className="font-medium text-gray-700 dark:text-gray-200">
+                {activeProperty.address}
+              </span>
+            </p>
+          )}
         </div>
-        {selectedPropertyId && activeProperty && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Creating tasks for{" "}
-            <span className="font-medium text-gray-700 dark:text-gray-200">
-              {activeProperty.address}
-            </span>
-          </p>
-        )}
       </div>
 
       {editingTask && (
