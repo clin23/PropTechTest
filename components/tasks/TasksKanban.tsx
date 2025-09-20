@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   DragDropContext,
@@ -140,7 +140,7 @@ export default function TasksKanban({
   const [columnsByProperty, setColumnsByProperty] = useState<ColumnMap>({});
   const [columnsLoaded, setColumnsLoaded] = useState(false);
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false);
-  const [propertyOrder, setPropertyOrder] = useState<string[]>([]);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initialPropertyId) {
@@ -324,6 +324,7 @@ export default function TasksKanban({
     mutationFn: (id: string) => completeTask(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
@@ -351,6 +352,11 @@ export default function TasksKanban({
       destination.index === source.index
     )
       return;
+    setStatusOverrides((prev) => {
+      if (!prev[draggableId]) return prev;
+      const { [draggableId]: _removed, ...rest } = prev;
+      return rest;
+    });
     updateMut.mutate({ id: draggableId, data: { status: destination.droppableId } });
   };
 
@@ -371,6 +377,19 @@ export default function TasksKanban({
   };
 
   const deleteColumn = (id: string) => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      let changed = false;
+      const next: Record<string, string> = {};
+      Object.entries(prev).forEach(([taskId, columnId]) => {
+        if (columnId === id) {
+          changed = true;
+          return;
+        }
+        next[taskId] = columnId;
+      });
+      return changed ? next : prev;
+    });
     const remaining = columns.filter((column) => column.id !== id);
     const fallbackColumns = remaining.length ? remaining : createDefaultColumns();
     const fallback = fallbackColumns[0]?.id || "todo";
@@ -429,11 +448,80 @@ export default function TasksKanban({
 
   const showPropertiesOnCards = !selectedPropertyId;
 
+  useEffect(() => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      const validColumnIds = new Set(columns.map((column) => column.id));
+      let changed = false;
+      const next: Record<string, string> = {};
+
+      Object.entries(prev).forEach(([taskId, columnId]) => {
+        if (!validColumnIds.has(columnId)) {
+          changed = true;
+          return;
+        }
+        next[taskId] = columnId;
+      });
+
+      return changed ? next : prev;
+    });
+  }, [columns]);
+
+  useEffect(() => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      const next = { ...prev };
+      let changed = false;
+
+      tasks.forEach((task) => {
+        if (task.status !== "done" && next[task.id]) {
+          delete next[task.id];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [tasks]);
+
+  const getDisplayStatus = useCallback(
+    (task: TaskDto) => {
+      const override = statusOverrides[task.id];
+      if (
+        override &&
+        columns.some((column) => column.id === override)
+      ) {
+        return override;
+      }
+      return task.status;
+    },
+    [statusOverrides, columns]
+  );
+
+  const tasksByColumn = useMemo(() => {
+    const grouped = new Map<string, TaskDto[]>();
+    tasks.forEach((task) => {
+      const status = getDisplayStatus(task);
+      const existing = grouped.get(status);
+      if (existing) {
+        existing.push(task);
+      } else {
+        grouped.set(status, [task]);
+      }
+    });
+    return grouped;
+  }, [tasks, getDisplayStatus]);
+
   const handleCompleteTask = async (task: TaskDto) => {
+    if (completeMut.isPending) return;
+
+    const previousStatus = getDisplayStatus(task);
+    setCompletingTaskId(task.id);
     try {
       await completeMut.mutateAsync(task.id);
     } catch (error) {
       console.error("Failed to complete task", error);
+      setCompletingTaskId(null);
       return;
     }
 
@@ -441,61 +529,83 @@ export default function TasksKanban({
       "Task completed. Would you like to archive it now?"
     );
     if (shouldArchive) {
-      archiveMut.mutate(task.id);
+      try {
+        await archiveMut.mutateAsync(task.id);
+        setStatusOverrides((prev) => {
+          if (!prev[task.id]) return prev;
+          const { [task.id]: _omit, ...rest } = prev;
+          return rest;
+        });
+      } catch (error) {
+        console.error("Failed to archive task", error);
+        setStatusOverrides((prev) => ({
+          ...prev,
+          [task.id]: previousStatus,
+        }));
+      } finally {
+        setCompletingTaskId(null);
+      }
+      return;
     }
+
+    setStatusOverrides((prev) => ({
+      ...prev,
+      [task.id]: previousStatus,
+    }));
+    setCompletingTaskId(null);
   };
 
   return (
     <>
       <div className="flex gap-4 overflow-x-auto p-1 pb-32">
         <DragDropContext onDragEnd={handleDragEnd}>
-          {columns.map((col) => (
-            <div key={col.id} className="w-64 flex-shrink-0">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="font-semibold">{col.title}</h2>
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      setMenuColumn(menuColumn === col.id ? null : col.id)
-                    }
-                    className="px-1"
-                  >
-                    ⋯
-                  </button>
-                  {menuColumn === col.id && (
-                    <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
-                      <button
-                        className="block w-full px-3 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
-                        onClick={() => {
-                          setMenuColumn(null);
-                          setRenaming(col);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                        onClick={() => {
-                          setMenuColumn(null);
-                          setDeleting(col);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+          {columns.map((col) => {
+            const columnTasks = tasksByColumn.get(col.id) ?? [];
+            return (
+              <div key={col.id} className="w-64 flex-shrink-0">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="font-semibold">{col.title}</h2>
+                  <div className="relative">
+                    <button
+                      onClick={() =>
+                        setMenuColumn(menuColumn === col.id ? null : col.id)
+                      }
+                      className="px-1"
+                    >
+                      ⋯
+                    </button>
+                    {menuColumn === col.id && (
+                      <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+                        <button
+                          className="block w-full px-3 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => {
+                            setMenuColumn(null);
+                            setRenaming(col);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                          onClick={() => {
+                            setMenuColumn(null);
+                            setDeleting(col);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <Droppable droppableId={col.id}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="space-y-2"
-                  >
-                    {tasks
-                      .filter((t) => t.status === col.id)
-                      .map((task, idx) => (
+                <Droppable droppableId={col.id}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className="space-y-2"
+                    >
+                      {columnTasks.map((task, idx) => (
                         <Draggable
                           key={task.id}
                           draggableId={task.id}
@@ -517,24 +627,28 @@ export default function TasksKanban({
                                     : undefined
                                 }
                                 isCompleted={task.status === "done"}
-                                isCompleting={completeMut.isPending}
+                                isCompleting={
+                                  completingTaskId === task.id &&
+                                  completeMut.isPending
+                                }
                               />
                             </div>
                           )}
                         </Draggable>
                       ))}
-                    {provided.placeholder}
-                    <TaskQuickNew
-                      onCreate={(title) =>
-                        createMut.mutate({ title, status: col.id })
-                      }
-                      placeholder={newTaskPlaceholder}
-                    />
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          ))}
+                      {provided.placeholder}
+                      <TaskQuickNew
+                        onCreate={(title) =>
+                          createMut.mutate({ title, status: col.id })
+                        }
+                        placeholder={newTaskPlaceholder}
+                      />
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
         </DragDropContext>
         <div className="w-64 flex-shrink-0">
           <button
@@ -627,6 +741,12 @@ export default function TasksKanban({
             setEditingTask(null);
           }}
           onArchive={() => {
+            setStatusOverrides((prev) => {
+              if (!editingTask) return prev;
+              if (!prev[editingTask.id]) return prev;
+              const { [editingTask.id]: _omit, ...rest } = prev;
+              return rest;
+            });
             archiveMut.mutate(editingTask.id);
             setEditingTask(null);
           }}
