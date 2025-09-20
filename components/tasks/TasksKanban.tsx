@@ -16,6 +16,7 @@ import {
   archiveTask,
   listProperties,
   listVendors,
+  completeTask,
 } from "../../lib/api";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
@@ -284,6 +285,10 @@ export default function TasksKanban({
     mutationFn: (id: string) => archiveTask(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
+  const completeMut = useMutation({
+    mutationFn: (id: string) => completeTask(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
@@ -389,6 +394,22 @@ export default function TasksKanban({
 
   const showPropertiesOnCards = !selectedPropertyId;
 
+  const handleCompleteTask = async (task: TaskDto) => {
+    try {
+      await completeMut.mutateAsync(task.id);
+    } catch (error) {
+      console.error("Failed to complete task", error);
+      return;
+    }
+
+    const shouldArchive = window.confirm(
+      "Task completed. Would you like to archive it now?"
+    );
+    if (shouldArchive) {
+      archiveMut.mutate(task.id);
+    }
+  };
+
   return (
     <>
       <div className="flex gap-4 overflow-x-auto p-1 pb-32">
@@ -455,6 +476,13 @@ export default function TasksKanban({
                                 task={task}
                                 onClick={() => setEditingTask(task)}
                                 showProperties={showPropertiesOnCards}
+                                onComplete={
+                                  task.status !== "done"
+                                    ? () => handleCompleteTask(task)
+                                    : undefined
+                                }
+                                isCompleted={task.status === "done"}
+                                isCompleting={completeMut.isPending}
                               />
                             </div>
                           )}
