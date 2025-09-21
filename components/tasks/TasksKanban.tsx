@@ -392,7 +392,6 @@ export default function TasksKanban({
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
   const [completionPrompt, setCompletionPrompt] =
     useState<CompletionPromptState | null>(null);
-
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
   const [menuColumn, setMenuColumn] = useState<string | null>(null);

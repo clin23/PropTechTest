@@ -46,7 +46,7 @@ export default function TaskCard({
 
   return (
     <div
-      className={`group relative flex flex-col gap-2 rounded border p-2 pb-10 transition-colors ${
+      className={`group relative flex flex-col rounded border p-2 transition-colors ${
         onClick ? "cursor-pointer" : ""
       } ${dueSoon ? "border-yellow-500" : ""}`}
       onClick={onClick}
@@ -63,7 +63,7 @@ export default function TaskCard({
           </span>
         )}
       </div>
-      <div className="space-y-1 text-xs">
+      <div className="mt-2 space-y-1 text-xs">
         {task.vendor && <div>Vendor: {task.vendor.name}</div>}
         {showProperties &&
           task.properties.map((p) => (
@@ -82,20 +82,22 @@ export default function TaskCard({
         )}
       </div>
       {!completed && onComplete && (
-        <button
-          type="button"
-          className="pointer-events-none absolute inset-x-2 bottom-2 rounded bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition hover:bg-gray-700 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 group-hover:pointer-events-auto group-hover:opacity-100 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 dark:focus-visible:ring-gray-500"
-          onClick={(event) => {
-            event.stopPropagation();
-            if (isCompleting) return;
-            void Promise.resolve(onComplete()).catch((error) => {
-              console.error("Failed to complete task", error);
-            });
-          }}
-          disabled={isCompleting}
-        >
-          {isCompleting ? "Completing…" : "Complete Task"}
-        </button>
+        <div className="max-h-0 overflow-hidden transition-[max-height,padding] duration-200 ease-out group-focus-within:max-h-16 group-focus-within:pt-2 group-hover:max-h-16 group-hover:pt-2">
+          <button
+            type="button"
+            className="w-full rounded bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition hover:bg-gray-700 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 group-focus-within:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 dark:focus-visible:ring-gray-500"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (isCompleting) return;
+              void Promise.resolve(onComplete()).catch((error) => {
+                console.error("Failed to complete task", error);
+              });
+            }}
+            disabled={isCompleting}
+          >
+            {isCompleting ? "Completing…" : "Complete Task"}
+          </button>
+        </div>
       )}
     </div>
   );
