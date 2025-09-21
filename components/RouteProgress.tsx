@@ -1,15 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
-type RouterInstance = ReturnType<typeof useRouter>;
-type MutableRouterInstance = {
-  -readonly [Key in keyof RouterInstance]: RouterInstance[Key];
-};
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function RouteProgress() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchParamsKey = useMemo(
@@ -91,39 +85,26 @@ export function RouteProgress() {
       return;
     }
 
-    const mutableRouter = router as MutableRouterInstance;
+    const { history } = window;
 
     const wrap =
-      <Fn extends (...args: unknown[]) => unknown>(fn: Fn) =>
-      ((...args: Parameters<Fn>) => {
+      <Fn extends History["pushState"] | History["replaceState"]>(fn: Fn) =>
+      function wrapped(this: History, ...args: Parameters<Fn>) {
         startLoading();
 
         try {
-          const result = fn.apply(mutableRouter, args as Parameters<Fn>);
-
-          if (
-            result &&
-            typeof result === "object" &&
-            "catch" in result &&
-            typeof (result as Promise<unknown>).catch === "function"
-          ) {
-            (result as Promise<unknown>).catch(() => {
-              finishLoading();
-            });
-          }
-
-          return result;
+          return fn.apply(this, args as Parameters<Fn>);
         } catch (error) {
           finishLoading();
           throw error;
         }
-      }) as Fn;
+      } as Fn;
 
-    const originalPush = mutableRouter.push;
-    const originalReplace = mutableRouter.replace;
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
 
-    mutableRouter.push = wrap(originalPush);
-    mutableRouter.replace = wrap(originalReplace);
+    history.pushState = wrap(originalPushState);
+    history.replaceState = wrap(originalReplaceState);
 
     const handlePopState = () => {
       startLoading();
@@ -132,11 +113,11 @@ export function RouteProgress() {
     window.addEventListener("popstate", handlePopState);
 
     return () => {
-      mutableRouter.push = originalPush;
-      mutableRouter.replace = originalReplace;
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [finishLoading, router, startLoading]);
+  }, [finishLoading, startLoading]);
 
   return (
     <div
