@@ -42,7 +42,7 @@ export default function PageTransition({ children, routeKey, className }: PageTr
       };
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <AnimatePresence mode="wait">
         <motion.div key={routeKey} {...animationProps} className={className}>
           {children}
