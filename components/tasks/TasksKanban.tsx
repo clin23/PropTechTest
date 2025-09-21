@@ -331,9 +331,12 @@ export default function TasksKanban({
         : listTasks(),
   });
 
-  const activeProperty = selectedPropertyId
-    ? properties.find((property) => property.id === selectedPropertyId)
-    : undefined;
+  const activeProperty = useMemo(() => {
+    if (!selectedPropertyId) return undefined;
+    return orderedProperties.find(
+      (property) => property.id === selectedPropertyId
+    );
+  }, [orderedProperties, selectedPropertyId]);
 
   useEffect(() => {
     if (!onContextChange) return;
@@ -349,7 +352,7 @@ export default function TasksKanban({
 
   const defaultPropertyForCreation = selectedPropertyId
     ? activeProperty ?? null
-    : properties[0] ?? null;
+    : orderedProperties[0] ?? null;
 
   const createMut = useMutation({
     mutationFn: ({ title, status }: { title: string; status: string }) =>
@@ -645,6 +648,113 @@ export default function TasksKanban({
     setCompletingTaskId(null);
   };
 
+  useEffect(() => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      const validColumnIds = new Set(columns.map((column) => column.id));
+      let changed = false;
+      const next: Record<string, string> = {};
+
+      Object.entries(prev).forEach(([taskId, columnId]) => {
+        if (!validColumnIds.has(columnId)) {
+          changed = true;
+          return;
+        }
+        next[taskId] = columnId;
+      });
+
+      return changed ? next : prev;
+    });
+  }, [columns]);
+
+  useEffect(() => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      const next = { ...prev };
+      let changed = false;
+
+      tasks.forEach((task) => {
+        if (task.status !== "done" && next[task.id]) {
+          delete next[task.id];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [tasks]);
+
+  const getDisplayStatus = useCallback(
+    (task: TaskDto) => {
+      const override = statusOverrides[task.id];
+      if (
+        override &&
+        columns.some((column) => column.id === override)
+      ) {
+        return override;
+      }
+      return task.status;
+    },
+    [statusOverrides, columns]
+  );
+
+  const tasksByColumn = useMemo(() => {
+    const grouped = new Map<string, TaskDto[]>();
+    tasks.forEach((task) => {
+      const status = getDisplayStatus(task);
+      const existing = grouped.get(status);
+      if (existing) {
+        existing.push(task);
+      } else {
+        grouped.set(status, [task]);
+      }
+    });
+    return grouped;
+  }, [tasks, getDisplayStatus]);
+
+  const handleCompleteTask = async (task: TaskDto) => {
+    if (completeMut.isPending) return;
+
+    const previousStatus = getDisplayStatus(task);
+    setCompletingTaskId(task.id);
+    try {
+      await completeMut.mutateAsync(task.id);
+    } catch (error) {
+      console.error("Failed to complete task", error);
+      setCompletingTaskId(null);
+      return;
+    }
+
+    const shouldArchive = window.confirm(
+      "Task completed. Would you like to archive it now?"
+    );
+    if (shouldArchive) {
+      try {
+        await archiveMut.mutateAsync(task.id);
+        setStatusOverrides((prev) => {
+          if (!prev[task.id]) return prev;
+          const { [task.id]: _omit, ...rest } = prev;
+          return rest;
+        });
+      } catch (error) {
+        console.error("Failed to archive task", error);
+        setStatusOverrides((prev) => ({
+          ...prev,
+          [task.id]: previousStatus,
+        }));
+      } finally {
+        setCompletingTaskId(null);
+      }
+      return;
+    }
+
+    setStatusOverrides((prev) => ({
+      ...prev,
+      [task.id]: previousStatus,
+    }));
+    setCompletingTaskId(null);
+  };
+
   return (
     <>
       <div className="flex gap-4 overflow-x-auto p-1 pb-32">
@@ -825,7 +935,7 @@ export default function TasksKanban({
       {editingTask && (
         <TaskEditModal
           task={editingTask}
-          properties={properties}
+          properties={orderedProperties}
           vendors={vendors}
           onClose={() => setEditingTask(null)}
           onSave={(data) => {
@@ -873,6 +983,7 @@ type PropertySelectModalProps = {
   properties: PropertySummary[];
   selectedPropertyId?: string;
   onSelect: (propertyId?: string) => void;
+  onReorder: (orderedIds: string[]) => void;
   onClose: () => void;
   allowAll: boolean;
   onReorder?: (propertyIds: string[]) => void;
@@ -920,6 +1031,17 @@ function PropertySelectModal(props: PropertySelectModalProps) {
 
   const handleSelect = (propertyId?: string) => {
     onSelect(propertyId);
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+    if (!destination) return;
+    if (destination.index === source.index) return;
+    const reordered = Array.from(properties);
+    const [moved] = reordered.splice(source.index, 1);
+    if (!moved) return;
+    reordered.splice(destination.index, 0, moved);
+    onReorder(reordered.map((property) => property.id));
   };
 
   return (
@@ -1021,4 +1143,5 @@ function PropertySelectModal(props: PropertySelectModalProps) {
       </div>
     </div>
   );
+
 }

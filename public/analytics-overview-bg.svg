@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#e5d9c3" />
+  <g fill="#263638">
+    <circle cx="234" cy="214" r="148" />
+    <path d="M288 124a140 140 0 0 0 0 180 140 140 0 0 0 0-180z" fill="#324548" />
+  </g>
+  <circle cx="256" cy="242" r="188" fill="none" stroke="#1f2c2e" stroke-width="6" opacity="0.8" />
+  <path d="M256 54v56" stroke="#1f2c2e" stroke-width="4" />
+  <path d="M182 86c36-36 88-44 132-24" fill="none" stroke="#1f2c2e" stroke-width="4" />
+  <path d="M272 256h132" stroke="#1f2c2e" stroke-width="4" />
+  <path d="M404 256l30-30" stroke="#1f2c2e" stroke-width="4" />
+  <path d="M404 256l30 30" stroke="#1f2c2e" stroke-width="4" />
+  <circle cx="440" cy="226" r="14" fill="#263638" />
+  <circle cx="440" cy="118" r="38" fill="none" stroke="#1f2c2e" stroke-width="4" opacity="0.6" />
+  <path d="M420 112c-20 0-36 16-36 36" fill="none" stroke="#1f2c2e" stroke-width="4" opacity="0.4" />
+  <g fill="#1f2c2e">
+    <rect x="78" y="332" width="24" height="96" />
+    <rect x="114" y="300" width="24" height="128" />
+    <rect x="150" y="270" width="24" height="158" />
+    <rect x="186" y="242" width="24" height="186" />
+  </g>
+  <path d="M364 370l70 120h-140z" fill="#d8c7a9" stroke="#1f2c2e" stroke-width="4" />
+  <circle cx="364" cy="436" r="12" fill="#1f2c2e" />
+  <g fill="#1f2c2e">
+    <circle cx="360" cy="174" r="6" />
+    <circle cx="384" cy="174" r="6" />
+    <circle cx="408" cy="174" r="6" />
+    <circle cx="360" cy="198" r="6" />
+    <circle cx="384" cy="198" r="6" />
+    <circle cx="408" cy="198" r="6" />
+    <circle cx="360" cy="222" r="6" />
+    <circle cx="384" cy="222" r="6" />
+    <circle cx="408" cy="222" r="6" />
+  </g>
+  <path d="M86 148l144 144" fill="none" stroke="#1f2c2e" stroke-width="4" />
+  <path d="M110 124l144 144" fill="none" stroke="#1f2c2e" stroke-width="4" />
+  <path d="M134 100l144 144" fill="none" stroke="#1f2c2e" stroke-width="4" />
+  <path d="M256 242l84-84" fill="none" stroke="#1f2c2e" stroke-width="4" opacity="0.5" />
+</svg>
