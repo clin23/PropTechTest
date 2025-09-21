@@ -57,6 +57,7 @@ const DEFAULT_COLUMNS: Column[] = [
 
 const STORAGE_KEY = "task-columns";
 const DEFAULT_SCOPE = "__default__";
+const PROPERTY_ORDER_STORAGE_KEY = "task-property-order";
 
 type ColumnMap = Record<string, Column[]>;
 
@@ -64,6 +65,14 @@ const cloneColumns = (columns: Column[]): Column[] =>
   columns.map((column) => ({ ...column }));
 
 const createDefaultColumns = (): Column[] => cloneColumns(DEFAULT_COLUMNS);
+
+const sanitizeIdArray = (value: unknown): string[] | null => {
+  if (!Array.isArray(value)) return null;
+
+  const sanitized = value.filter((item): item is string => typeof item === "string");
+
+  return sanitized.length ? sanitized : null;
+};
 
 const sanitizeColumnArray = (value: unknown): Column[] | null => {
   if (!Array.isArray(value)) return null;
@@ -141,6 +150,8 @@ export default function TasksKanban({
   const [columnsLoaded, setColumnsLoaded] = useState(false);
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
+  const [propertyOrder, setPropertyOrder] = useState<string[]>([]);
+  const [propertyOrderLoaded, setPropertyOrderLoaded] = useState(false);
 
   useEffect(() => {
     if (initialPropertyId) {
@@ -187,6 +198,42 @@ export default function TasksKanban({
   }, [columnsByProperty, columnsLoaded]);
 
   useEffect(() => {
+    let parsed: string[] | null = null;
+    const raw = localStorage.getItem(PROPERTY_ORDER_STORAGE_KEY);
+
+    if (raw) {
+      try {
+        parsed = sanitizeIdArray(JSON.parse(raw));
+      } catch (error) {
+        console.warn("Failed to parse stored property order", error);
+      }
+    }
+
+    if (parsed) {
+      setPropertyOrder(parsed);
+    }
+
+    setPropertyOrderLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!propertyOrderLoaded) return;
+
+    try {
+      if (!propertyOrder.length) {
+        localStorage.removeItem(PROPERTY_ORDER_STORAGE_KEY);
+      } else {
+        localStorage.setItem(
+          PROPERTY_ORDER_STORAGE_KEY,
+          JSON.stringify(propertyOrder)
+        );
+      }
+    } catch (error) {
+      console.warn("Failed to persist property order", error);
+    }
+  }, [propertyOrder, propertyOrderLoaded]);
+
+  useEffect(() => {
     if (!isPropertyModalOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -200,7 +247,10 @@ export default function TasksKanban({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPropertyModalOpen]);
 
-  const { data: properties = [] } = useQuery<PropertySummary[]>({
+  const {
+    data: properties = [],
+    isSuccess: propertiesLoaded,
+  } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
     queryFn: () => listProperties(),
   });
@@ -210,35 +260,21 @@ export default function TasksKanban({
   });
 
   useEffect(() => {
-    const propertyIds = properties.map((property) => property.id);
+    if (!propertyOrderLoaded || !propertiesLoaded) return;
+    if (!propertyOrder.length) return;
+
+    const validIds = new Set(properties.map((property) => property.id));
     setPropertyOrder((prev) => {
-      const filteredPrev = prev.filter((id) => propertyIds.includes(id));
-      const missing = propertyIds.filter((id) => !filteredPrev.includes(id));
-      const next = [...filteredPrev, ...missing];
-      if (
-        next.length === prev.length &&
-        next.every((id, index) => id === prev[index])
-      ) {
+      if (!prev.length) return prev;
+
+      const filtered = prev.filter((id) => validIds.has(id));
+      if (filtered.length === prev.length) {
         return prev;
       }
-      return next;
-    });
-  }, [properties]);
 
-  const orderedProperties = useMemo(() => {
-    if (!properties.length) return [];
-    const propertyMap = new Map(properties.map((property) => [property.id, property]));
-    const ordered = propertyOrder
-      .map((id) => propertyMap.get(id))
-      .filter((property): property is PropertySummary => Boolean(property));
-    if (ordered.length === properties.length) {
-      return ordered;
-    }
-    const remaining = properties.filter(
-      (property) => !propertyOrder.includes(property.id)
-    );
-    return [...ordered, ...remaining];
-  }, [properties, propertyOrder]);
+      return filtered;
+    });
+  }, [properties, propertiesLoaded, propertyOrderLoaded, propertyOrder]);
 
   useEffect(() => {
     if (!allowPropertySwitching) return;
@@ -251,6 +287,29 @@ export default function TasksKanban({
   }, [activeFilter, allowPropertySwitching, properties]);
 
   const selectedPropertyId = activeFilter !== "all" ? activeFilter : undefined;
+
+  const orderedProperties = useMemo(() => {
+    if (!propertyOrder.length) return properties;
+
+    const byId = new Map(properties.map((property) => [property.id, property]));
+    const seen = new Set<string>();
+    const ordered: PropertySummary[] = [];
+
+    propertyOrder.forEach((id) => {
+      const property = byId.get(id);
+      if (!property) return;
+      if (seen.has(id)) return;
+      seen.add(id);
+      ordered.push(property);
+    });
+
+    properties.forEach((property) => {
+      if (seen.has(property.id)) return;
+      ordered.push(property);
+    });
+
+    return ordered;
+  }, [properties, propertyOrder]);
 
   const columns = useMemo(() => {
     if (!columnsLoaded) {
@@ -359,6 +418,38 @@ export default function TasksKanban({
     });
     updateMut.mutate({ id: draggableId, data: { status: destination.droppableId } });
   };
+
+  const handlePropertyReorder = useCallback(
+    (nextOrder: string[]) => {
+      if (!propertyOrderLoaded) return;
+
+      const validIds = new Set(properties.map((property) => property.id));
+      const seen = new Set<string>();
+      const sanitized: string[] = [];
+
+      nextOrder.forEach((id) => {
+        if (!validIds.has(id)) return;
+        if (seen.has(id)) return;
+        seen.add(id);
+        sanitized.push(id);
+      });
+
+      if (!sanitized.length) {
+        if (!propertyOrder.length) return;
+        setPropertyOrder([]);
+        return;
+      }
+
+      const isSameOrder =
+        sanitized.length === propertyOrder.length &&
+        sanitized.every((id, index) => id === propertyOrder[index]);
+
+      if (isSameOrder) return;
+
+      setPropertyOrder(sanitized);
+    },
+    [properties, propertyOrder, propertyOrderLoaded]
+  );
 
   const addColumn = (title: string) => {
     const id = title.toLowerCase().replace(/\s+/g, "_");
@@ -784,6 +875,7 @@ type PropertySelectModalProps = {
   onReorder: (orderedIds: string[]) => void;
   onClose: () => void;
   allowAll: boolean;
+  onReorder?: (propertyIds: string[]) => void;
 };
 
 function PropertySelectModal({
@@ -794,6 +886,7 @@ function PropertySelectModal({
   onReorder,
   onClose,
   allowAll,
+  onReorder,
 }: PropertySelectModalProps) {
   if (!open) return null;
 
@@ -804,6 +897,25 @@ function PropertySelectModal({
         ? "border-gray-900 bg-gray-900 text-white shadow-sm dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
         : "border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800",
     ].join(" ");
+
+  const reorderable = typeof onReorder === "function" && properties.length > 1;
+
+  const handleMove = (propertyId: string, direction: -1 | 1) => {
+    if (!reorderable) return;
+
+    const currentOrder = properties.map((property) => property.id);
+    const currentIndex = currentOrder.indexOf(propertyId);
+    if (currentIndex === -1) return;
+
+    const targetIndex = currentIndex + direction;
+    if (targetIndex < 0 || targetIndex >= currentOrder.length) return;
+
+    const nextOrder = [...currentOrder];
+    const [moved] = nextOrder.splice(currentIndex, 1);
+    nextOrder.splice(targetIndex, 0, moved);
+
+    onReorder?.(nextOrder);
+  };
 
   const handleSelect = (propertyId?: string) => {
     onSelect(propertyId);
@@ -846,63 +958,75 @@ function PropertySelectModal({
           </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="space-y-2">
-              {allowAll && (
-                <button
-                  type="button"
-                  onClick={() => handleSelect(undefined)}
-                  className={optionClassName(!selectedPropertyId)}
-                  aria-pressed={!selectedPropertyId}
+          <div className="space-y-2">
+            {allowAll && (
+              <button
+                type="button"
+                onClick={() => handleSelect(undefined)}
+                className={optionClassName(!selectedPropertyId)}
+                aria-pressed={!selectedPropertyId}
+              >
+                <span>All properties</span>
+                {!selectedPropertyId && <span aria-hidden="true">✓</span>}
+              </button>
+            )}
+            {properties.map((property, index) => {
+              const isActive = selectedPropertyId === property.id;
+              const selectClassName = [
+                optionClassName(isActive),
+                reorderable ? "flex-1" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+
+              return (
+                <div
+                  key={property.id}
+                  className={reorderable ? "flex items-center gap-2" : undefined}
                 >
-                  <span>All properties</span>
-                  {!selectedPropertyId && <span aria-hidden="true">✓</span>}
-                </button>
-              )}
-              <Droppable droppableId="property-list">
-                {(droppableProvided) => (
-                  <div
-                    ref={droppableProvided.innerRef}
-                    {...droppableProvided.droppableProps}
-                    className="space-y-2"
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(property.id)}
+                    className={selectClassName}
+                    aria-pressed={isActive}
                   >
-                    {properties.map((property, index) => {
-                      const isActive = selectedPropertyId === property.id;
-                      return (
-                        <Draggable
-                          key={property.id}
-                          draggableId={property.id}
-                          index={index}
-                        >
-                          {(draggableProvided) => (
-                            <div
-                              ref={draggableProvided.innerRef}
-                              {...draggableProvided.draggableProps}
-                              {...draggableProvided.dragHandleProps}
-                            >
-                              <button
-                                type="button"
-                                onClick={() => handleSelect(property.id)}
-                                className={[
-                                  optionClassName(isActive),
-                                  "cursor-grab active:cursor-grabbing",
-                                ].join(" ")}
-                                aria-pressed={isActive}
-                              >
-                                <span>{property.address}</span>
-                                {isActive && <span aria-hidden="true">✓</span>}
-                              </button>
-                            </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
-                    {droppableProvided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          </DragDropContext>
+                    <span>{property.address}</span>
+                    {isActive && <span aria-hidden="true">✓</span>}
+                  </button>
+                  {reorderable && (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleMove(property.id, -1);
+                        }}
+                        className="rounded border px-2 py-1 text-xs text-gray-500 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-600"
+                        aria-label={`Move ${property.address} up`}
+                        disabled={index === 0}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleMove(property.id, 1);
+                        }}
+                        className="rounded border px-2 py-1 text-xs text-gray-500 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-600"
+                        aria-label={`Move ${property.address} down`}
+                        disabled={index === properties.length - 1}
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
