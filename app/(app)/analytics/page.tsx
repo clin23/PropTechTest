@@ -50,9 +50,8 @@ export default function AnalyticsPage() {
             )}
           </div>
         </div>
-        <Link
-          href="/analytics/custom"
-          className="flex items-center justify-center rounded-lg border bg-white/10 p-6 text-2xl font-semibold shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:bg-gray-900/20 dark:focus-visible:ring-white/40 md:col-start-3 md:row-start-1 md:h-full md:text-3xl"
+        <div
+          className="group relative flex items-center justify-center rounded-lg border bg-white/10 p-6 text-2xl font-semibold shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:bg-gray-900/20 dark:focus-visible:ring-white/40 md:col-start-3 md:row-start-1 md:h-full md:text-3xl"
         >
           <span
             className="pointer-events-none absolute inset-0 z-0 bg-white opacity-70 transition-opacity duration-300 dark:bg-gray-900 dark:opacity-60 group-hover:opacity-30 group-focus-within:opacity-30 dark:group-hover:opacity-20 dark:group-focus-within:opacity-20"
