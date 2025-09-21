@@ -1,17 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useNavigation } from "next/navigation";
 
 export function RouteProgress() {
-  const path = usePathname();
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
+  const timeoutRef = useRef<number | undefined>();
 
   useEffect(() => {
-    setLoading(true);
-    const id = window.setTimeout(() => setLoading(false), 250);
-    return () => window.clearTimeout(id);
-  }, [path]);
+    if (navigation.state !== "idle") {
+      if (timeoutRef.current !== undefined) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = undefined;
+      }
+      if (!loading) {
+        setLoading(true);
+      }
+    } else if (loading) {
+      timeoutRef.current = window.setTimeout(() => {
+        setLoading(false);
+        timeoutRef.current = undefined;
+      }, 250);
+    }
+
+    return () => {
+      if (timeoutRef.current !== undefined) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = undefined;
+      }
+    };
+  }, [navigation.state, loading]);
 
   return (
     <div

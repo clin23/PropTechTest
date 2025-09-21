@@ -156,6 +156,8 @@ export default function TasksKanban({
   const [columnsLoaded, setColumnsLoaded] = useState(false);
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false);
   const [propertyOrder, setPropertyOrder] = useState<string[]>([]);
+  const [propertyOrderLoaded, setPropertyOrderLoaded] = useState(false);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initialPropertyId) {
@@ -558,8 +560,6 @@ export default function TasksKanban({
   const showCaretButton = allowPropertySwitching && hasExtraProperties;
 
   const showPropertiesOnCards = !selectedPropertyId;
-  const canReorderProperties =
-    propertyOrderLoaded && allowPropertySwitching && properties.length > 1;
 
   useEffect(() => {
     setStatusOverrides((prev) => {
@@ -683,30 +683,6 @@ export default function TasksKanban({
           : current
       );
     }
-  };
-
-  const handlePropertyReorder = (orderedIds: string[]) => {
-    setPropertyOrder((prev) => {
-      if (
-        prev.length === orderedIds.length &&
-        prev.every((id, index) => id === orderedIds[index])
-      ) {
-        return prev;
-      }
-      return orderedIds;
-    });
-  };
-
-  const handlePropertyReorder = (orderedIds: string[]) => {
-    setPropertyOrder((prev) => {
-      if (
-        prev.length === orderedIds.length &&
-        prev.every((id, index) => id === orderedIds[index])
-      ) {
-        return prev;
-      }
-      return orderedIds;
-    });
   };
 
   return (
@@ -1025,10 +1001,9 @@ type PropertySelectModalProps = {
   properties: PropertySummary[];
   selectedPropertyId?: string;
   onSelect: (propertyId?: string) => void;
-  onReorder: (orderedIds: string[]) => void;
+  onReorder?: (orderedIds: string[]) => void;
   onClose: () => void;
   allowAll: boolean;
-  onReorder?: (propertyIds: string[]) => void;
 };
 
 function PropertySelectModal({
@@ -1051,7 +1026,7 @@ function PropertySelectModal({
     ].join(" ");
 
   const reorderable =
-    typeof handleReorder === "function" && properties.length > 1;
+    typeof onReorder === "function" && properties.length > 1;
 
   const handleMove = (propertyId: string, direction: -1 | 1) => {
     if (!reorderable) return;
@@ -1067,7 +1042,7 @@ function PropertySelectModal({
     const [moved] = nextOrder.splice(currentIndex, 1);
     nextOrder.splice(targetIndex, 0, moved);
 
-    handleReorder?.(nextOrder);
+    onReorder?.(nextOrder);
   };
 
   const handleSelect = (propertyId?: string) => {
@@ -1082,7 +1057,7 @@ function PropertySelectModal({
     const [moved] = reordered.splice(source.index, 1);
     if (!moved) return;
     reordered.splice(destination.index, 0, moved);
-    onReorder(reordered.map((property) => property.id));
+    onReorder?.(reordered.map((property) => property.id));
   };
 
   return (
