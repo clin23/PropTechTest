@@ -54,8 +54,19 @@ export default function AnalyticsPage() {
           href="/analytics/custom"
           className="flex items-center justify-center rounded-lg border bg-white/10 p-6 text-2xl font-semibold shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:bg-gray-900/20 dark:focus-visible:ring-white/40 md:col-start-3 md:row-start-1 md:h-full md:text-3xl"
         >
-          My Custom Analytics
-        </Link>
+          <span
+            className="pointer-events-none absolute inset-0 z-0 bg-white opacity-70 transition-opacity duration-300 dark:bg-gray-900 dark:opacity-60 group-hover:opacity-30 group-focus-within:opacity-30 dark:group-hover:opacity-20 dark:group-focus-within:opacity-20"
+            aria-hidden="true"
+          />
+          <Link
+            href="/analytics/custom"
+            className="absolute inset-0 z-10 focus-visible:outline-none"
+            aria-label="Go to custom analytics"
+          />
+          <div className="pointer-events-none relative z-20 flex flex-1 flex-col justify-between">
+            <span className="text-3xl font-semibold md:text-4xl">My Custom Analytics</span>
+          </div>
+        </div>
         <Link
           href="/analytics/builder"
           className="group relative flex h-full flex-col justify-center gap-4 overflow-hidden rounded-lg border bg-cover bg-center bg-no-repeat p-6 text-2xl font-semibold shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent backdrop-blur dark:focus-visible:ring-white/40 md:col-start-3 md:row-start-2 md:h-full md:text-3xl"
