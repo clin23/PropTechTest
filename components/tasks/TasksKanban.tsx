@@ -279,7 +279,7 @@ export default function TasksKanban({
     });
   }, [properties]);
 
-  const orderedProperties = useMemo(() => {
+  const orderedPropertyList = useMemo(() => {
     if (!properties.length) return [];
     const propertyMap = new Map(properties.map((property) => [property.id, property]));
     const ordered = propertyOrder
@@ -351,10 +351,10 @@ export default function TasksKanban({
 
   const activeProperty = useMemo(() => {
     if (!selectedPropertyId) return undefined;
-    return orderedProperties.find(
+    return orderedPropertyList.find(
       (property) => property.id === selectedPropertyId
     );
-  }, [orderedProperties, selectedPropertyId]);
+  }, [orderedPropertyList, selectedPropertyId]);
 
   useEffect(() => {
     if (!onContextChange) return;
@@ -370,7 +370,7 @@ export default function TasksKanban({
 
   const defaultPropertyForCreation = selectedPropertyId
     ? activeProperty ?? null
-    : orderedProperties[0] ?? null;
+    : orderedPropertyList[0] ?? null;
 
   const createMut = useMutation({
     mutationFn: ({ title, status }: { title: string; status: string }) =>
@@ -531,7 +531,7 @@ export default function TasksKanban({
     : "+ New task";
 
   const propertyTabs: PropertySummary[] = allowPropertySwitching
-    ? orderedProperties
+    ? orderedPropertyList
     : activeProperty
       ? [activeProperty]
       : [];
@@ -683,6 +683,18 @@ export default function TasksKanban({
           : current
       );
     }
+  };
+
+  const handlePropertyReorder = (orderedIds: string[]) => {
+    setPropertyOrder((prev) => {
+      if (
+        prev.length === orderedIds.length &&
+        prev.every((id, index) => id === orderedIds[index])
+      ) {
+        return prev;
+      }
+      return orderedIds;
+    });
   };
 
   const handlePropertyReorder = (orderedIds: string[]) => {
@@ -875,7 +887,7 @@ export default function TasksKanban({
       {editingTask && (
         <TaskEditModal
           task={editingTask}
-          properties={orderedProperties}
+          properties={orderedPropertyList}
           vendors={vendors}
           onClose={() => setEditingTask(null)}
           onSave={(data) => {
