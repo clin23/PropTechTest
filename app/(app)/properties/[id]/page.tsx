@@ -3,7 +3,11 @@
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 
+import PageTransition from "../../../../components/PageTransition";
+import { SharedTile } from "../../../../components/SharedTile";
+import Skeleton from "../../../../components/Skeleton";
 import IncomeForm from "../../../../components/IncomeForm";
 import ExpenseForm from "../../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../../components/DocumentUploadModal";
@@ -40,6 +44,49 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 const DEFAULT_TAB: TabId = "rent-ledger";
 
+const rentFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+const listVariants: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.03,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 8, opacity: 0 },
+  show: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.15, ease: "easeOut" },
+  },
+};
+
+function formatRent(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "—";
+  }
+  return `$${rentFormatter.format(value)}`;
+}
+
+function formatDateValue(value?: string) {
+  if (!value) {
+    return "—";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "—";
+  }
+  return dateFormatter.format(parsed);
+}
+
 export default function PropertyPage() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useURLState<TabId>({
@@ -51,7 +98,7 @@ export default function PropertyPage() {
   const [documentOpen, setDocumentOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
-  const { data: property, isPending } = useQuery<PropertySummary>({
+  const { data: property, isPending, isError } = useQuery<PropertySummary>({
     queryKey: ["property", id],
     queryFn: () => getProperty(id),
   });
@@ -60,9 +107,30 @@ export default function PropertyPage() {
     return TABS.some((tab) => tab.id === activeTab) ? activeTab : DEFAULT_TAB;
   }, [activeTab]);
 
-  if (isPending || !property) {
-    return <div className="p-6">Loading...</div>;
+  const routeKey = id ? `/properties/${id}` : "/properties";
+
+  if (isError) {
+    return (
+      <PageTransition routeKey={routeKey}>
+        <div className="p-6">Failed to load property</div>
+      </PageTransition>
+    );
   }
+
+  if (!property && !isPending) {
+    return (
+      <PageTransition routeKey={routeKey}>
+        <div className="p-6">Failed to load property</div>
+      </PageTransition>
+    );
+  }
+
+  const reduceMotion = useReducedMotion();
+  const listMotionProps = reduceMotion
+    ? {}
+    : { variants: listVariants, initial: "hidden" as const, animate: "show" as const };
+  const itemMotionProps = reduceMotion ? {} : { variants: itemVariants };
+  const ready = Boolean(property);
 
   const handleTabSelect = (tab: string) => {
     const match = TABS.find((item) => item.id === tab);
@@ -72,6 +140,7 @@ export default function PropertyPage() {
   };
 
   const renderSection = (tabId: TabId) => {
+    if (!property) return null;
     switch (tabId) {
       case "rent-ledger":
         return <RentLedger propertyId={id} />;
@@ -80,12 +149,7 @@ export default function PropertyPage() {
       case "documents":
         return <Documents propertyId={id} />;
       case "tasks":
-        return (
-          <TasksSection
-            propertyId={id}
-            propertyAddress={property.address}
-          />
-        );
+        return <TasksSection propertyId={id} propertyAddress={property.address} />;
       case "rent-review":
         return <RentReview propertyId={id} />;
       case "key-dates":
@@ -104,59 +168,151 @@ export default function PropertyPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[minmax(0,420px)_1fr]">
-        <div>
-          <PropertyHero
-            property={property}
-            onEdit={() => setEditOpen(true)}
-            onAddIncome={() => setIncomeOpen(true)}
-            onAddExpense={() => setExpenseOpen(true)}
-            onUploadDocument={() => setDocumentOpen(true)}
-          />
-        </div>
-        <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
-            <ScrollableSectionBar
-              tabs={TABS}
-              activeTab={resolvedTab}
-              onTabSelect={handleTabSelect}
-              variant="contained"
-            />
-          </div>
-          <div
-            role="tabpanel"
-            id={`panel-${resolvedTab}`}
-            aria-labelledby={`tab-${resolvedTab}`}
-            tabIndex={0}
-            className="flex-1 overflow-auto px-4 pb-6 pt-4 sm:px-6"
-          >
-            {renderSection(resolvedTab)}
-          </div>
-        </section>
+    <PageTransition routeKey={routeKey}>
+      <div className="relative">
+        <motion.div
+          initial={{ opacity: 1 }}
+          animate={{ opacity: ready ? 0 : 1 }}
+          transition={{ duration: 0.12 }}
+          className={`p-6 ${ready ? "pointer-events-none absolute inset-0" : ""}`}
+        >
+          <PropertyPageSkeleton />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: ready ? 1 : 0 }}
+          transition={{ duration: 0.12 }}
+          className="p-6"
+        >
+          {property && (
+            <div className="space-y-6">
+              <motion.section
+                className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[minmax(0,420px)_1fr]"
+                {...listMotionProps}
+              >
+                <motion.div className="lg:col-span-2" {...itemMotionProps}>
+                  <PropertySummaryTile property={property} />
+                </motion.div>
+                <motion.div {...itemMotionProps}>
+                  <PropertyHero
+                    property={property}
+                    onEdit={() => setEditOpen(true)}
+                    onAddIncome={() => setIncomeOpen(true)}
+                    onAddExpense={() => setExpenseOpen(true)}
+                    onUploadDocument={() => setDocumentOpen(true)}
+                  />
+                </motion.div>
+                <motion.div {...itemMotionProps}>
+                  <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                    <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
+                      <ScrollableSectionBar
+                        tabs={TABS}
+                        activeTab={resolvedTab}
+                        onTabSelect={handleTabSelect}
+                        variant="contained"
+                      />
+                    </div>
+                    <div
+                      role="tabpanel"
+                      id={`panel-${resolvedTab}`}
+                      aria-labelledby={`tab-${resolvedTab}`}
+                      tabIndex={0}
+                      className="flex-1 overflow-auto px-4 pb-6 pt-4 sm:px-6"
+                    >
+                      {renderSection(resolvedTab)}
+                    </div>
+                  </section>
+                </motion.div>
+              </motion.section>
+              <IncomeForm propertyId={id} open={incomeOpen} onOpenChange={setIncomeOpen} showTrigger={false} />
+              <ExpenseForm propertyId={id} open={expenseOpen} onOpenChange={setExpenseOpen} showTrigger={false} />
+              <DocumentUploadModal
+                propertyId={id}
+                open={documentOpen}
+                onClose={() => setDocumentOpen(false)}
+              />
+              <PropertyEditModal property={property} open={editOpen} onClose={() => setEditOpen(false)} />
+            </div>
+          )}
+        </motion.div>
       </div>
-      <IncomeForm
-        propertyId={id}
-        open={incomeOpen}
-        onOpenChange={setIncomeOpen}
-        showTrigger={false}
-      />
-      <ExpenseForm
-        propertyId={id}
-        open={expenseOpen}
-        onOpenChange={setExpenseOpen}
-        showTrigger={false}
-      />
-      <DocumentUploadModal
-        propertyId={id}
-        open={documentOpen}
-        onClose={() => setDocumentOpen(false)}
-      />
-      <PropertyEditModal
-        property={property}
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-      />
+    </PageTransition>
+  );
+}
+
+function PropertySummaryTile({ property }: { property: PropertySummary }) {
+  const rentDisplay = formatRent(property.rent);
+  const nextEvent = property.events?.[0];
+  let nextEventDisplay = "—";
+  if (nextEvent) {
+    const nextDate = formatDateValue(nextEvent.date);
+    nextEventDisplay = nextDate === "—" ? nextEvent.title : `${nextDate} · ${nextEvent.title}`;
+  } else {
+    const leaseEnd = formatDateValue(property.leaseEnd);
+    if (leaseEnd !== "—") {
+      nextEventDisplay = `${leaseEnd} · Lease end`;
+    }
+  }
+
+  const summaryItems = [
+    { label: "Tenant", value: property.tenant || "—" },
+    { label: "Rent / week", value: rentDisplay === "—" ? rentDisplay : `${rentDisplay}/week` },
+    { label: "Next key date", value: nextEventDisplay },
+  ] as const;
+
+  return (
+    <SharedTile>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active property</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{property.address}</h2>
+        </div>
+        <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
+          {summaryItems.map((item) => (
+            <div key={item.label} className="space-y-1">
+              <dt className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{item.label}</dt>
+              <dd className="text-base font-semibold text-gray-900 dark:text-gray-100">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </SharedTile>
+  );
+}
+
+function PropertyPageSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <Skeleton className="h-5 w-32" />
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[minmax(0,420px)_1fr]">
+        <div className="overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <Skeleton className="h-48 w-full" />
+          <div className="space-y-3 p-6">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        </div>
+        <div className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="border-b border-gray-100 px-4 pb-1 pt-4 dark:border-gray-800 sm:px-6">
+            <Skeleton className="h-5 w-40" />
+          </div>
+          <div className="flex-1 space-y-3 overflow-hidden px-4 pb-6 pt-4 sm:px-6">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-11/12" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/5" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
