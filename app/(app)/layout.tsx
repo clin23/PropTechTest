@@ -9,5 +9,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const routeKey = pathname ?? "/";
 
-  return <PageTransition routeKey={routeKey}>{children}</PageTransition>;
+  return (
+    <PageTransition routeKey={routeKey} className="h-full">
+      {children}
+    </PageTransition>
+  );
 }
