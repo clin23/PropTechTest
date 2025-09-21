@@ -538,6 +538,115 @@ export default function TasksKanban({
   const showCaretButton = allowPropertySwitching && hasExtraProperties;
 
   const showPropertiesOnCards = !selectedPropertyId;
+  const canReorderProperties =
+    propertyOrderLoaded && allowPropertySwitching && properties.length > 1;
+
+  useEffect(() => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      const validColumnIds = new Set(columns.map((column) => column.id));
+      let changed = false;
+      const next: Record<string, string> = {};
+
+      Object.entries(prev).forEach(([taskId, columnId]) => {
+        if (!validColumnIds.has(columnId)) {
+          changed = true;
+          return;
+        }
+        next[taskId] = columnId;
+      });
+
+      return changed ? next : prev;
+    });
+  }, [columns]);
+
+  useEffect(() => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      const next = { ...prev };
+      let changed = false;
+
+      tasks.forEach((task) => {
+        if (task.status !== "done" && next[task.id]) {
+          delete next[task.id];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [tasks]);
+
+  const getDisplayStatus = useCallback(
+    (task: TaskDto) => {
+      const override = statusOverrides[task.id];
+      if (
+        override &&
+        columns.some((column) => column.id === override)
+      ) {
+        return override;
+      }
+      return task.status;
+    },
+    [statusOverrides, columns]
+  );
+
+  const tasksByColumn = useMemo(() => {
+    const grouped = new Map<string, TaskDto[]>();
+    tasks.forEach((task) => {
+      const status = getDisplayStatus(task);
+      const existing = grouped.get(status);
+      if (existing) {
+        existing.push(task);
+      } else {
+        grouped.set(status, [task]);
+      }
+    });
+    return grouped;
+  }, [tasks, getDisplayStatus]);
+
+  const handleCompleteTask = async (task: TaskDto) => {
+    if (completeMut.isPending) return;
+
+    const previousStatus = getDisplayStatus(task);
+    setCompletingTaskId(task.id);
+    try {
+      await completeMut.mutateAsync(task.id);
+    } catch (error) {
+      console.error("Failed to complete task", error);
+      setCompletingTaskId(null);
+      return;
+    }
+
+    const shouldArchive = window.confirm(
+      "Task completed. Would you like to archive it now?"
+    );
+    if (shouldArchive) {
+      try {
+        await archiveMut.mutateAsync(task.id);
+        setStatusOverrides((prev) => {
+          if (!prev[task.id]) return prev;
+          const { [task.id]: _omit, ...rest } = prev;
+          return rest;
+        });
+      } catch (error) {
+        console.error("Failed to archive task", error);
+        setStatusOverrides((prev) => ({
+          ...prev,
+          [task.id]: previousStatus,
+        }));
+      } finally {
+        setCompletingTaskId(null);
+      }
+      return;
+    }
+
+    setStatusOverrides((prev) => ({
+      ...prev,
+      [task.id]: previousStatus,
+    }));
+    setCompletingTaskId(null);
+  };
 
   useEffect(() => {
     setStatusOverrides((prev) => {
@@ -812,10 +921,12 @@ export default function TasksKanban({
           <PropertySelectModal
             open={isPropertyModalOpen}
             onClose={() => setPropertyModalOpen(false)}
-            properties={propertyTabs}
+            properties={orderedProperties}
             selectedPropertyId={selectedPropertyId}
             onSelect={handlePropertySelect}
-            onReorder={handlePropertyReorder}
+            onReorder={
+              canReorderProperties ? handlePropertyReorder : undefined
+            }
             allowAll={allowPropertySwitching}
           />
         </>
@@ -878,16 +989,16 @@ type PropertySelectModalProps = {
   onReorder?: (propertyIds: string[]) => void;
 };
 
-function PropertySelectModal({
-  open,
-  properties,
-  selectedPropertyId,
-  onSelect,
-  onReorder,
-  onClose,
-  allowAll,
-  onReorder,
-}: PropertySelectModalProps) {
+function PropertySelectModal(props: PropertySelectModalProps) {
+  const {
+    open,
+    properties,
+    selectedPropertyId,
+    onSelect,
+    onClose,
+    allowAll,
+    onReorder: handleReorder,
+  } = props;
   if (!open) return null;
 
   const optionClassName = (isActive: boolean) =>
@@ -898,7 +1009,8 @@ function PropertySelectModal({
         : "border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800",
     ].join(" ");
 
-  const reorderable = typeof onReorder === "function" && properties.length > 1;
+  const reorderable =
+    typeof handleReorder === "function" && properties.length > 1;
 
   const handleMove = (propertyId: string, direction: -1 | 1) => {
     if (!reorderable) return;
@@ -914,7 +1026,7 @@ function PropertySelectModal({
     const [moved] = nextOrder.splice(currentIndex, 1);
     nextOrder.splice(targetIndex, 0, moved);
 
-    onReorder?.(nextOrder);
+    handleReorder?.(nextOrder);
   };
 
   const handleSelect = (propertyId?: string) => {
