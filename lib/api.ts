@@ -56,6 +56,49 @@ export interface TenantNote {
   createdAt: string;
 }
 
+export interface PropertyDataExport {
+  property: {
+    id: string;
+    address: string;
+    imageUrl?: string;
+    tenant: string;
+    leaseStart: string;
+    leaseEnd: string;
+    rent: number;
+    archived?: boolean;
+  };
+  tenant: { id: string; name: string; propertyId: string } | null;
+  incomes: IncomeRow[];
+  expenses: ExpenseRow[];
+  rentLedger: {
+    id: string;
+    propertyId: string;
+    tenantId: string;
+    amount: number;
+    dueDate: string;
+    status: string;
+    paidDate?: string;
+  }[];
+  documents: {
+    id: string;
+    propertyId?: string;
+    tenantId?: string;
+    title: string;
+    url: string;
+    tag: string;
+  }[];
+  reminders: {
+    id: string;
+    propertyId: string;
+    type: string;
+    title: string;
+    dueDate: string;
+    severity: string;
+  }[];
+  tenantNotes: TenantNote[];
+  tasks: TaskDto[];
+}
+
 export interface Notification {
   id: string;
   propertyId?: string;
@@ -109,6 +152,8 @@ export const updateProperty = (id: string, payload: any) =>
   });
 export const deleteProperty = (id: string) =>
   api(`/properties/${id}`, { method: 'DELETE' });
+export const exportPropertyData = (id: string) =>
+  api<PropertyDataExport>(`/properties/${id}/export`);
 export const listLedger = (propertyId: string) =>
   api<LedgerEntry[]>(`/rent-ledger?propertyId=${propertyId}`);
 export const updateLedgerEntry = (
