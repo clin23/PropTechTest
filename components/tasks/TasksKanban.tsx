@@ -577,7 +577,7 @@ export default function TasksKanban({
     });
   }, [tasks]);
 
-  const getDisplayStatus = useCallback(
+  const resolveDisplayStatus = useCallback(
     (task: TaskDto) => {
       const override = statusOverrides[task.id];
       if (
@@ -594,7 +594,7 @@ export default function TasksKanban({
   const tasksByColumn = useMemo(() => {
     const grouped = new Map<string, TaskDto[]>();
     tasks.forEach((task) => {
-      const status = getDisplayStatus(task);
+      const status = resolveDisplayStatus(task);
       const existing = grouped.get(status);
       if (existing) {
         existing.push(task);
@@ -603,119 +603,12 @@ export default function TasksKanban({
       }
     });
     return grouped;
-  }, [tasks, getDisplayStatus]);
+  }, [tasks, resolveDisplayStatus]);
 
   const handleCompleteTask = async (task: TaskDto) => {
     if (completeMut.isPending) return;
 
-    const previousStatus = getDisplayStatus(task);
-    setCompletingTaskId(task.id);
-    try {
-      await completeMut.mutateAsync(task.id);
-    } catch (error) {
-      console.error("Failed to complete task", error);
-      setCompletingTaskId(null);
-      return;
-    }
-
-    const shouldArchive = window.confirm(
-      "Task completed. Would you like to archive it now?"
-    );
-    if (shouldArchive) {
-      try {
-        await archiveMut.mutateAsync(task.id);
-        setStatusOverrides((prev) => {
-          if (!prev[task.id]) return prev;
-          const { [task.id]: _omit, ...rest } = prev;
-          return rest;
-        });
-      } catch (error) {
-        console.error("Failed to archive task", error);
-        setStatusOverrides((prev) => ({
-          ...prev,
-          [task.id]: previousStatus,
-        }));
-      } finally {
-        setCompletingTaskId(null);
-      }
-      return;
-    }
-
-    setStatusOverrides((prev) => ({
-      ...prev,
-      [task.id]: previousStatus,
-    }));
-    setCompletingTaskId(null);
-  };
-
-  useEffect(() => {
-    setStatusOverrides((prev) => {
-      if (!Object.keys(prev).length) return prev;
-      const validColumnIds = new Set(columns.map((column) => column.id));
-      let changed = false;
-      const next: Record<string, string> = {};
-
-      Object.entries(prev).forEach(([taskId, columnId]) => {
-        if (!validColumnIds.has(columnId)) {
-          changed = true;
-          return;
-        }
-        next[taskId] = columnId;
-      });
-
-      return changed ? next : prev;
-    });
-  }, [columns]);
-
-  useEffect(() => {
-    setStatusOverrides((prev) => {
-      if (!Object.keys(prev).length) return prev;
-      const next = { ...prev };
-      let changed = false;
-
-      tasks.forEach((task) => {
-        if (task.status !== "done" && next[task.id]) {
-          delete next[task.id];
-          changed = true;
-        }
-      });
-
-      return changed ? next : prev;
-    });
-  }, [tasks]);
-
-  const getDisplayStatus = useCallback(
-    (task: TaskDto) => {
-      const override = statusOverrides[task.id];
-      if (
-        override &&
-        columns.some((column) => column.id === override)
-      ) {
-        return override;
-      }
-      return task.status;
-    },
-    [statusOverrides, columns]
-  );
-
-  const tasksByColumn = useMemo(() => {
-    const grouped = new Map<string, TaskDto[]>();
-    tasks.forEach((task) => {
-      const status = getDisplayStatus(task);
-      const existing = grouped.get(status);
-      if (existing) {
-        existing.push(task);
-      } else {
-        grouped.set(status, [task]);
-      }
-    });
-    return grouped;
-  }, [tasks, getDisplayStatus]);
-
-  const handleCompleteTask = async (task: TaskDto) => {
-    if (completeMut.isPending) return;
-
-    const previousStatus = getDisplayStatus(task);
+    const previousStatus = resolveDisplayStatus(task);
     setCompletingTaskId(task.id);
     try {
       await completeMut.mutateAsync(task.id);
