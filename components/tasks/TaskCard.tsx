@@ -46,7 +46,7 @@ export default function TaskCard({
 
   return (
     <div
-      className={`flex flex-col gap-2 rounded border p-2 ${
+      className={`group relative flex flex-col gap-2 rounded border p-2 pb-10 transition-colors ${
         onClick ? "cursor-pointer" : ""
       } ${dueSoon ? "border-yellow-500" : ""}`}
       onClick={onClick}
@@ -84,7 +84,7 @@ export default function TaskCard({
       {!completed && onComplete && (
         <button
           type="button"
-          className="mt-1 rounded bg-gray-900 px-3 py-1 text-xs font-semibold text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+          className="pointer-events-none absolute inset-x-2 bottom-2 rounded bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition hover:bg-gray-700 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 group-hover:pointer-events-auto group-hover:opacity-100 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 dark:focus-visible:ring-gray-500"
           onClick={(event) => {
             event.stopPropagation();
             if (isCompleting) return;

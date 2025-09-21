@@ -61,6 +61,12 @@ const PROPERTY_ORDER_STORAGE_KEY = "task-property-order";
 
 type ColumnMap = Record<string, Column[]>;
 
+type CompletionPromptState = {
+  task: TaskDto;
+  previousStatus: string;
+  error: string | null;
+};
+
 const cloneColumns = (columns: Column[]): Column[] =>
   columns.map((column) => ({ ...column }));
 
@@ -384,6 +390,9 @@ export default function TasksKanban({
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+  const [completionPrompt, setCompletionPrompt] =
+    useState<CompletionPromptState | null>(null);
+
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
@@ -612,40 +621,57 @@ export default function TasksKanban({
     setCompletingTaskId(task.id);
     try {
       await completeMut.mutateAsync(task.id);
+      setStatusOverrides((prev) => ({
+        ...prev,
+        [task.id]: previousStatus,
+      }));
+      setCompletionPrompt({ task, previousStatus, error: null });
     } catch (error) {
       console.error("Failed to complete task", error);
+    } finally {
       setCompletingTaskId(null);
-      return;
     }
+  };
 
-    const shouldArchive = window.confirm(
-      "Task completed. Would you like to archive it now?"
+  const handleKeepCompletedTask = () => {
+    if (archiveMut.isPending) return;
+    setCompletionPrompt(null);
+  };
+
+  const handleArchiveCompletedTask = async () => {
+    if (!completionPrompt || archiveMut.isPending) return;
+
+    const { task, previousStatus } = completionPrompt;
+
+    setCompletionPrompt((current) =>
+      current && current.task.id === task.id
+        ? { ...current, error: null }
+        : current
     );
-    if (shouldArchive) {
-      try {
-        await archiveMut.mutateAsync(task.id);
-        setStatusOverrides((prev) => {
-          if (!prev[task.id]) return prev;
-          const { [task.id]: _omit, ...rest } = prev;
-          return rest;
-        });
-      } catch (error) {
-        console.error("Failed to archive task", error);
-        setStatusOverrides((prev) => ({
-          ...prev,
-          [task.id]: previousStatus,
-        }));
-      } finally {
-        setCompletingTaskId(null);
-      }
-      return;
-    }
 
-    setStatusOverrides((prev) => ({
-      ...prev,
-      [task.id]: previousStatus,
-    }));
-    setCompletingTaskId(null);
+    try {
+      await archiveMut.mutateAsync(task.id);
+      setStatusOverrides((prev) => {
+        if (!prev[task.id]) return prev;
+        const { [task.id]: _omit, ...rest } = prev;
+        return rest;
+      });
+      setCompletionPrompt(null);
+    } catch (error) {
+      console.error("Failed to archive task", error);
+      setStatusOverrides((prev) => ({
+        ...prev,
+        [task.id]: previousStatus,
+      }));
+      setCompletionPrompt((current) =>
+        current && current.task.id === task.id
+          ? {
+              ...current,
+              error: "Failed to archive the task. Please try again.",
+            }
+          : current
+      );
+    }
   };
 
   return (
@@ -847,27 +873,117 @@ export default function TasksKanban({
           }}
         />
       )}
-    {renaming && (
-      <ColumnRenameModal
-        column={renaming}
-        onClose={() => setRenaming(null)}
-        onSave={(title) => renameColumn(renaming.id, title)}
-      />
-    )}
-    {deleting && (
-      <ColumnDeleteModal
-        column={deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => deleteColumn(deleting.id)}
-      />
-    )}
-    {creating && (
-      <ColumnCreateModal
-        onClose={() => setCreating(false)}
-        onSave={(title) => addColumn(title)}
-      />
-    )}
+      {renaming && (
+        <ColumnRenameModal
+          column={renaming}
+          onClose={() => setRenaming(null)}
+          onSave={(title) => renameColumn(renaming.id, title)}
+        />
+      )}
+      {deleting && (
+        <ColumnDeleteModal
+          column={deleting}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => deleteColumn(deleting.id)}
+        />
+      )}
+      {creating && (
+        <ColumnCreateModal
+          onClose={() => setCreating(false)}
+          onSave={(title) => addColumn(title)}
+        />
+      )}
+      {completionPrompt && (
+        <TaskCompletionPrompt
+          task={completionPrompt.task}
+          error={completionPrompt.error}
+          archiving={archiveMut.isPending}
+          onKeep={handleKeepCompletedTask}
+          onArchive={handleArchiveCompletedTask}
+          onDismiss={handleKeepCompletedTask}
+        />
+      )}
     </>
+  );
+}
+
+type TaskCompletionPromptProps = {
+  task: TaskDto;
+  archiving: boolean;
+  error: string | null;
+  onKeep: () => void;
+  onArchive: () => void;
+  onDismiss: () => void;
+};
+
+function TaskCompletionPrompt({
+  task,
+  archiving,
+  error,
+  onKeep,
+  onArchive,
+  onDismiss,
+}: TaskCompletionPromptProps) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (!archiving) {
+          onDismiss();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [archiving, onDismiss]);
+
+  const handleBackdropClick = () => {
+    if (archiving) return;
+    onDismiss();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`task-complete-${task.id}`}
+      onClick={handleBackdropClick}
+    >
+      <div
+        className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900 dark:text-white"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 id={`task-complete-${task.id}`} className="text-lg font-semibold">
+          Task completed
+        </h3>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          {`Would you like to archive "${task.title}" or keep it in this list?`}
+        </p>
+        {error ? (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+        ) : null}
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onKeep}
+            disabled={archiving}
+            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Keep in list
+          </button>
+          <button
+            type="button"
+            onClick={onArchive}
+            disabled={archiving}
+            className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+          >
+            {archiving ? "Archiving…" : "Archive task"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
