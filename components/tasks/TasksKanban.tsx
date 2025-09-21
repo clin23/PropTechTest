@@ -139,6 +139,7 @@ export default function TasksKanban({
   const [columnsByProperty, setColumnsByProperty] = useState<ColumnMap>({});
   const [columnsLoaded, setColumnsLoaded] = useState(false);
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false);
+  const [propertyOrder, setPropertyOrder] = useState<string[]>([]);
 
   useEffect(() => {
     if (initialPropertyId) {
@@ -208,6 +209,37 @@ export default function TasksKanban({
   });
 
   useEffect(() => {
+    const propertyIds = properties.map((property) => property.id);
+    setPropertyOrder((prev) => {
+      const filteredPrev = prev.filter((id) => propertyIds.includes(id));
+      const missing = propertyIds.filter((id) => !filteredPrev.includes(id));
+      const next = [...filteredPrev, ...missing];
+      if (
+        next.length === prev.length &&
+        next.every((id, index) => id === prev[index])
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [properties]);
+
+  const orderedProperties = useMemo(() => {
+    if (!properties.length) return [];
+    const propertyMap = new Map(properties.map((property) => [property.id, property]));
+    const ordered = propertyOrder
+      .map((id) => propertyMap.get(id))
+      .filter((property): property is PropertySummary => Boolean(property));
+    if (ordered.length === properties.length) {
+      return ordered;
+    }
+    const remaining = properties.filter(
+      (property) => !propertyOrder.includes(property.id)
+    );
+    return [...ordered, ...remaining];
+  }, [properties, propertyOrder]);
+
+  useEffect(() => {
     if (!allowPropertySwitching) return;
     if (activeFilter === "all") return;
     if (!properties.length) return;
@@ -239,9 +271,12 @@ export default function TasksKanban({
         : listTasks(),
   });
 
-  const activeProperty = selectedPropertyId
-    ? properties.find((property) => property.id === selectedPropertyId)
-    : undefined;
+  const activeProperty = useMemo(() => {
+    if (!selectedPropertyId) return undefined;
+    return orderedProperties.find(
+      (property) => property.id === selectedPropertyId
+    );
+  }, [orderedProperties, selectedPropertyId]);
 
   useEffect(() => {
     if (!onContextChange) return;
@@ -257,7 +292,7 @@ export default function TasksKanban({
 
   const defaultPropertyForCreation = selectedPropertyId
     ? activeProperty ?? null
-    : properties[0] ?? null;
+    : orderedProperties[0] ?? null;
 
   const createMut = useMutation({
     mutationFn: ({ title, status }: { title: string; status: string }) =>
@@ -361,7 +396,7 @@ export default function TasksKanban({
     : "+ New task";
 
   const propertyTabs: PropertySummary[] = allowPropertySwitching
-    ? properties
+    ? orderedProperties
     : activeProperty
       ? [activeProperty]
       : [];
@@ -388,6 +423,18 @@ export default function TasksKanban({
   const showCaretButton = allowPropertySwitching && hasExtraProperties;
 
   const showPropertiesOnCards = !selectedPropertyId;
+
+  const handlePropertyReorder = (orderedIds: string[]) => {
+    setPropertyOrder((prev) => {
+      if (
+        prev.length === orderedIds.length &&
+        prev.every((id, index) => id === orderedIds[index])
+      ) {
+        return prev;
+      }
+      return orderedIds;
+    });
+  };
 
   return (
     <>
@@ -547,6 +594,7 @@ export default function TasksKanban({
             properties={propertyTabs}
             selectedPropertyId={selectedPropertyId}
             onSelect={handlePropertySelect}
+            onReorder={handlePropertyReorder}
             allowAll={allowPropertySwitching}
           />
         </>
@@ -555,7 +603,7 @@ export default function TasksKanban({
       {editingTask && (
         <TaskEditModal
           task={editingTask}
-          properties={properties}
+          properties={orderedProperties}
           vendors={vendors}
           onClose={() => setEditingTask(null)}
           onSave={(data) => {
@@ -597,6 +645,7 @@ type PropertySelectModalProps = {
   properties: PropertySummary[];
   selectedPropertyId?: string;
   onSelect: (propertyId?: string) => void;
+  onReorder: (orderedIds: string[]) => void;
   onClose: () => void;
   allowAll: boolean;
 };
@@ -606,6 +655,7 @@ function PropertySelectModal({
   properties,
   selectedPropertyId,
   onSelect,
+  onReorder,
   onClose,
   allowAll,
 }: PropertySelectModalProps) {
@@ -621,6 +671,17 @@ function PropertySelectModal({
 
   const handleSelect = (propertyId?: string) => {
     onSelect(propertyId);
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+    if (!destination) return;
+    if (destination.index === source.index) return;
+    const reordered = Array.from(properties);
+    const [moved] = reordered.splice(source.index, 1);
+    if (!moved) return;
+    reordered.splice(destination.index, 0, moved);
+    onReorder(reordered.map((property) => property.id));
   };
 
   return (
@@ -649,36 +710,70 @@ function PropertySelectModal({
           </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
-          <div className="space-y-2">
-            {allowAll && (
-              <button
-                type="button"
-                onClick={() => handleSelect(undefined)}
-                className={optionClassName(!selectedPropertyId)}
-                aria-pressed={!selectedPropertyId}
-              >
-                <span>All properties</span>
-                {!selectedPropertyId && <span aria-hidden="true">✓</span>}
-              </button>
-            )}
-            {properties.map((property) => {
-              const isActive = selectedPropertyId === property.id;
-              return (
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="space-y-2">
+              {allowAll && (
                 <button
-                  key={property.id}
                   type="button"
-                  onClick={() => handleSelect(property.id)}
-                  className={optionClassName(isActive)}
-                  aria-pressed={isActive}
+                  onClick={() => handleSelect(undefined)}
+                  className={optionClassName(!selectedPropertyId)}
+                  aria-pressed={!selectedPropertyId}
                 >
-                  <span>{property.address}</span>
-                  {isActive && <span aria-hidden="true">✓</span>}
+                  <span>All properties</span>
+                  {!selectedPropertyId && <span aria-hidden="true">✓</span>}
                 </button>
-              );
-            })}
-          </div>
+              )}
+              <Droppable droppableId="property-list">
+                {(droppableProvided) => (
+                  <div
+                    ref={droppableProvided.innerRef}
+                    {...droppableProvided.droppableProps}
+                    className="space-y-2"
+                  >
+                    {properties.map((property, index) => {
+                      const isActive = selectedPropertyId === property.id;
+                      return (
+                        <Draggable
+                          key={property.id}
+                          draggableId={property.id}
+                          index={index}
+                        >
+                          {(draggableProvided) => (
+                            <div
+                              ref={draggableProvided.innerRef}
+                              {...draggableProvided.draggableProps}
+                              className={optionClassName(isActive)}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleSelect(property.id)}
+                                className="flex flex-1 items-center justify-between gap-3 text-left focus:outline-none"
+                                aria-pressed={isActive}
+                              >
+                                <span>{property.address}</span>
+                                {isActive && <span aria-hidden="true">✓</span>}
+                              </button>
+                              <span
+                                {...draggableProvided.dragHandleProps}
+                                className="ml-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-lg text-gray-400 transition hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:cursor-grabbing cursor-grab dark:text-gray-500 dark:hover:text-gray-300 dark:focus-visible:ring-gray-600 dark:focus-visible:ring-offset-gray-900"
+                                aria-label={`Reorder ${property.address}`}
+                              >
+                                <span aria-hidden="true">⋮⋮</span>
+                              </span>
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {droppableProvided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
+          </DragDropContext>
         </div>
       </div>
     </div>
   );
+
 }
