@@ -155,9 +155,7 @@ export default function TasksKanban({
   const [columnsByProperty, setColumnsByProperty] = useState<ColumnMap>({});
   const [columnsLoaded, setColumnsLoaded] = useState(false);
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false);
-  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
   const [propertyOrder, setPropertyOrder] = useState<string[]>([]);
-  const [propertyOrderLoaded, setPropertyOrderLoaded] = useState(false);
 
   useEffect(() => {
     if (initialPropertyId) {
@@ -266,21 +264,35 @@ export default function TasksKanban({
   });
 
   useEffect(() => {
-    if (!propertyOrderLoaded || !propertiesLoaded) return;
-    if (!propertyOrder.length) return;
-
-    const validIds = new Set(properties.map((property) => property.id));
+    const propertyIds = properties.map((property) => property.id);
     setPropertyOrder((prev) => {
-      if (!prev.length) return prev;
-
-      const filtered = prev.filter((id) => validIds.has(id));
-      if (filtered.length === prev.length) {
+      const filteredPrev = prev.filter((id) => propertyIds.includes(id));
+      const missing = propertyIds.filter((id) => !filteredPrev.includes(id));
+      const next = [...filteredPrev, ...missing];
+      if (
+        next.length === prev.length &&
+        next.every((id, index) => id === prev[index])
+      ) {
         return prev;
       }
-
-      return filtered;
+      return next;
     });
-  }, [properties, propertiesLoaded, propertyOrderLoaded, propertyOrder]);
+  }, [properties]);
+
+  const orderedProperties = useMemo(() => {
+    if (!properties.length) return [];
+    const propertyMap = new Map(properties.map((property) => [property.id, property]));
+    const ordered = propertyOrder
+      .map((id) => propertyMap.get(id))
+      .filter((property): property is PropertySummary => Boolean(property));
+    if (ordered.length === properties.length) {
+      return ordered;
+    }
+    const remaining = properties.filter(
+      (property) => !propertyOrder.includes(property.id)
+    );
+    return [...ordered, ...remaining];
+  }, [properties, propertyOrder]);
 
   useEffect(() => {
     if (!allowPropertySwitching) return;
@@ -673,6 +685,18 @@ export default function TasksKanban({
     }
   };
 
+  const handlePropertyReorder = (orderedIds: string[]) => {
+    setPropertyOrder((prev) => {
+      if (
+        prev.length === orderedIds.length &&
+        prev.every((id, index) => id === orderedIds[index])
+      ) {
+        return prev;
+      }
+      return orderedIds;
+    });
+  };
+
   return (
     <>
       <div className="flex gap-4 overflow-x-auto p-1 pb-32">
@@ -842,9 +866,7 @@ export default function TasksKanban({
             properties={orderedProperties}
             selectedPropertyId={selectedPropertyId}
             onSelect={handlePropertySelect}
-            onReorder={
-              canReorderProperties ? handlePropertyReorder : undefined
-            }
+            onReorder={handlePropertyReorder}
             allowAll={allowPropertySwitching}
           />
         </>
@@ -997,16 +1019,15 @@ type PropertySelectModalProps = {
   onReorder?: (propertyIds: string[]) => void;
 };
 
-function PropertySelectModal(props: PropertySelectModalProps) {
-  const {
-    open,
-    properties,
-    selectedPropertyId,
-    onSelect,
-    onClose,
-    allowAll,
-    onReorder: handleReorder,
-  } = props;
+function PropertySelectModal({
+  open,
+  properties,
+  selectedPropertyId,
+  onSelect,
+  onReorder,
+  onClose,
+  allowAll,
+}: PropertySelectModalProps) {
   if (!open) return null;
 
   const optionClassName = (isActive: boolean) =>
@@ -1078,75 +1099,67 @@ function PropertySelectModal(props: PropertySelectModalProps) {
           </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
-          <div className="space-y-2">
-            {allowAll && (
-              <button
-                type="button"
-                onClick={() => handleSelect(undefined)}
-                className={optionClassName(!selectedPropertyId)}
-                aria-pressed={!selectedPropertyId}
-              >
-                <span>All properties</span>
-                {!selectedPropertyId && <span aria-hidden="true">✓</span>}
-              </button>
-            )}
-            {properties.map((property, index) => {
-              const isActive = selectedPropertyId === property.id;
-              const selectClassName = [
-                optionClassName(isActive),
-                reorderable ? "flex-1" : "",
-              ]
-                .filter(Boolean)
-                .join(" ");
-
-              return (
-                <div
-                  key={property.id}
-                  className={reorderable ? "flex items-center gap-2" : undefined}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="space-y-2">
+              {allowAll && (
+                <button
+                  type="button"
+                  onClick={() => handleSelect(undefined)}
+                  className={optionClassName(!selectedPropertyId)}
+                  aria-pressed={!selectedPropertyId}
                 >
-                  <button
-                    type="button"
-                    onClick={() => handleSelect(property.id)}
-                    className={selectClassName}
-                    aria-pressed={isActive}
+                  <span>All properties</span>
+                  {!selectedPropertyId && <span aria-hidden="true">✓</span>}
+                </button>
+              )}
+              <Droppable droppableId="property-list">
+                {(droppableProvided) => (
+                  <div
+                    ref={droppableProvided.innerRef}
+                    {...droppableProvided.droppableProps}
+                    className="space-y-2"
                   >
-                    <span>{property.address}</span>
-                    {isActive && <span aria-hidden="true">✓</span>}
-                  </button>
-                  {reorderable && (
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          handleMove(property.id, -1);
-                        }}
-                        className="rounded border px-2 py-1 text-xs text-gray-500 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-600"
-                        aria-label={`Move ${property.address} up`}
-                        disabled={index === 0}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          handleMove(property.id, 1);
-                        }}
-                        className="rounded border px-2 py-1 text-xs text-gray-500 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-600"
-                        aria-label={`Move ${property.address} down`}
-                        disabled={index === properties.length - 1}
-                      >
-                        ↓
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                    {properties.map((property, index) => {
+                      const isActive = selectedPropertyId === property.id;
+                      return (
+                        <Draggable
+                          key={property.id}
+                          draggableId={property.id}
+                          index={index}
+                        >
+                          {(draggableProvided) => (
+                            <div
+                              ref={draggableProvided.innerRef}
+                              {...draggableProvided.draggableProps}
+                              className={optionClassName(isActive)}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleSelect(property.id)}
+                                className="flex flex-1 items-center justify-between gap-3 text-left focus:outline-none"
+                                aria-pressed={isActive}
+                              >
+                                <span>{property.address}</span>
+                                {isActive && <span aria-hidden="true">✓</span>}
+                              </button>
+                              <span
+                                {...draggableProvided.dragHandleProps}
+                                className="ml-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-lg text-gray-400 transition hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:cursor-grabbing cursor-grab dark:text-gray-500 dark:hover:text-gray-300 dark:focus-visible:ring-gray-600 dark:focus-visible:ring-offset-gray-900"
+                                aria-label={`Reorder ${property.address}`}
+                              >
+                                <span aria-hidden="true">⋮⋮</span>
+                              </span>
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {droppableProvided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
+          </DragDropContext>
         </div>
       </div>
     </div>
