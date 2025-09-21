@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { ANALYTICS_OVERVIEW_BACKGROUND } from './overview-background';
 import { ANALYTICS_BUILDER_BACKGROUND } from './builder-background';
+import { ANALYTICS_CUSTOM_BACKGROUND } from './custom-background';
 
 // Landing page for the analytics section. Provides quick links to the
 // overview, custom analytics and builder areas, along with a placeholder for
@@ -51,7 +52,8 @@ export default function AnalyticsPage() {
           </div>
         </div>
         <div
-          className="group relative flex items-center justify-center rounded-lg border bg-white/10 p-6 text-2xl font-semibold shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:bg-gray-900/20 dark:focus-visible:ring-white/40 md:col-start-3 md:row-start-1 md:h-full md:text-3xl"
+          className="group relative flex h-full flex-col justify-center gap-4 overflow-hidden rounded-lg border bg-cover bg-center bg-no-repeat p-6 shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent backdrop-blur dark:focus-visible:ring-white/40 md:col-start-3 md:row-start-1"
+          style={{ backgroundImage: `url(${ANALYTICS_CUSTOM_BACKGROUND})` }}
         >
           <span
             className="pointer-events-none absolute inset-0 z-0 bg-white opacity-70 transition-opacity duration-300 dark:bg-gray-900 dark:opacity-60 group-hover:opacity-30 group-focus-within:opacity-30 dark:group-hover:opacity-20 dark:group-focus-within:opacity-20"
@@ -62,20 +64,20 @@ export default function AnalyticsPage() {
             className="absolute inset-0 z-10 focus-visible:outline-none"
             aria-label="Go to custom analytics"
           />
-          <div className="pointer-events-none relative z-20 flex flex-1 flex-col justify-between">
-            <span className="text-3xl font-semibold md:text-4xl">My Custom Analytics</span>
+          <div className="pointer-events-none relative z-20 flex flex-col items-start gap-2">
+            <span className="text-3xl font-semibold md:text-4xl lg:text-[44px]">My Custom Analytics</span>
           </div>
         </div>
         <Link
           href="/analytics/builder"
-          className="group relative flex h-full flex-col justify-center gap-4 overflow-hidden rounded-lg border bg-cover bg-center bg-no-repeat p-6 text-2xl font-semibold shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent backdrop-blur dark:focus-visible:ring-white/40 md:col-start-3 md:row-start-2 md:h-full md:text-3xl"
+          className="group relative flex h-full flex-col justify-center gap-4 overflow-hidden rounded-lg border bg-cover bg-center bg-no-repeat p-6 shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent backdrop-blur dark:focus-visible:ring-white/40 md:col-start-3 md:row-start-2 md:h-full"
           style={{ backgroundImage: `url(${ANALYTICS_BUILDER_BACKGROUND})` }}
         >
           <span
             className="pointer-events-none absolute inset-0 z-0 bg-white opacity-70 transition-opacity duration-300 ease-in-out dark:bg-gray-900 dark:opacity-60 group-hover:opacity-40 group-focus-visible:opacity-40 dark:group-hover:opacity-30 dark:group-focus-visible:opacity-30"
             aria-hidden="true"
           />
-          <span className="relative z-10">Analytics Builder</span>
+          <span className="relative z-10 text-3xl font-semibold md:text-4xl lg:text-[44px]">Analytics Builder</span>
         </Link>
       </div>
     </div>
