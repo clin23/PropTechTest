@@ -5,7 +5,7 @@ import PropertiesGridSkeleton from "./PropertiesGridSkeleton";
 import PropertyPageSkeleton from "./PropertyPageSkeleton";
 import TasksSkeleton from "./TasksSkeleton";
 
-function normalizePath(path: string): string {
+export function normalizePath(path: string): string {
   try {
     const url = new URL(path, typeof window === "undefined" ? "http://localhost" : window.location.origin);
     return url.pathname;
