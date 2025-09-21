@@ -15,6 +15,7 @@ import VizSpreadsheet from '../components/VizSpreadsheet';
 import { AnalyticsState, AnalyticsStateType } from '../../../../lib/schemas';
 import { useUrlState } from '../../../../lib/urlState';
 import { useSeries } from '../../../../hooks/useAnalytics';
+import { ANALYTICS_BUILDER_BACKGROUND } from './background-image';
 
 const now = new Date();
 const defaultState = AnalyticsState.parse({
@@ -62,7 +63,10 @@ export default function AnalyticsBuilderPage() {
   }
 
   return (
-    <div className="flex">
+    <div
+      className="flex min-h-screen w-full bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${ANALYTICS_BUILDER_BACKGROUND})` }}
+    >
       <div className="flex-1 p-6 space-y-4">
         <div className="flex items-center gap-2 mb-4 mt-2">
           <Link href="/analytics" className="text-blue-600 hover:underline">
