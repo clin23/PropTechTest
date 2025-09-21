@@ -42,6 +42,13 @@ export default function IncomeForm({
     setForm(getInitialForm());
   }, [propertyId]);
 
+  useEffect(() => {
+    if (!open) {
+      setForm(getInitialForm());
+      setError(null);
+    }
+  }, [open]);
+
   const { data: properties = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
     queryFn: listProperties,
@@ -66,6 +73,12 @@ export default function IncomeForm({
     },
   });
 
+  const handleClose = () => {
+    setOpen(false);
+    setForm(getInitialForm());
+    setError(null);
+  };
+
   return (
     <div>
       {showTrigger && (
@@ -78,9 +91,13 @@ export default function IncomeForm({
       )}
 
       {open && (
-        <div className="fixed inset-0 bg-black/50 flex justify-end">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+          onClick={handleClose}
+        >
           <form
-            className="bg-white w-96 h-full p-4 space-y-2 overflow-y-auto"
+            className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 w-full max-w-md max-h-[90vh] p-4 space-y-2 overflow-y-auto rounded-lg shadow-lg"
+            onClick={(e) => e.stopPropagation()}
             onSubmit={(e) => {
               e.preventDefault();
               setError(null);
@@ -111,10 +128,10 @@ export default function IncomeForm({
             }}
           >
             {!propertyId && (
-              <label className="block">
+              <label className="block text-gray-700 dark:text-gray-300">
                 Property
                 <select
-                  className="border p-1 w-full"
+                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                   value={form.propertyId}
                   onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
                 >
@@ -127,19 +144,19 @@ export default function IncomeForm({
                 </select>
               </label>
             )}
-            <label className="block">
+            <label className="block text-gray-700 dark:text-gray-300">
               Date
               <input
                 type="date"
-                className="border p-1 w-full"
+                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 value={form.date}
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
               />
             </label>
-            <label className="block">
+            <label className="block text-gray-700 dark:text-gray-300">
               Category
               <select
-                className="border p-1 w-full"
+                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               >
@@ -158,27 +175,27 @@ export default function IncomeForm({
                 ))}
               </select>
             </label>
-            <label className="block">
+            <label className="block text-gray-700 dark:text-gray-300">
               Amount
               <input
                 type="number"
-                className="border p-1 w-full"
+                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
               />
             </label>
-            <label className="block">
+            <label className="block text-gray-700 dark:text-gray-300">
               Custom label
               <input
-                className="border p-1 w-full"
+                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 value={form.label}
                 onChange={(e) => setForm({ ...form, label: e.target.value })}
               />
             </label>
-            <label className="block">
+            <label className="block text-gray-700 dark:text-gray-300">
               Notes
               <textarea
-                className="border p-1 w-full"
+                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
@@ -187,12 +204,15 @@ export default function IncomeForm({
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                className="px-2 py-1 bg-gray-100"
-                onClick={() => setOpen(false)}
+                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 dark:text-gray-200 rounded"
+                onClick={handleClose}
               >
                 Cancel
               </button>
-              <button type="submit" className="px-2 py-1 bg-green-500 text-white">
+              <button
+                type="submit"
+                className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded"
+              >
                 Save
               </button>
             </div>
