@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 
 import { SharedTile } from "../../../../components/SharedTile";
-import Skeleton from "../../../../components/Skeleton";
 import IncomeForm from "../../../../components/IncomeForm";
 import ExpenseForm from "../../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../../components/DocumentUploadModal";
@@ -26,6 +25,7 @@ import TenantCRM from "./sections/TenantCRM";
 import Inspections from "./sections/Inspections";
 import CreateListing from "./sections/CreateListing";
 import Vendors from "./sections/Vendors";
+import PropertyPageSkeleton from "../../../../components/skeletons/PropertyPageSkeleton";
 
 const TABS = [
   { id: "rent-ledger", label: "Rent Ledger" },
@@ -263,39 +263,3 @@ function PropertySummaryTile({ property }: { property: PropertySummary }) {
   );
 }
 
-function PropertyPageSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <Skeleton className="h-5 w-32" />
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-28" />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[minmax(0,420px)_1fr]">
-        <div className="overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <Skeleton className="h-48 w-full" />
-          <div className="space-y-3 p-6">
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        </div>
-        <div className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="border-b border-gray-100 px-4 pb-1 pt-4 dark:border-gray-800 sm:px-6">
-            <Skeleton className="h-5 w-40" />
-          </div>
-          <div className="flex-1 space-y-3 overflow-hidden px-4 pb-6 pt-4 sm:px-6">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-11/12" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-4/5" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
