@@ -1,41 +1,123 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export function RouteProgress() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const searchParamsKey = searchParams?.toString();
+  const searchParamsKey = useMemo(
+    () => searchParams?.toString() ?? "",
+    [searchParams]
+  );
+
   const [loading, setLoading] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof window.setTimeout>>();
-  const isFirstRenderRef = useRef(true);
+  const isMountedRef = useRef(false);
+  const hasInitializedRef = useRef(false);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const fallbackTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  useEffect(() => {
-    if (isFirstRenderRef.current) {
-      isFirstRenderRef.current = false;
-      return undefined;
+  const clearHideTimeout = useCallback(() => {
+    if (hideTimeoutRef.current !== undefined) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = undefined;
+    }
+  }, []);
+
+  const clearFallbackTimeout = useCallback(() => {
+    if (fallbackTimeoutRef.current !== undefined) {
+      clearTimeout(fallbackTimeoutRef.current);
+      fallbackTimeoutRef.current = undefined;
+    }
+  }, []);
+
+  const startLoading = useCallback(() => {
+    if (!isMountedRef.current) {
+      return;
     }
 
-    if (timeoutRef.current !== undefined) {
-      window.clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
-    }
+    clearHideTimeout();
+    clearFallbackTimeout();
 
     setLoading(true);
 
-    timeoutRef.current = window.setTimeout(() => {
+    fallbackTimeoutRef.current = window.setTimeout(() => {
       setLoading(false);
-      timeoutRef.current = undefined;
+      fallbackTimeoutRef.current = undefined;
+    }, 10000);
+  }, [clearFallbackTimeout, clearHideTimeout]);
+
+  const finishLoading = useCallback(() => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
+    clearFallbackTimeout();
+    clearHideTimeout();
+
+    hideTimeoutRef.current = window.setTimeout(() => {
+      setLoading(false);
+      hideTimeoutRef.current = undefined;
     }, 250);
+  }, [clearFallbackTimeout, clearHideTimeout]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
 
     return () => {
-      if (timeoutRef.current !== undefined) {
-        window.clearTimeout(timeoutRef.current);
-        timeoutRef.current = undefined;
-      }
+      isMountedRef.current = false;
+      clearHideTimeout();
+      clearFallbackTimeout();
     };
-  }, [pathname, searchParamsKey]);
+  }, [clearFallbackTimeout, clearHideTimeout]);
+
+  useEffect(() => {
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      return;
+    }
+
+    finishLoading();
+  }, [finishLoading, pathname, searchParamsKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const { history } = window;
+
+    const wrap =
+      <Fn extends History["pushState"] | History["replaceState"]>(fn: Fn) =>
+      function wrapped(this: History, ...args: Parameters<Fn>) {
+        startLoading();
+
+        try {
+          return fn.apply(this, args as Parameters<Fn>);
+        } catch (error) {
+          finishLoading();
+          throw error;
+        }
+      } as Fn;
+
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = wrap(originalPushState);
+    history.replaceState = wrap(originalReplaceState);
+
+    const handlePopState = () => {
+      startLoading();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [finishLoading, startLoading]);
 
   return (
     <div

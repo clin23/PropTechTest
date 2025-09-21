@@ -17,7 +17,7 @@ export default function AnalyticsPage() {
       <h1 className="text-2xl font-semibold">Analytics</h1>
       <div className="grid flex-1 gap-4 md:grid-cols-3 md:grid-rows-[repeat(2,minmax(0,1fr))]">
         <div
-          className="group relative flex h-full flex-col gap-6 overflow-hidden rounded-lg border bg-cover bg-center bg-no-repeat p-6 shadow-lg transition-shadow duration-300 hover:shadow-2xl focus-within:shadow-2xl backdrop-blur md:col-span-2 md:row-span-2"
+          className="group relative flex h-full flex-col gap-6 overflow-hidden rounded-lg border bg-cover bg-center bg-no-repeat p-6 shadow-lg transition-shadow duration-300 ease-out hover:shadow-2xl focus-within:shadow-2xl backdrop-blur md:col-span-2 md:row-span-2"
           style={{ backgroundImage: `url(${ANALYTICS_OVERVIEW_BACKGROUND})` }}
         >
           <span
@@ -71,7 +71,11 @@ export default function AnalyticsPage() {
           href="/analytics/builder"
           className="flex items-center justify-center rounded-lg border bg-white/10 p-6 text-2xl font-semibold shadow-lg transition-shadow duration-300 hover:shadow-2xl focus-visible:shadow-2xl focus-visible:outline-none backdrop-blur dark:bg-gray-900/20 md:col-start-3 md:row-start-2 md:h-full md:text-3xl"
         >
-          Analytics Builder
+          <span
+            className="pointer-events-none absolute inset-0 z-0 bg-white opacity-70 transition-opacity duration-300 ease-in-out dark:bg-gray-900 dark:opacity-60 group-hover:opacity-40 group-focus-visible:opacity-40 dark:group-hover:opacity-30 dark:group-focus-visible:opacity-30"
+            aria-hidden="true"
+          />
+          <span className="relative z-10">Analytics Builder</span>
         </Link>
       </div>
     </div>
