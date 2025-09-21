@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 
-import PageTransition from "../../../../components/PageTransition";
 import { SharedTile } from "../../../../components/SharedTile";
 import Skeleton from "../../../../components/Skeleton";
 import IncomeForm from "../../../../components/IncomeForm";
@@ -107,22 +106,12 @@ export default function PropertyPage() {
     return TABS.some((tab) => tab.id === activeTab) ? activeTab : DEFAULT_TAB;
   }, [activeTab]);
 
-  const routeKey = id ? `/properties/${id}` : "/properties";
-
   if (isError) {
-    return (
-      <PageTransition routeKey={routeKey}>
-        <div className="p-6">Failed to load property</div>
-      </PageTransition>
-    );
+    return <div className="p-6">Failed to load property</div>;
   }
 
   if (!property && !isPending) {
-    return (
-      <PageTransition routeKey={routeKey}>
-        <div className="p-6">Failed to load property</div>
-      </PageTransition>
-    );
+    return <div className="p-6">Failed to load property</div>;
   }
 
   const reduceMotion = useReducedMotion();
@@ -168,75 +157,69 @@ export default function PropertyPage() {
   };
 
   return (
-    <PageTransition routeKey={routeKey}>
-      <div className="relative">
-        <motion.div
-          initial={{ opacity: 1 }}
-          animate={{ opacity: ready ? 0 : 1 }}
-          transition={{ duration: 0.12 }}
-          className={`p-6 ${ready ? "pointer-events-none absolute inset-0" : ""}`}
-        >
-          <PropertyPageSkeleton />
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: ready ? 1 : 0 }}
-          transition={{ duration: 0.12 }}
-          className="p-6"
-        >
-          {property && (
-            <div className="space-y-6">
-              <motion.section
-                className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[minmax(0,420px)_1fr]"
-                {...listMotionProps}
-              >
-                <motion.div className="lg:col-span-2" {...itemMotionProps}>
-                  <PropertySummaryTile property={property} />
-                </motion.div>
-                <motion.div {...itemMotionProps}>
-                  <PropertyHero
-                    property={property}
-                    onEdit={() => setEditOpen(true)}
-                    onAddIncome={() => setIncomeOpen(true)}
-                    onAddExpense={() => setExpenseOpen(true)}
-                    onUploadDocument={() => setDocumentOpen(true)}
-                  />
-                </motion.div>
-                <motion.div {...itemMotionProps}>
-                  <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                    <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
-                      <ScrollableSectionBar
-                        tabs={TABS}
-                        activeTab={resolvedTab}
-                        onTabSelect={handleTabSelect}
-                        variant="contained"
-                      />
-                    </div>
-                    <div
-                      role="tabpanel"
-                      id={`panel-${resolvedTab}`}
-                      aria-labelledby={`tab-${resolvedTab}`}
-                      tabIndex={0}
-                      className="flex-1 overflow-auto px-4 pb-6 pt-4 sm:px-6"
-                    >
-                      {renderSection(resolvedTab)}
-                    </div>
-                  </section>
-                </motion.div>
-              </motion.section>
-              <IncomeForm propertyId={id} open={incomeOpen} onOpenChange={setIncomeOpen} showTrigger={false} />
-              <ExpenseForm propertyId={id} open={expenseOpen} onOpenChange={setExpenseOpen} showTrigger={false} />
-              <DocumentUploadModal
-                propertyId={id}
-                open={documentOpen}
-                onClose={() => setDocumentOpen(false)}
-              />
-              <PropertyEditModal property={property} open={editOpen} onClose={() => setEditOpen(false)} />
-            </div>
-          )}
-        </motion.div>
-      </div>
-    </PageTransition>
+    <div className="relative">
+      <motion.div
+        initial={{ opacity: 1 }}
+        animate={{ opacity: ready ? 0 : 1 }}
+        transition={{ duration: 0.12 }}
+        className={`p-6 ${ready ? "pointer-events-none absolute inset-0" : ""}`}
+      >
+        <PropertyPageSkeleton />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: ready ? 1 : 0 }}
+        transition={{ duration: 0.12 }}
+        className="p-6"
+      >
+        {property && (
+          <div className="space-y-6">
+            <motion.section
+              className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[minmax(0,420px)_1fr]"
+              {...listMotionProps}
+            >
+              <motion.div className="lg:col-span-2" {...itemMotionProps}>
+                <PropertySummaryTile property={property} />
+              </motion.div>
+              <motion.div {...itemMotionProps}>
+                <PropertyHero
+                  property={property}
+                  onEdit={() => setEditOpen(true)}
+                  onAddIncome={() => setIncomeOpen(true)}
+                  onAddExpense={() => setExpenseOpen(true)}
+                  onUploadDocument={() => setDocumentOpen(true)}
+                />
+              </motion.div>
+              <motion.div {...itemMotionProps}>
+                <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                  <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
+                    <ScrollableSectionBar
+                      tabs={TABS}
+                      activeTab={resolvedTab}
+                      onTabSelect={handleTabSelect}
+                      variant="contained"
+                    />
+                  </div>
+                  <div
+                    role="tabpanel"
+                    id={`panel-${resolvedTab}`}
+                    aria-labelledby={`tab-${resolvedTab}`}
+                    tabIndex={0}
+                    className="flex-1 overflow-auto px-4 pb-6 pt-4 sm:px-6"
+                  >
+                    {renderSection(resolvedTab)}
+                  </div>
+                </section>
+              </motion.div>
+            </motion.section>
+            <IncomeForm propertyId={id} open={incomeOpen} onOpenChange={setIncomeOpen} showTrigger={false} />
+            <ExpenseForm propertyId={id} open={expenseOpen} onOpenChange={setExpenseOpen} showTrigger={false} />
+            <DocumentUploadModal propertyId={id} open={documentOpen} onClose={() => setDocumentOpen(false)} />
+            <PropertyEditModal property={property} open={editOpen} onClose={() => setEditOpen(false)} />
+          </div>
+        )}
+      </motion.div>
+    </div>
   );
 }
 
