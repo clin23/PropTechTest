@@ -175,7 +175,7 @@ export default function PropertyPage() {
         {property && (
           <div className="space-y-6">
             <motion.section
-              className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[minmax(0,420px)_1fr]"
+              className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]"
               {...listMotionProps}
             >
               <motion.div className="lg:col-span-2" {...itemMotionProps}>
