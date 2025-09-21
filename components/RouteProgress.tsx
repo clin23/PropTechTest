@@ -1,28 +1,33 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useNavigation } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function RouteProgress() {
-  const navigation = useNavigation();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchParamsKey = searchParams?.toString();
   const [loading, setLoading] = useState(false);
-  const timeoutRef = useRef<number | undefined>();
+  const timeoutRef = useRef<ReturnType<typeof window.setTimeout>>();
+  const isFirstRenderRef = useRef(true);
 
   useEffect(() => {
-    if (navigation.state !== "idle") {
-      if (timeoutRef.current !== undefined) {
-        window.clearTimeout(timeoutRef.current);
-        timeoutRef.current = undefined;
-      }
-      if (!loading) {
-        setLoading(true);
-      }
-    } else if (loading) {
-      timeoutRef.current = window.setTimeout(() => {
-        setLoading(false);
-        timeoutRef.current = undefined;
-      }, 250);
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return undefined;
     }
+
+    if (timeoutRef.current !== undefined) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = undefined;
+    }
+
+    setLoading(true);
+
+    timeoutRef.current = window.setTimeout(() => {
+      setLoading(false);
+      timeoutRef.current = undefined;
+    }, 250);
 
     return () => {
       if (timeoutRef.current !== undefined) {
@@ -30,7 +35,7 @@ export function RouteProgress() {
         timeoutRef.current = undefined;
       }
     };
-  }, [navigation.state, loading]);
+  }, [pathname, searchParamsKey]);
 
   return (
     <div
