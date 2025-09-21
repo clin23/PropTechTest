@@ -331,9 +331,12 @@ export default function TasksKanban({
         : listTasks(),
   });
 
-  const activeProperty = selectedPropertyId
-    ? properties.find((property) => property.id === selectedPropertyId)
-    : undefined;
+  const activeProperty = useMemo(() => {
+    if (!selectedPropertyId) return undefined;
+    return orderedProperties.find(
+      (property) => property.id === selectedPropertyId
+    );
+  }, [orderedProperties, selectedPropertyId]);
 
   useEffect(() => {
     if (!onContextChange) return;
@@ -349,7 +352,7 @@ export default function TasksKanban({
 
   const defaultPropertyForCreation = selectedPropertyId
     ? activeProperty ?? null
-    : properties[0] ?? null;
+    : orderedProperties[0] ?? null;
 
   const createMut = useMutation({
     mutationFn: ({ title, status }: { title: string; status: string }) =>
@@ -825,7 +828,7 @@ export default function TasksKanban({
       {editingTask && (
         <TaskEditModal
           task={editingTask}
-          properties={properties}
+          properties={orderedProperties}
           vendors={vendors}
           onClose={() => setEditingTask(null)}
           onSave={(data) => {
@@ -873,6 +876,7 @@ type PropertySelectModalProps = {
   properties: PropertySummary[];
   selectedPropertyId?: string;
   onSelect: (propertyId?: string) => void;
+  onReorder: (orderedIds: string[]) => void;
   onClose: () => void;
   allowAll: boolean;
   onReorder?: (propertyIds: string[]) => void;
@@ -920,6 +924,17 @@ function PropertySelectModal(props: PropertySelectModalProps) {
 
   const handleSelect = (propertyId?: string) => {
     onSelect(propertyId);
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+    if (!destination) return;
+    if (destination.index === source.index) return;
+    const reordered = Array.from(properties);
+    const [moved] = reordered.splice(source.index, 1);
+    if (!moved) return;
+    reordered.splice(destination.index, 0, moved);
+    onReorder(reordered.map((property) => property.id));
   };
 
   return (
@@ -1021,4 +1036,5 @@ function PropertySelectModal(props: PropertySelectModalProps) {
       </div>
     </div>
   );
+
 }
