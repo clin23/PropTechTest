@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { listProperties } from "../lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { listProperties, getProperty } from "../lib/api";
 import type { PropertySummary } from "../types/property";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: propertyList = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
     queryFn: listProperties,
@@ -142,6 +144,8 @@ export default function Sidebar() {
               <div key={link.href}>
                 <Link
                   href={link.href}
+                  prefetch
+                  onMouseEnter={() => router.prefetch(link.href)}
                   className={`relative flex items-center px-4 py-2 rounded hover:bg-[var(--hover)] text-text-primary ${
                     open ? "" : "justify-center"
                   } ${
@@ -159,6 +163,17 @@ export default function Sidebar() {
                       <Link
                         key={child.href}
                         href={child.href}
+                        prefetch
+                        onMouseEnter={() => {
+                          router.prefetch(child.href);
+                          const id = child.href.split("/").pop();
+                          if (id) {
+                            queryClient.prefetchQuery({
+                              queryKey: ["property", id],
+                              queryFn: () => getProperty(id),
+                            });
+                          }
+                        }}
                         className="block px-2 py-1 text-sm rounded hover:bg-[var(--hover)]"
                       >
                         {child.label}

@@ -1,5 +1,10 @@
 import DashboardPage from '../../../components/dashboard/DashboardPage';
+import PageTransition from '../../../components/PageTransition';
 
 export default function Page() {
-  return <DashboardPage />;
+  return (
+    <PageTransition routeKey="/dashboard">
+      <DashboardPage />
+    </PageTransition>
+  );
 }
