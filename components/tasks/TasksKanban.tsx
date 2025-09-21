@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   DragDropContext,
@@ -16,6 +16,7 @@ import {
   archiveTask,
   listProperties,
   listVendors,
+  completeTask,
 } from "../../lib/api";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
@@ -56,13 +57,28 @@ const DEFAULT_COLUMNS: Column[] = [
 
 const STORAGE_KEY = "task-columns";
 const DEFAULT_SCOPE = "__default__";
+const PROPERTY_ORDER_STORAGE_KEY = "task-property-order";
 
 type ColumnMap = Record<string, Column[]>;
+
+type CompletionPromptState = {
+  task: TaskDto;
+  previousStatus: string;
+  error: string | null;
+};
 
 const cloneColumns = (columns: Column[]): Column[] =>
   columns.map((column) => ({ ...column }));
 
 const createDefaultColumns = (): Column[] => cloneColumns(DEFAULT_COLUMNS);
+
+const sanitizeIdArray = (value: unknown): string[] | null => {
+  if (!Array.isArray(value)) return null;
+
+  const sanitized = value.filter((item): item is string => typeof item === "string");
+
+  return sanitized.length ? sanitized : null;
+};
 
 const sanitizeColumnArray = (value: unknown): Column[] | null => {
   if (!Array.isArray(value)) return null;
@@ -139,6 +155,9 @@ export default function TasksKanban({
   const [columnsByProperty, setColumnsByProperty] = useState<ColumnMap>({});
   const [columnsLoaded, setColumnsLoaded] = useState(false);
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
+  const [propertyOrder, setPropertyOrder] = useState<string[]>([]);
+  const [propertyOrderLoaded, setPropertyOrderLoaded] = useState(false);
 
   useEffect(() => {
     if (initialPropertyId) {
@@ -185,6 +204,42 @@ export default function TasksKanban({
   }, [columnsByProperty, columnsLoaded]);
 
   useEffect(() => {
+    let parsed: string[] | null = null;
+    const raw = localStorage.getItem(PROPERTY_ORDER_STORAGE_KEY);
+
+    if (raw) {
+      try {
+        parsed = sanitizeIdArray(JSON.parse(raw));
+      } catch (error) {
+        console.warn("Failed to parse stored property order", error);
+      }
+    }
+
+    if (parsed) {
+      setPropertyOrder(parsed);
+    }
+
+    setPropertyOrderLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!propertyOrderLoaded) return;
+
+    try {
+      if (!propertyOrder.length) {
+        localStorage.removeItem(PROPERTY_ORDER_STORAGE_KEY);
+      } else {
+        localStorage.setItem(
+          PROPERTY_ORDER_STORAGE_KEY,
+          JSON.stringify(propertyOrder)
+        );
+      }
+    } catch (error) {
+      console.warn("Failed to persist property order", error);
+    }
+  }, [propertyOrder, propertyOrderLoaded]);
+
+  useEffect(() => {
     if (!isPropertyModalOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -198,7 +253,10 @@ export default function TasksKanban({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPropertyModalOpen]);
 
-  const { data: properties = [] } = useQuery<PropertySummary[]>({
+  const {
+    data: properties = [],
+    isSuccess: propertiesLoaded,
+  } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
     queryFn: () => listProperties(),
   });
@@ -206,6 +264,23 @@ export default function TasksKanban({
     queryKey: ["vendors"],
     queryFn: () => listVendors(),
   });
+
+  useEffect(() => {
+    if (!propertyOrderLoaded || !propertiesLoaded) return;
+    if (!propertyOrder.length) return;
+
+    const validIds = new Set(properties.map((property) => property.id));
+    setPropertyOrder((prev) => {
+      if (!prev.length) return prev;
+
+      const filtered = prev.filter((id) => validIds.has(id));
+      if (filtered.length === prev.length) {
+        return prev;
+      }
+
+      return filtered;
+    });
+  }, [properties, propertiesLoaded, propertyOrderLoaded, propertyOrder]);
 
   useEffect(() => {
     if (!allowPropertySwitching) return;
@@ -218,6 +293,29 @@ export default function TasksKanban({
   }, [activeFilter, allowPropertySwitching, properties]);
 
   const selectedPropertyId = activeFilter !== "all" ? activeFilter : undefined;
+
+  const orderedProperties = useMemo(() => {
+    if (!propertyOrder.length) return properties;
+
+    const byId = new Map(properties.map((property) => [property.id, property]));
+    const seen = new Set<string>();
+    const ordered: PropertySummary[] = [];
+
+    propertyOrder.forEach((id) => {
+      const property = byId.get(id);
+      if (!property) return;
+      if (seen.has(id)) return;
+      seen.add(id);
+      ordered.push(property);
+    });
+
+    properties.forEach((property) => {
+      if (seen.has(property.id)) return;
+      ordered.push(property);
+    });
+
+    return ordered;
+  }, [properties, propertyOrder]);
 
   const columns = useMemo(() => {
     if (!columnsLoaded) {
@@ -284,6 +382,13 @@ export default function TasksKanban({
     mutationFn: (id: string) => archiveTask(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
+  const completeMut = useMutation({
+    mutationFn: (id: string) => completeTask(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+  const [completionPrompt, setCompletionPrompt] =
+    useState<CompletionPromptState | null>(null);
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
@@ -311,8 +416,45 @@ export default function TasksKanban({
       destination.index === source.index
     )
       return;
+    setStatusOverrides((prev) => {
+      if (!prev[draggableId]) return prev;
+      const { [draggableId]: _removed, ...rest } = prev;
+      return rest;
+    });
     updateMut.mutate({ id: draggableId, data: { status: destination.droppableId } });
   };
+
+  const handlePropertyReorder = useCallback(
+    (nextOrder: string[]) => {
+      if (!propertyOrderLoaded) return;
+
+      const validIds = new Set(properties.map((property) => property.id));
+      const seen = new Set<string>();
+      const sanitized: string[] = [];
+
+      nextOrder.forEach((id) => {
+        if (!validIds.has(id)) return;
+        if (seen.has(id)) return;
+        seen.add(id);
+        sanitized.push(id);
+      });
+
+      if (!sanitized.length) {
+        if (!propertyOrder.length) return;
+        setPropertyOrder([]);
+        return;
+      }
+
+      const isSameOrder =
+        sanitized.length === propertyOrder.length &&
+        sanitized.every((id, index) => id === propertyOrder[index]);
+
+      if (isSameOrder) return;
+
+      setPropertyOrder(sanitized);
+    },
+    [properties, propertyOrder, propertyOrderLoaded]
+  );
 
   const addColumn = (title: string) => {
     const id = title.toLowerCase().replace(/\s+/g, "_");
@@ -331,6 +473,19 @@ export default function TasksKanban({
   };
 
   const deleteColumn = (id: string) => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      let changed = false;
+      const next: Record<string, string> = {};
+      Object.entries(prev).forEach(([taskId, columnId]) => {
+        if (columnId === id) {
+          changed = true;
+          return;
+        }
+        next[taskId] = columnId;
+      });
+      return changed ? next : prev;
+    });
     const remaining = columns.filter((column) => column.id !== id);
     const fallbackColumns = remaining.length ? remaining : createDefaultColumns();
     const fallback = fallbackColumns[0]?.id || "todo";
@@ -361,7 +516,7 @@ export default function TasksKanban({
     : "+ New task";
 
   const propertyTabs: PropertySummary[] = allowPropertySwitching
-    ? properties
+    ? orderedProperties
     : activeProperty
       ? [activeProperty]
       : [];
@@ -388,58 +543,184 @@ export default function TasksKanban({
   const showCaretButton = allowPropertySwitching && hasExtraProperties;
 
   const showPropertiesOnCards = !selectedPropertyId;
+  const canReorderProperties =
+    propertyOrderLoaded && allowPropertySwitching && properties.length > 1;
+
+  useEffect(() => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      const validColumnIds = new Set(columns.map((column) => column.id));
+      let changed = false;
+      const next: Record<string, string> = {};
+
+      Object.entries(prev).forEach(([taskId, columnId]) => {
+        if (!validColumnIds.has(columnId)) {
+          changed = true;
+          return;
+        }
+        next[taskId] = columnId;
+      });
+
+      return changed ? next : prev;
+    });
+  }, [columns]);
+
+  useEffect(() => {
+    setStatusOverrides((prev) => {
+      if (!Object.keys(prev).length) return prev;
+      const next = { ...prev };
+      let changed = false;
+
+      tasks.forEach((task) => {
+        if (task.status !== "done" && next[task.id]) {
+          delete next[task.id];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [tasks]);
+
+  const resolveDisplayStatus = useCallback(
+    (task: TaskDto) => {
+      const override = statusOverrides[task.id];
+      if (
+        override &&
+        columns.some((column) => column.id === override)
+      ) {
+        return override;
+      }
+      return task.status;
+    },
+    [statusOverrides, columns]
+  );
+
+  const tasksByColumn = useMemo(() => {
+    const grouped = new Map<string, TaskDto[]>();
+    tasks.forEach((task) => {
+      const status = resolveDisplayStatus(task);
+      const existing = grouped.get(status);
+      if (existing) {
+        existing.push(task);
+      } else {
+        grouped.set(status, [task]);
+      }
+    });
+    return grouped;
+  }, [tasks, resolveDisplayStatus]);
+
+  const handleCompleteTask = async (task: TaskDto) => {
+    if (completeMut.isPending) return;
+
+    const previousStatus = resolveDisplayStatus(task);
+    setCompletingTaskId(task.id);
+    try {
+      await completeMut.mutateAsync(task.id);
+      setStatusOverrides((prev) => ({
+        ...prev,
+        [task.id]: previousStatus,
+      }));
+      setCompletionPrompt({ task, previousStatus, error: null });
+    } catch (error) {
+      console.error("Failed to complete task", error);
+    } finally {
+      setCompletingTaskId(null);
+    }
+  };
+
+  const handleKeepCompletedTask = () => {
+    if (archiveMut.isPending) return;
+    setCompletionPrompt(null);
+  };
+
+  const handleArchiveCompletedTask = async () => {
+    if (!completionPrompt || archiveMut.isPending) return;
+
+    const { task, previousStatus } = completionPrompt;
+
+    setCompletionPrompt((current) =>
+      current && current.task.id === task.id
+        ? { ...current, error: null }
+        : current
+    );
+
+    try {
+      await archiveMut.mutateAsync(task.id);
+      setStatusOverrides((prev) => {
+        if (!prev[task.id]) return prev;
+        const { [task.id]: _omit, ...rest } = prev;
+        return rest;
+      });
+      setCompletionPrompt(null);
+    } catch (error) {
+      console.error("Failed to archive task", error);
+      setStatusOverrides((prev) => ({
+        ...prev,
+        [task.id]: previousStatus,
+      }));
+      setCompletionPrompt((current) =>
+        current && current.task.id === task.id
+          ? {
+              ...current,
+              error: "Failed to archive the task. Please try again.",
+            }
+          : current
+      );
+    }
+  };
 
   return (
     <>
       <div className="flex gap-4 overflow-x-auto p-1 pb-32">
         <DragDropContext onDragEnd={handleDragEnd}>
-          {columns.map((col) => (
-            <div key={col.id} className="w-64 flex-shrink-0">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="font-semibold">{col.title}</h2>
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      setMenuColumn(menuColumn === col.id ? null : col.id)
-                    }
-                    className="px-1"
-                  >
-                    ⋯
-                  </button>
-                  {menuColumn === col.id && (
-                    <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
-                      <button
-                        className="block w-full px-3 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
-                        onClick={() => {
-                          setMenuColumn(null);
-                          setRenaming(col);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                        onClick={() => {
-                          setMenuColumn(null);
-                          setDeleting(col);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+          {columns.map((col) => {
+            const columnTasks = tasksByColumn.get(col.id) ?? [];
+            return (
+              <div key={col.id} className="w-64 flex-shrink-0">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="font-semibold">{col.title}</h2>
+                  <div className="relative">
+                    <button
+                      onClick={() =>
+                        setMenuColumn(menuColumn === col.id ? null : col.id)
+                      }
+                      className="px-1"
+                    >
+                      ⋯
+                    </button>
+                    {menuColumn === col.id && (
+                      <div className="absolute right-0 mt-1 w-28 rounded border bg-white shadow text-sm z-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+                        <button
+                          className="block w-full px-3 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => {
+                            setMenuColumn(null);
+                            setRenaming(col);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="block w-full px-3 py-1 text-left text-red-500 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                          onClick={() => {
+                            setMenuColumn(null);
+                            setDeleting(col);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <Droppable droppableId={col.id}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="space-y-2"
-                  >
-                    {tasks
-                      .filter((t) => t.status === col.id)
-                      .map((task, idx) => (
+                <Droppable droppableId={col.id}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className="space-y-2"
+                    >
+                      {columnTasks.map((task, idx) => (
                         <Draggable
                           key={task.id}
                           draggableId={task.id}
@@ -455,23 +736,34 @@ export default function TasksKanban({
                                 task={task}
                                 onClick={() => setEditingTask(task)}
                                 showProperties={showPropertiesOnCards}
+                                onComplete={
+                                  task.status !== "done"
+                                    ? () => handleCompleteTask(task)
+                                    : undefined
+                                }
+                                isCompleted={task.status === "done"}
+                                isCompleting={
+                                  completingTaskId === task.id &&
+                                  completeMut.isPending
+                                }
                               />
                             </div>
                           )}
                         </Draggable>
                       ))}
-                    {provided.placeholder}
-                    <TaskQuickNew
-                      onCreate={(title) =>
-                        createMut.mutate({ title, status: col.id })
-                      }
-                      placeholder={newTaskPlaceholder}
-                    />
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          ))}
+                      {provided.placeholder}
+                      <TaskQuickNew
+                        onCreate={(title) =>
+                          createMut.mutate({ title, status: col.id })
+                        }
+                        placeholder={newTaskPlaceholder}
+                      />
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
         </DragDropContext>
         <div className="w-64 flex-shrink-0">
           <button
@@ -544,9 +836,12 @@ export default function TasksKanban({
           <PropertySelectModal
             open={isPropertyModalOpen}
             onClose={() => setPropertyModalOpen(false)}
-            properties={propertyTabs}
+            properties={orderedProperties}
             selectedPropertyId={selectedPropertyId}
             onSelect={handlePropertySelect}
+            onReorder={
+              canReorderProperties ? handlePropertyReorder : undefined
+            }
             allowAll={allowPropertySwitching}
           />
         </>
@@ -563,32 +858,128 @@ export default function TasksKanban({
             setEditingTask(null);
           }}
           onArchive={() => {
+            setStatusOverrides((prev) => {
+              if (!editingTask) return prev;
+              if (!prev[editingTask.id]) return prev;
+              const { [editingTask.id]: _omit, ...rest } = prev;
+              return rest;
+            });
             archiveMut.mutate(editingTask.id);
             setEditingTask(null);
           }}
         />
       )}
-    {renaming && (
-      <ColumnRenameModal
-        column={renaming}
-        onClose={() => setRenaming(null)}
-        onSave={(title) => renameColumn(renaming.id, title)}
-      />
-    )}
-    {deleting && (
-      <ColumnDeleteModal
-        column={deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => deleteColumn(deleting.id)}
-      />
-    )}
-    {creating && (
-      <ColumnCreateModal
-        onClose={() => setCreating(false)}
-        onSave={(title) => addColumn(title)}
-      />
-    )}
+      {renaming && (
+        <ColumnRenameModal
+          column={renaming}
+          onClose={() => setRenaming(null)}
+          onSave={(title) => renameColumn(renaming.id, title)}
+        />
+      )}
+      {deleting && (
+        <ColumnDeleteModal
+          column={deleting}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => deleteColumn(deleting.id)}
+        />
+      )}
+      {creating && (
+        <ColumnCreateModal
+          onClose={() => setCreating(false)}
+          onSave={(title) => addColumn(title)}
+        />
+      )}
+      {completionPrompt && (
+        <TaskCompletionPrompt
+          task={completionPrompt.task}
+          error={completionPrompt.error}
+          archiving={archiveMut.isPending}
+          onKeep={handleKeepCompletedTask}
+          onArchive={handleArchiveCompletedTask}
+          onDismiss={handleKeepCompletedTask}
+        />
+      )}
     </>
+  );
+}
+
+type TaskCompletionPromptProps = {
+  task: TaskDto;
+  archiving: boolean;
+  error: string | null;
+  onKeep: () => void;
+  onArchive: () => void;
+  onDismiss: () => void;
+};
+
+function TaskCompletionPrompt({
+  task,
+  archiving,
+  error,
+  onKeep,
+  onArchive,
+  onDismiss,
+}: TaskCompletionPromptProps) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (!archiving) {
+          onDismiss();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [archiving, onDismiss]);
+
+  const handleBackdropClick = () => {
+    if (archiving) return;
+    onDismiss();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`task-complete-${task.id}`}
+      onClick={handleBackdropClick}
+    >
+      <div
+        className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900 dark:text-white"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 id={`task-complete-${task.id}`} className="text-lg font-semibold">
+          Task completed
+        </h3>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          {`Would you like to archive "${task.title}" or keep it in this list?`}
+        </p>
+        {error ? (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+        ) : null}
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onKeep}
+            disabled={archiving}
+            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Keep in list
+          </button>
+          <button
+            type="button"
+            onClick={onArchive}
+            disabled={archiving}
+            className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+          >
+            {archiving ? "Archiving…" : "Archive task"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -599,16 +990,19 @@ type PropertySelectModalProps = {
   onSelect: (propertyId?: string) => void;
   onClose: () => void;
   allowAll: boolean;
+  onReorder?: (propertyIds: string[]) => void;
 };
 
-function PropertySelectModal({
-  open,
-  properties,
-  selectedPropertyId,
-  onSelect,
-  onClose,
-  allowAll,
-}: PropertySelectModalProps) {
+function PropertySelectModal(props: PropertySelectModalProps) {
+  const {
+    open,
+    properties,
+    selectedPropertyId,
+    onSelect,
+    onClose,
+    allowAll,
+    onReorder: handleReorder,
+  } = props;
   if (!open) return null;
 
   const optionClassName = (isActive: boolean) =>
@@ -618,6 +1012,26 @@ function PropertySelectModal({
         ? "border-gray-900 bg-gray-900 text-white shadow-sm dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
         : "border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800",
     ].join(" ");
+
+  const reorderable =
+    typeof handleReorder === "function" && properties.length > 1;
+
+  const handleMove = (propertyId: string, direction: -1 | 1) => {
+    if (!reorderable) return;
+
+    const currentOrder = properties.map((property) => property.id);
+    const currentIndex = currentOrder.indexOf(propertyId);
+    if (currentIndex === -1) return;
+
+    const targetIndex = currentIndex + direction;
+    if (targetIndex < 0 || targetIndex >= currentOrder.length) return;
+
+    const nextOrder = [...currentOrder];
+    const [moved] = nextOrder.splice(currentIndex, 1);
+    nextOrder.splice(targetIndex, 0, moved);
+
+    handleReorder?.(nextOrder);
+  };
 
   const handleSelect = (propertyId?: string) => {
     onSelect(propertyId);
@@ -661,19 +1075,60 @@ function PropertySelectModal({
                 {!selectedPropertyId && <span aria-hidden="true">✓</span>}
               </button>
             )}
-            {properties.map((property) => {
+            {properties.map((property, index) => {
               const isActive = selectedPropertyId === property.id;
+              const selectClassName = [
+                optionClassName(isActive),
+                reorderable ? "flex-1" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+
               return (
-                <button
+                <div
                   key={property.id}
-                  type="button"
-                  onClick={() => handleSelect(property.id)}
-                  className={optionClassName(isActive)}
-                  aria-pressed={isActive}
+                  className={reorderable ? "flex items-center gap-2" : undefined}
                 >
-                  <span>{property.address}</span>
-                  {isActive && <span aria-hidden="true">✓</span>}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(property.id)}
+                    className={selectClassName}
+                    aria-pressed={isActive}
+                  >
+                    <span>{property.address}</span>
+                    {isActive && <span aria-hidden="true">✓</span>}
+                  </button>
+                  {reorderable && (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleMove(property.id, -1);
+                        }}
+                        className="rounded border px-2 py-1 text-xs text-gray-500 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-600"
+                        aria-label={`Move ${property.address} up`}
+                        disabled={index === 0}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleMove(property.id, 1);
+                        }}
+                        className="rounded border px-2 py-1 text-xs text-gray-500 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-600"
+                        aria-label={`Move ${property.address} down`}
+                        disabled={index === properties.length - 1}
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
