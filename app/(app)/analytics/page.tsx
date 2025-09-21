@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { ANALYTICS_OVERVIEW_BACKGROUND } from './overview-background';
+
 // Landing page for the analytics section. Provides quick links to the
 // overview, custom analytics and builder areas, along with a placeholder for
 // the planned AI-powered search feature.
@@ -15,7 +17,7 @@ export default function AnalyticsPage() {
       <div className="grid flex-1 gap-4 md:grid-cols-3 md:grid-rows-[repeat(2,minmax(0,1fr))]">
         <div
           className="relative flex h-full flex-col gap-6 overflow-hidden rounded-lg border bg-cover bg-center bg-no-repeat p-6 shadow-lg backdrop-blur md:col-span-2 md:row-span-2"
-          style={{ backgroundImage: "url('/analytics-overview-bg.svg')" }}
+          style={{ backgroundImage: `url(${ANALYTICS_OVERVIEW_BACKGROUND})` }}
         >
           <span
             className="pointer-events-none absolute inset-0 z-0 bg-white/70 dark:bg-gray-900/60"
