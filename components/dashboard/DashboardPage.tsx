@@ -32,8 +32,8 @@ const itemVariants: Variants = {
   },
 };
 
-// Use the first day of the previous month to show a two-month window ending today.
-const startOfPreviousMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() - 1, 1);
+// Use the first day of the current month to show month-to-date data.
+const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
 const formatISODate = (d: Date) => d.toISOString().split('T')[0];
 const getAustralianFinancialYearBounds = (date: Date) => {
   const month = date.getMonth();
@@ -43,7 +43,7 @@ const getAustralianFinancialYearBounds = (date: Date) => {
 };
 
 export default function DashboardPage() {
-  const [from] = useState(() => startOfPreviousMonth(new Date()));
+  const [from] = useState(() => startOfMonth(new Date()));
   const [to] = useState(() => new Date());
   const { startYear: fyStartYear, endYear: fyEndYear } = getAustralianFinancialYearBounds(to);
   const fyLabel = `FY${String(fyEndYear).slice(-2)}`;
