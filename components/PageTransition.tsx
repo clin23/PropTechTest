@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { useRouteTransition } from "./RouteProgress";
-import { getRouteSkeleton } from "./skeletons";
+import { getRouteSkeleton, normalizePath } from "./skeletons";
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -12,10 +12,31 @@ interface PageTransitionProps {
   className?: string;
 }
 
+function getTopLevelSegment(pathname: string | null): string | null {
+  if (!pathname) {
+    return null;
+  }
+
+  const segments = pathname.split("/").filter(Boolean);
+  return segments[0] ?? null;
+}
+
 export default function PageTransition({ children, routeKey, className }: PageTransitionProps) {
   const reduceMotion = useReducedMotion();
   const { isNavigating, targetPath } = useRouteTransition();
   const skeleton = getRouteSkeleton(targetPath ?? routeKey);
+
+  const currentPathname = routeKey ? normalizePath(routeKey) : null;
+  const targetPathname = targetPath ? normalizePath(targetPath) : null;
+
+  let shouldShowSkeleton = false;
+  if (isNavigating && skeleton) {
+    if (targetPathname && currentPathname && targetPathname !== currentPathname) {
+      const currentSegment = getTopLevelSegment(currentPathname);
+      const targetSegment = getTopLevelSegment(targetPathname);
+      shouldShowSkeleton = currentSegment !== targetSegment;
+    }
+  }
 
   const animationProps = reduceMotion
     ? {
@@ -49,7 +70,7 @@ export default function PageTransition({ children, routeKey, className }: PageTr
         </motion.div>
       </AnimatePresence>
       <AnimatePresence>
-        {isNavigating && skeleton ? (
+        {shouldShowSkeleton ? (
           <motion.div
             key="route-skeleton"
             {...skeletonMotion}
