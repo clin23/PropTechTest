@@ -7,6 +7,7 @@ import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
+import type { ExpenseRow } from "../types/expense";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
 type FormState = {
@@ -52,20 +53,30 @@ export default function ExpenseForm({
   const isEditMode = mode === "edit" && Boolean(expenseId);
 
   const getInitialForm = (): FormState => {
-    const defaultCategory = defaults?.category ?? "";
+    const defaultCategory =
+      editingExpense?.category ?? (defaults?.category ?? "");
     const foundGroup = Object.entries(EXPENSE_CATEGORIES).find(([g, items]) =>
       items.includes(defaultCategory)
     )?.[0];
+    const normalizedAmount = (value: unknown) =>
+      value === undefined || value === null || value === ""
+        ? ""
+        : String(value);
     return {
-      propertyId: propertyId ?? (defaults?.propertyId ?? ""),
-      date: defaults?.date ?? "",
+      propertyId:
+        propertyId ?? editingExpense?.propertyId ?? (defaults?.propertyId ?? ""),
+      date: editingExpense?.date ?? (defaults?.date ?? ""),
       group: foundGroup ?? "",
       category: defaultCategory,
-      vendor: defaults?.vendor ?? "",
-      amount: defaults?.amount !== undefined ? String(defaults.amount) : "",
-      gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
-      notes: defaults?.notes ?? "",
-      label: (defaults as any)?.label ?? "",
+      vendor: editingExpense?.vendor ?? (defaults?.vendor ?? ""),
+      amount: normalizedAmount(
+        editingExpense?.amount ?? (defaults as any)?.amount
+      ),
+      gst: normalizedAmount(
+        editingExpense?.gst ?? (defaults as any)?.gst
+      ),
+      notes: editingExpense?.notes ?? (defaults?.notes ?? ""),
+      label: editingExpense?.label ?? ((defaults as any)?.label ?? ""),
     };
   };
 
@@ -92,7 +103,8 @@ export default function ExpenseForm({
 
   useEffect(() => {
     setForm(getInitialForm());
-  }, [propertyId, defaults, open]);
+    setError(null);
+  }, [propertyId, defaults, expense, open]);
 
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
@@ -184,7 +196,9 @@ export default function ExpenseForm({
                 notes: form.notes,
                 label: form.label,
               });
-              addRecent(form.group);
+              if (form.group) {
+                addRecent(form.group);
+              }
             }}
           >
             {!propertyId && (
@@ -361,7 +375,7 @@ export default function ExpenseForm({
                 type="submit"
                 className="px-2 py-1 bg-green-500 text-white rounded"
               >
-                Save
+                {isEditMode ? "Update" : "Save"}
               </button>
             </div>
           </form>
