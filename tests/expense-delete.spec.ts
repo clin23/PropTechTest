@@ -19,7 +19,8 @@ test('user can add and delete an expense', async ({ page }) => {
   await expect(row).toBeVisible();
 
   // Delete the expense
-  await row.getByRole('button', { name: 'Delete' }).click();
+  await row.getByRole('button', { name: 'Delete expense' }).click();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
 
   // Verify the expense no longer appears
   await expect(page.getByRole('cell', { name: 'Acme Corp' })).toHaveCount(0);
