@@ -202,19 +202,58 @@ export default function ExpensesTable({
         </div>
       </div>
       {data.length ? (
-        filteredData.length ? (
-          <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
-            <thead>
-              <tr className="bg-gray-100 dark:bg-gray-700">
-                {!propertyId && <th className="p-2 text-left">Property</th>}
-                <th className="p-2 text-left">Date</th>
-                <th className="p-2 text-left">Category</th>
-                <th className="p-2 text-left">Vendor</th>
-                <th className="p-2 text-left">Amount</th>
-                <th className="p-2 text-left">GST</th>
-                <th className="p-2 text-left">Notes</th>
-                <th className="p-2 text-left">Receipt</th>
-                <th className="p-2 text-left">Actions</th>
+        <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-gray-700">
+              {!propertyId && <th className="p-2 text-left">Property</th>}
+              <th className="p-2 text-left">Date</th>
+              <th className="p-2 text-left">Category</th>
+              <th className="p-2 text-left">Vendor</th>
+              <th className="p-2 text-left">Amount</th>
+              <th className="p-2 text-left">GST</th>
+              <th className="p-2 text-left">Notes</th>
+              <th className="p-2 text-left">Receipt</th>
+              <th className="p-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((r) => (
+              <tr key={r.id} className="border-t dark:border-gray-700">
+                {!propertyId && (
+                  <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
+                )}
+                <td className="p-2">{r.date}</td>
+                <td className="p-2">{r.category}</td>
+                <td className="p-2">{r.vendor}</td>
+                <td className="p-2">{r.amount}</td>
+                <td className="p-2">{r.gst}</td>
+                <td className="p-2">{r.notes}</td>
+                <td className="p-2">
+                  {r.receiptUrl ? (
+                    <a
+                      href={r.receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline dark:text-blue-300"
+                    >
+                      View
+                    </a>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">—</span>
+                  )}
+                </td>
+                <td className="p-2">
+                  <button
+                    className="text-red-600 underline dark:text-red-400"
+                    onClick={() => {
+                      if (confirm("Delete this expense?")) {
+                        deleteMutation.mutate(r.id);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             </thead>
             <tbody>
