@@ -144,7 +144,20 @@ export default function ExpensesTable({
                 <td className="p-2">{r.amount}</td>
                 <td className="p-2">{r.gst}</td>
                 <td className="p-2">{r.notes}</td>
-                <td className="p-2">{r.receiptUrl && <span>📎</span>}</td>
+                <td className="p-2">
+                  {r.receiptUrl ? (
+                    <a
+                      href={r.receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline dark:text-blue-300"
+                    >
+                      View
+                    </a>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">—</span>
+                  )}
+                </td>
                 <td className="p-2">
                   <button
                     className="text-red-600 underline dark:text-red-400"

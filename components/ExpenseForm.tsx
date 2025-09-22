@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createExpense, listProperties } from "../lib/api";
+import { createExpense, listProperties, uploadExpenseReceipt } from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
@@ -19,6 +19,7 @@ type FormState = {
   gst: string;
   notes: string;
   label: string;
+  receipt: File | null;
 };
 
 
@@ -59,6 +60,7 @@ export default function ExpenseForm({
       gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
       notes: defaults?.notes ?? "",
       label: (defaults as any)?.label ?? "",
+      receipt: null,
     };
   };
 
@@ -66,6 +68,7 @@ export default function ExpenseForm({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [recent, setRecent] = useState<string[]>([]);
+  const [fileInputKey, setFileInputKey] = useState(0);
 
   useEffect(() => {
     const stored = localStorage.getItem("recentExpenseCategories");
@@ -84,7 +87,10 @@ export default function ExpenseForm({
   };
 
   useEffect(() => {
+    if (!open) return;
     setForm(getInitialForm());
+    setError(null);
+    setFileInputKey((key) => key + 1);
   }, [propertyId, defaults, open]);
 
 
@@ -94,12 +100,34 @@ export default function ExpenseForm({
   });
 
   const mutation = useMutation({
-    mutationFn: (payload: any) => createExpense(payload),
+    mutationFn: async (
+      payload: {
+        expense: {
+          propertyId: string;
+          date: string;
+          category: string;
+          vendor?: string;
+          amount: number;
+          gst: number;
+          notes?: string;
+          label?: string;
+        };
+        receipt?: File | null;
+      }
+    ) => {
+      const created = await createExpense(payload.expense);
+      if (payload.receipt) {
+        const { url } = await uploadExpenseReceipt(created.id, payload.receipt);
+        return { ...created, receiptUrl: url };
+      }
+      return created;
+    },
     onSuccess: () => {
       toast({ title: "Expense saved" });
       setOpen(false);
       setForm(getInitialForm());
       setError(null);
+      setFileInputKey((key) => key + 1);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
       logEvent("expense_create", {
@@ -118,6 +146,7 @@ export default function ExpenseForm({
     setOpen(false);
     setForm(getInitialForm());
     setError(null);
+    setFileInputKey((key) => key + 1);
   };
 
   return (
@@ -162,14 +191,17 @@ export default function ExpenseForm({
                 return;
               }
               mutation.mutate({
-                propertyId: form.propertyId,
-                date: form.date,
-                category: form.category,
-                vendor: form.vendor,
-                amount: parseFloat(form.amount),
-                gst: form.gst ? parseFloat(form.gst) : 0,
-                notes: form.notes,
-                label: form.label,
+                expense: {
+                  propertyId: form.propertyId,
+                  date: form.date,
+                  category: form.category,
+                  vendor: form.vendor,
+                  amount: parseFloat(form.amount),
+                  gst: form.gst ? parseFloat(form.gst) : 0,
+                  notes: form.notes,
+                  label: form.label,
+                },
+                receipt: form.receipt,
               });
               addRecent(form.group);
             }}
@@ -334,6 +366,28 @@ export default function ExpenseForm({
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
+            </label>
+            <label className="block text-gray-700 dark:text-gray-300">
+              Receipt
+              <input
+                key={fileInputKey}
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    receipt: e.target.files && e.target.files[0]
+                      ? e.target.files[0]
+                      : null,
+                  })
+                }
+              />
+              {form.receipt && (
+                <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  Selected: {form.receipt.name}
+                </div>
+              )}
             </label>
             {error && <p className="text-red-600 text-sm">{error}</p>}
             <div className="flex justify-end gap-2 pt-2">
