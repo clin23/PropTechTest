@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createExpense, listProperties, updateExpense } from "../lib/api";
 import { logEvent } from "../lib/log";
@@ -52,35 +52,51 @@ export default function ExpenseForm({
   const setOpen = onOpenChange ?? setInternalOpen;
   const isEditMode = mode === "edit" && Boolean(expenseId);
 
-  const getInitialForm = (): FormState => {
-    const defaultCategory =
-      editingExpense?.category ?? (defaults?.category ?? "");
-    const foundGroup = Object.entries(EXPENSE_CATEGORIES).find(([g, items]) =>
-      items.includes(defaultCategory)
-    )?.[0];
-    const normalizedAmount = (value: unknown) =>
-      value === undefined || value === null || value === ""
-        ? ""
-        : String(value);
+  const computeInitialForm = useCallback((): FormState => {
+    const typedDefaults = (defaults ?? {}) as Partial<FormState> & {
+      label?: string;
+    };
+    const rawCategory = typedDefaults.category ?? "";
+    const categoryValue =
+      typeof rawCategory === "string" ? rawCategory : String(rawCategory ?? "");
+    const configuredGroup =
+      typeof typedDefaults.group === "string" &&
+      typedDefaults.group in EXPENSE_CATEGORIES
+        ? typedDefaults.group
+        : "";
+    const derivedGroup =
+      configuredGroup ||
+      (categoryValue
+        ? Object.entries(EXPENSE_CATEGORIES).find(([, items]) =>
+            items.includes(categoryValue)
+          )?.[0] ?? ""
+        : "");
+
+    const coerceString = (value: unknown): string =>
+      value === undefined || value === null ? "" : String(value);
+
     return {
       propertyId:
-        propertyId ?? editingExpense?.propertyId ?? (defaults?.propertyId ?? ""),
-      date: editingExpense?.date ?? (defaults?.date ?? ""),
-      group: foundGroup ?? "",
-      category: defaultCategory,
-      vendor: editingExpense?.vendor ?? (defaults?.vendor ?? ""),
-      amount: normalizedAmount(
-        editingExpense?.amount ?? (defaults as any)?.amount
-      ),
-      gst: normalizedAmount(
-        editingExpense?.gst ?? (defaults as any)?.gst
-      ),
-      notes: editingExpense?.notes ?? (defaults?.notes ?? ""),
-      label: editingExpense?.label ?? ((defaults as any)?.label ?? ""),
+        propertyId ??
+        (typeof typedDefaults.propertyId === "string"
+          ? typedDefaults.propertyId
+          : ""),
+      date:
+        typeof typedDefaults.date === "string" ? typedDefaults.date : "",
+      group: derivedGroup,
+      category: categoryValue,
+      vendor:
+        typeof typedDefaults.vendor === "string" ? typedDefaults.vendor : "",
+      amount: coerceString(typedDefaults.amount),
+      gst: coerceString(typedDefaults.gst),
+      notes:
+        typeof typedDefaults.notes === "string" ? typedDefaults.notes : "",
+      label:
+        typeof typedDefaults.label === "string" ? typedDefaults.label : "",
     };
-  };
+  }, [defaults, propertyId]);
 
-  const [form, setForm] = useState<FormState>(getInitialForm());
+  const [form, setForm] = useState<FormState>(computeInitialForm);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [recent, setRecent] = useState<string[]>([]);
@@ -102,9 +118,8 @@ export default function ExpenseForm({
   };
 
   useEffect(() => {
-    setForm(getInitialForm());
-    setError(null);
-  }, [propertyId, defaults, expense, open]);
+    setForm(computeInitialForm());
+  }, [computeInitialForm, open]);
 
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
@@ -120,7 +135,7 @@ export default function ExpenseForm({
     onSuccess: () => {
       toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
       setOpen(false);
-      setForm(getInitialForm());
+      setForm(computeInitialForm());
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
@@ -141,7 +156,7 @@ export default function ExpenseForm({
 
   const handleClose = () => {
     setOpen(false);
-    setForm(getInitialForm());
+    setForm(computeInitialForm());
     setError(null);
   };
 
