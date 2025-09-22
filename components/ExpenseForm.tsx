@@ -7,6 +7,7 @@ import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
+import type { ExpenseRow } from "../types/expense";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
 type FormState = {
@@ -210,7 +211,9 @@ export default function ExpenseForm({
                 notes: form.notes,
                 label: form.label,
               });
-              addRecent(form.group);
+              if (form.group) {
+                addRecent(form.group);
+              }
             }}
           >
             {!propertyId && (
@@ -387,7 +390,7 @@ export default function ExpenseForm({
                 type="submit"
                 className="px-2 py-1 bg-green-500 text-white rounded"
               >
-                Save
+                {isEditMode ? "Update" : "Save"}
               </button>
             </div>
           </form>
