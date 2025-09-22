@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createExpense, listProperties } from "../lib/api";
+import { createExpense, listProperties, updateExpense } from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
+import type { ExpenseRow } from "../types/expense";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
 type FormState = {
@@ -29,6 +30,7 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
   defaults?: Partial<FormState>;
   showTrigger?: boolean;
+  expense?: ExpenseRow | null;
 }
 
 export default function ExpenseForm({
@@ -38,27 +40,40 @@ export default function ExpenseForm({
   onOpenChange,
   defaults,
   showTrigger = true,
+  expense,
 }: Props) {
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
+  const editingExpense = expense ?? null;
+  const isEditMode = Boolean(editingExpense);
 
   const getInitialForm = (): FormState => {
-    const defaultCategory = defaults?.category ?? "";
+    const defaultCategory =
+      editingExpense?.category ?? (defaults?.category ?? "");
     const foundGroup = Object.entries(EXPENSE_CATEGORIES).find(([g, items]) =>
       items.includes(defaultCategory)
     )?.[0];
+    const normalizedAmount = (value: unknown) =>
+      value === undefined || value === null || value === ""
+        ? ""
+        : String(value);
     return {
-      propertyId: propertyId ?? (defaults?.propertyId ?? ""),
-      date: defaults?.date ?? "",
+      propertyId:
+        propertyId ?? editingExpense?.propertyId ?? (defaults?.propertyId ?? ""),
+      date: editingExpense?.date ?? (defaults?.date ?? ""),
       group: foundGroup ?? "",
       category: defaultCategory,
-      vendor: defaults?.vendor ?? "",
-      amount: defaults?.amount !== undefined ? String(defaults.amount) : "",
-      gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
-      notes: defaults?.notes ?? "",
-      label: (defaults as any)?.label ?? "",
+      vendor: editingExpense?.vendor ?? (defaults?.vendor ?? ""),
+      amount: normalizedAmount(
+        editingExpense?.amount ?? (defaults as any)?.amount
+      ),
+      gst: normalizedAmount(
+        editingExpense?.gst ?? (defaults as any)?.gst
+      ),
+      notes: editingExpense?.notes ?? (defaults?.notes ?? ""),
+      label: editingExpense?.label ?? ((defaults as any)?.label ?? ""),
     };
   };
 
@@ -85,7 +100,8 @@ export default function ExpenseForm({
 
   useEffect(() => {
     setForm(getInitialForm());
-  }, [propertyId, defaults, open]);
+    setError(null);
+  }, [propertyId, defaults, expense, open]);
 
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
@@ -94,18 +110,28 @@ export default function ExpenseForm({
   });
 
   const mutation = useMutation({
-    mutationFn: (payload: any) => createExpense(payload),
+    mutationFn: (payload: any) =>
+      isEditMode && editingExpense
+        ? updateExpense(editingExpense.id, payload)
+        : createExpense(payload),
     onSuccess: () => {
-      toast({ title: "Expense saved" });
+      toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
       setOpen(false);
       setForm(getInitialForm());
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      onCreated?.();
-      logEvent("expense_create", {
-        propertyId: form.propertyId,
-        amount: parseFloat(form.amount),
-      });
+      if (isEditMode) {
+        logEvent("expense_update", {
+          propertyId: form.propertyId,
+          amount: parseFloat(form.amount),
+        });
+      } else {
+        onCreated?.();
+        logEvent("expense_create", {
+          propertyId: form.propertyId,
+          amount: parseFloat(form.amount),
+        });
+      }
     },
     onError: (err: any) => {
       const message = err instanceof Error ? err.message : "Failed to save expense";
@@ -171,7 +197,9 @@ export default function ExpenseForm({
                 notes: form.notes,
                 label: form.label,
               });
-              addRecent(form.group);
+              if (form.group) {
+                addRecent(form.group);
+              }
             }}
           >
             {!propertyId && (
@@ -348,7 +376,7 @@ export default function ExpenseForm({
                 type="submit"
                 className="px-2 py-1 bg-green-500 text-white rounded"
               >
-                Save
+                {isEditMode ? "Update" : "Save"}
               </button>
             </div>
           </form>
