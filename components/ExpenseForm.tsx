@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createExpense, listProperties, uploadExpenseReceipt } from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
+import type { ExpenseRow } from "../types/expense";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
 type FormState = {
@@ -26,30 +27,55 @@ type FormState = {
 interface Props {
   propertyId?: string;
   onCreated?: () => void;
+  onSaved?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaults?: Partial<FormState>;
   showTrigger?: boolean;
+  mode?: "create" | "edit";
+  expenseId?: string;
 }
 
 export default function ExpenseForm({
   propertyId,
   onCreated,
+  onSaved,
   open: controlledOpen,
   onOpenChange,
   defaults,
   showTrigger = true,
+  mode = "create",
+  expenseId,
 }: Props) {
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
+  const isEditMode = mode === "edit" && Boolean(expenseId);
 
-  const getInitialForm = (): FormState => {
-    const defaultCategory = defaults?.category ?? "";
-    const foundGroup = Object.entries(EXPENSE_CATEGORIES).find(([g, items]) =>
-      items.includes(defaultCategory)
-    )?.[0];
+  const computeInitialForm = useCallback((): FormState => {
+    const typedDefaults = (defaults ?? {}) as Partial<FormState> & {
+      label?: string;
+    };
+    const rawCategory = typedDefaults.category ?? "";
+    const categoryValue =
+      typeof rawCategory === "string" ? rawCategory : String(rawCategory ?? "");
+    const configuredGroup =
+      typeof typedDefaults.group === "string" &&
+      typedDefaults.group in EXPENSE_CATEGORIES
+        ? typedDefaults.group
+        : "";
+    const derivedGroup =
+      configuredGroup ||
+      (categoryValue
+        ? Object.entries(EXPENSE_CATEGORIES).find(([, items]) =>
+            items.includes(categoryValue)
+          )?.[0] ?? ""
+        : "");
+
+    const coerceString = (value: unknown): string =>
+      value === undefined || value === null ? "" : String(value);
+
     return {
       propertyId: propertyId ?? (defaults?.propertyId ?? ""),
       date: defaults?.date ?? "",
@@ -62,9 +88,9 @@ export default function ExpenseForm({
       label: (defaults as any)?.label ?? "",
       receipt: null,
     };
-  };
+  }, [defaults, propertyId]);
 
-  const [form, setForm] = useState<FormState>(getInitialForm());
+  const [form, setForm] = useState<FormState>(computeInitialForm);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [recent, setRecent] = useState<string[]>([]);
@@ -123,17 +149,20 @@ export default function ExpenseForm({
       return created;
     },
     onSuccess: () => {
-      toast({ title: "Expense saved" });
+      toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
       setOpen(false);
-      setForm(getInitialForm());
+      setForm(computeInitialForm());
       setError(null);
       setFileInputKey((key) => key + 1);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
-      logEvent("expense_create", {
-        propertyId: form.propertyId,
-        amount: parseFloat(form.amount),
-      });
+      onSaved?.();
+      if (!isEditMode) {
+        logEvent("expense_create", {
+          propertyId: form.propertyId,
+          amount: parseFloat(form.amount),
+        });
+      }
     },
     onError: (err: any) => {
       const message = err instanceof Error ? err.message : "Failed to save expense";
@@ -144,7 +173,7 @@ export default function ExpenseForm({
 
   const handleClose = () => {
     setOpen(false);
-    setForm(getInitialForm());
+    setForm(computeInitialForm());
     setError(null);
     setFileInputKey((key) => key + 1);
   };
@@ -203,7 +232,9 @@ export default function ExpenseForm({
                 },
                 receipt: form.receipt,
               });
-              addRecent(form.group);
+              if (form.group) {
+                addRecent(form.group);
+              }
             }}
           >
             {!propertyId && (
@@ -402,7 +433,7 @@ export default function ExpenseForm({
                 type="submit"
                 className="px-2 py-1 bg-green-500 text-white rounded"
               >
-                Save
+                {isEditMode ? "Update" : "Save"}
               </button>
             </div>
           </form>
