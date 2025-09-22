@@ -12,6 +12,8 @@ import {
 } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
+import { normalizePath } from "./skeletons";
+
 interface RouteTransitionContextValue {
   isNavigating: boolean;
   targetPath: string | null;
@@ -122,8 +124,24 @@ function useRouteTransitionManager() {
       clearHideTimeout();
       clearFallbackTimeout();
 
-      if (nextPath) {
-        setTargetPath(nextPath);
+      const resolvedPath = nextPath ? resolveTargetPath(nextPath) : null;
+
+      if (resolvedPath && typeof window !== "undefined") {
+        const currentPath = `${window.location.pathname}${window.location.search}`;
+        const normalizedCurrent = normalizePath(currentPath);
+        const normalizedNext = normalizePath(resolvedPath);
+
+        if (normalizedCurrent === normalizedNext) {
+          setLoading(false);
+          setTargetPath(null);
+          return;
+        }
+      }
+
+      if (resolvedPath) {
+        setTargetPath(resolvedPath);
+      } else {
+        setTargetPath(null);
       }
 
       setLoading(true);

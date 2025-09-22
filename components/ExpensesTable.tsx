@@ -118,6 +118,13 @@ export default function ExpensesTable({
           </select>
         )}
         <input
+          type="text"
+          className="p-1 bg-white dark:bg-gray-800 dark:text-white border-0 focus:outline-none focus:ring-0 placeholder-gray-500 dark:placeholder-gray-400"
+          placeholder="Search for an expense"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <input
           type="date"
           className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={from}
@@ -143,8 +150,16 @@ export default function ExpensesTable({
           value={vendor}
           onChange={(e) => setVendor(e.target.value)}
         />
+        <input
+          type="search"
+          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          placeholder="Search for an expense"
+          aria-label="Search expenses"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
-      {data.length ? (
+      {filteredData.length ? (
         <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-700">
