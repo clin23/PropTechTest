@@ -24,7 +24,6 @@ export default function ExpensesTable({
   const [to, setTo] = useState("");
   const [category, setCategory] = useState("");
   const [vendor, setVendor] = useState("");
-  const [search, setSearch] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ExpenseRow | null>(null);
@@ -78,35 +77,6 @@ export default function ExpensesTable({
     () => Object.fromEntries(properties.map((p) => [p.id, p.address])),
     [properties]
   );
-
-  const filteredData = useMemo<ExpenseRow[]>(() => {
-    const normalizedQuery = search.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return data;
-    }
-
-    return data.filter((expense) => {
-      const haystacks: string[] = [
-        expense.vendor,
-        expense.category,
-        expense.notes ?? "",
-        expense.label ?? "",
-        expense.date,
-        String(expense.amount ?? ""),
-        String(expense.gst ?? ""),
-      ];
-
-      if (!propertyId) {
-        haystacks.push(propertyMap[expense.propertyId] ?? "");
-      }
-
-      return haystacks.some((value) =>
-        value.toLowerCase().includes(normalizedQuery)
-      );
-    });
-  }, [data, propertyId, propertyMap, search]);
-
-  const columnCount = propertyId ? 8 : 9;
 
   const iconButtonClass =
     "rounded p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100";
@@ -205,8 +175,7 @@ export default function ExpensesTable({
             </tr>
           </thead>
           <tbody>
-            {filteredData.length ? (
-              filteredData.map((r) => (
+            {data.map((r) => (
                 <tr key={r.id} className="border-t dark:border-gray-700">
                   {!propertyId && (
                     <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
@@ -259,17 +228,7 @@ export default function ExpensesTable({
                     </div>
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={columnCount}
-                  className="p-4 text-center text-sm text-gray-500 dark:text-gray-400"
-                >
-                  No expenses match your search.
-                </td>
-              </tr>
-            )}
+              ))}
           </tbody>
         </table>
       ) : (
