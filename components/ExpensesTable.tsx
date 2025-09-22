@@ -27,6 +27,7 @@ export default function ExpensesTable({
   const [editOpen, setEditOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ExpenseRow | null>(null);
+  const [search, setSearch] = useState("");
 
   const params = {
     propertyId: propertyId ?? (property || undefined),
@@ -100,6 +101,30 @@ export default function ExpensesTable({
     setEditOpen(true);
   };
 
+  const filteredData = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) {
+      return data;
+    }
+
+    return data.filter((expense) => {
+      const haystack = [
+        expense.category,
+        expense.vendor,
+        expense.notes,
+        expense.label,
+        expense.date,
+        expense.amount ? String(expense.amount) : undefined,
+        expense.gst ? String(expense.gst) : undefined,
+        !propertyId ? propertyMap[expense.propertyId] : undefined,
+      ];
+
+      return haystack
+        .filter((value): value is string => Boolean(value))
+        .some((value) => value.toLowerCase().includes(term));
+    });
+  }, [data, propertyId, propertyMap, search]);
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
@@ -150,32 +175,50 @@ export default function ExpensesTable({
           value={vendor}
           onChange={(e) => setVendor(e.target.value)}
         />
-        <input
-          type="search"
-          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          placeholder="Search for an expense"
-          aria-label="Search expenses"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className="relative">
+          <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-gray-400">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9 3.5a5.5 5.5 0 1 0 3.356 9.86l3.641 3.642a.75.75 0 1 0 1.06-1.061l-3.64-3.642A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </span>
+          <input
+            type="search"
+            className="w-full min-w-[12rem] rounded border border-gray-300 bg-white py-1 pl-8 pr-2 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            placeholder="Search for an expense"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search expenses"
+          />
+        </div>
       </div>
-      {filteredData.length ? (
-        <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-gray-700">
-              {!propertyId && <th className="p-2 text-left">Property</th>}
-              <th className="p-2 text-left">Date</th>
-              <th className="p-2 text-left">Category</th>
-              <th className="p-2 text-left">Vendor</th>
-              <th className="p-2 text-left">Amount</th>
-              <th className="p-2 text-left">GST</th>
-              <th className="p-2 text-left">Notes</th>
-              <th className="p-2 text-left">Receipt</th>
-              <th className="p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((r) => (
+      {data.length ? (
+        filteredData.length ? (
+          <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700">
+                {!propertyId && <th className="p-2 text-left">Property</th>}
+                <th className="p-2 text-left">Date</th>
+                <th className="p-2 text-left">Category</th>
+                <th className="p-2 text-left">Vendor</th>
+                <th className="p-2 text-left">Amount</th>
+                <th className="p-2 text-left">GST</th>
+                <th className="p-2 text-left">Notes</th>
+                <th className="p-2 text-left">Receipt</th>
+                <th className="p-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((r) => (
                 <tr key={r.id} className="border-t dark:border-gray-700">
                   {!propertyId && (
                     <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
@@ -229,8 +272,11 @@ export default function ExpensesTable({
                   </td>
                 </tr>
               ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="No expenses match your search." />
+        )
       ) : (
         <EmptyState message="No expenses found." />
       )}
