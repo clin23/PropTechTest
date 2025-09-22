@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createExpense, listProperties } from "../lib/api";
+import { createExpense, listProperties, updateExpense } from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
@@ -25,24 +25,31 @@ type FormState = {
 interface Props {
   propertyId?: string;
   onCreated?: () => void;
+  onSaved?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaults?: Partial<FormState>;
   showTrigger?: boolean;
+  mode?: "create" | "edit";
+  expenseId?: string;
 }
 
 export default function ExpenseForm({
   propertyId,
   onCreated,
+  onSaved,
   open: controlledOpen,
   onOpenChange,
   defaults,
   showTrigger = true,
+  mode = "create",
+  expenseId,
 }: Props) {
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
+  const isEditMode = mode === "edit" && Boolean(expenseId);
 
   const getInitialForm = (): FormState => {
     const defaultCategory = defaults?.category ?? "";
@@ -94,18 +101,24 @@ export default function ExpenseForm({
   });
 
   const mutation = useMutation({
-    mutationFn: (payload: any) => createExpense(payload),
+    mutationFn: (payload: any) =>
+      isEditMode && expenseId
+        ? updateExpense(expenseId, payload)
+        : createExpense(payload),
     onSuccess: () => {
-      toast({ title: "Expense saved" });
+      toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
       setOpen(false);
       setForm(getInitialForm());
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
-      logEvent("expense_create", {
-        propertyId: form.propertyId,
-        amount: parseFloat(form.amount),
-      });
+      onSaved?.();
+      if (!isEditMode) {
+        logEvent("expense_create", {
+          propertyId: form.propertyId,
+          amount: parseFloat(form.amount),
+        });
+      }
     },
     onError: (err: any) => {
       const message = err instanceof Error ? err.message : "Failed to save expense";

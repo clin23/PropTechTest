@@ -1,11 +1,12 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { listExpenses, deleteExpense, listProperties } from "../lib/api";
 import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
+import ExpenseForm from "./ExpenseForm";
 
 export default function ExpensesTable({
   propertyId,
@@ -172,16 +173,48 @@ export default function ExpensesTable({
                 <td className="p-2">{r.notes}</td>
                 <td className="p-2">{r.receiptUrl && <span>📎</span>}</td>
                 <td className="p-2">
-                  <button
-                    className="text-red-600 underline dark:text-red-400"
-                    onClick={() => {
-                      if (confirm("Delete this expense?")) {
-                        deleteMutation.mutate(r.id);
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className={iconButtonClass}
+                      onClick={() => handleEdit(r)}
+                      aria-label="Edit expense"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-5 w-5"
+                      >
+                        <path d="M17.414 2.586a2 2 0 0 0-2.828 0l-1.086 1.086 2.828 2.828 1.086-1.086a2 2 0 0 0 0-2.828ZM14.5 7.5 11.672 4.672 4 12.343V15.5h3.157L14.5 7.5Z" />
+                        <path d="M2 6a2 2 0 0 1 2-2h4a1 1 0 1 1 0 2H4v10h10v-4a1 1 0 1 1 2 0v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className={`${iconButtonClass} text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300`}
+                      onClick={() => {
+                        if (confirm("are you sure?")) {
+                          deleteMutation.mutate(r.id);
+                        }
+                      }}
+                      aria-label="Delete expense"
+                      disabled={deleteMutation.isPending}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-5 w-5"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M8.75 3a1.75 1.75 0 0 0-1.744 1.602l-.035.348H4a.75.75 0 0 0 0 1.5h.532l.634 9.182A2.25 2.25 0 0 0 7.41 17.75h5.18a2.25 2.25 0 0 0 2.244-2.118L15.468 6.45H16a.75.75 0 0 0 0-1.5h-2.97l-.035-.348A1.75 1.75 0 0 0 11.25 3h-2.5ZM9.75 7a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0V7Zm2.75-.75a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V7a.75.75 0 0 1 .75-.75Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -190,6 +223,23 @@ export default function ExpensesTable({
       ) : (
         <EmptyState message="No expenses found." />
       )}
+      <ExpenseForm
+        propertyId={propertyId}
+        open={editOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open);
+          if (!open) {
+            setEditingExpense(null);
+          }
+        }}
+        showTrigger={false}
+        defaults={editDefaults}
+        mode="edit"
+        expenseId={editingExpense?.id}
+        onSaved={() => {
+          queryClient.invalidateQueries({ queryKey });
+        }}
+      />
     </div>
   );
 }
