@@ -79,7 +79,7 @@ export default function ExpensesTable({
     [properties]
   );
 
-  const filteredExpenses = useMemo(() => {
+  const filteredData = useMemo<ExpenseRow[]>(() => {
     const normalizedQuery = search.trim().toLowerCase();
     if (!normalizedQuery) {
       return data;
@@ -205,8 +205,8 @@ export default function ExpensesTable({
             </tr>
           </thead>
           <tbody>
-            {filteredExpenses.length ? (
-              filteredExpenses.map((r) => (
+            {filteredData.length ? (
+              filteredData.map((r) => (
                 <tr key={r.id} className="border-t dark:border-gray-700">
                   {!propertyId && (
                     <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
