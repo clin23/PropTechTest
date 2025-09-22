@@ -26,6 +26,7 @@ type FormState = {
 interface Props {
   propertyId?: string;
   onCreated?: () => void;
+  onSaved?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaults?: Partial<FormState>;
@@ -36,6 +37,7 @@ interface Props {
 export default function ExpenseForm({
   propertyId,
   onCreated,
+  onSaved,
   open: controlledOpen,
   onOpenChange,
   defaults,

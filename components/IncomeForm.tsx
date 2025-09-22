@@ -7,6 +7,18 @@ import { useToast } from "./ui/use-toast";
 import { INCOME_CATEGORIES } from "../lib/categories";
 import type { PropertySummary } from "../types/property";
 
+const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
+
+type FormState = {
+  propertyId: string;
+  date: string;
+  group: string;
+  category: string;
+  amount: string;
+  notes: string;
+  label: string;
+};
+
 interface IncomeFormProps {
   propertyId?: string;
   onCreated?: () => void;
@@ -26,15 +38,16 @@ export default function IncomeForm({
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
-  const getInitialForm = () => ({
+  const getInitialForm = (): FormState => ({
     propertyId: propertyId ?? "",
     date: "",
+    group: "",
     category: "",
     amount: "",
     notes: "",
     label: "",
   });
-  const [form, setForm] = useState(getInitialForm());
+  const [form, setForm] = useState<FormState>(getInitialForm());
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -79,6 +92,11 @@ export default function IncomeForm({
     setError(null);
   };
 
+  const selectedIncomeOptions =
+    form.group && form.group in INCOME_CATEGORIES
+      ? INCOME_CATEGORIES[form.group as keyof typeof INCOME_CATEGORIES]
+      : [];
+
   return (
     <div>
       {showTrigger && (
@@ -102,13 +120,16 @@ export default function IncomeForm({
               e.preventDefault();
               setError(null);
               const targetPropertyId = propertyId ?? form.propertyId;
-              if (
-                !targetPropertyId ||
-                !form.date ||
-                !form.category ||
-                !form.amount
-              ) {
+              if (!targetPropertyId || !form.date || !form.group || !form.amount) {
                 setError("Please fill in all required fields");
+                return;
+              }
+              if (!form.category && !form.label) {
+                setError("Please select an income or enter a custom label");
+                return;
+              }
+              if (form.category && form.label) {
+                setError("Please choose either an income or a custom label");
                 return;
               }
               if (isNaN(parseFloat(form.amount))) {
@@ -157,24 +178,87 @@ export default function IncomeForm({
               Category
               <select
                 className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                value={form.group}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    group: e.target.value,
+                    category: "",
+                    label: "",
+                  })
+                }
               >
                 <option value="">Select category</option>
-                {Object.entries(INCOME_CATEGORIES).map(([group, items]) => (
-                  <optgroup
-                    key={group}
-                    label={group.replace(/([A-Z])/g, " $1").trim()}
+                {Object.keys(INCOME_CATEGORIES).map((group) => (
+                  <option key={group} value={group}>
+                    {humanize(group)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {form.group && (
+              form.category === "" && form.label === "" ? (
+                <div className="flex items-start gap-2">
+                  <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                    Income
+                    <select
+                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                      value={form.category}
+                      onChange={(e) =>
+                        setForm({ ...form, category: e.target.value, label: "" })
+                      }
+                    >
+                      <option value="">Select income</option>
+                      {selectedIncomeOptions.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <span className="self-center text-gray-500">OR</span>
+                  <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                    Custom label
+                    <input
+                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                      value={form.label}
+                      onChange={(e) =>
+                        setForm({ ...form, label: e.target.value, category: "" })
+                      }
+                    />
+                  </label>
+                </div>
+              ) : form.category !== "" ? (
+                <label className="block text-gray-700 dark:text-gray-300">
+                  Income
+                  <select
+                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    value={form.category}
+                    onChange={(e) =>
+                      setForm({ ...form, category: e.target.value, label: "" })
+                    }
                   >
-                    {items.map((item) => (
+                    <option value="">Select income</option>
+                    {selectedIncomeOptions.map((item) => (
                       <option key={item} value={item}>
                         {item}
                       </option>
                     ))}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
+                  </select>
+                </label>
+              ) : (
+                <label className="block text-gray-700 dark:text-gray-300">
+                  Custom label
+                  <input
+                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    value={form.label}
+                    onChange={(e) =>
+                      setForm({ ...form, label: e.target.value, category: "" })
+                    }
+                  />
+                </label>
+              )
+            )}
             <label className="block text-gray-700 dark:text-gray-300">
               Amount
               <input
@@ -182,14 +266,6 @@ export default function IncomeForm({
                 className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              />
-            </label>
-            <label className="block text-gray-700 dark:text-gray-300">
-              Custom label
-              <input
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.label}
-                onChange={(e) => setForm({ ...form, label: e.target.value })}
               />
             </label>
             <label className="block text-gray-700 dark:text-gray-300">
