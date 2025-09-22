@@ -31,7 +31,8 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
   defaults?: Partial<FormState>;
   showTrigger?: boolean;
-  expense?: ExpenseRow | null;
+  mode?: "create" | "edit";
+  expenseId?: string;
 }
 
 export default function ExpenseForm({
@@ -42,14 +43,14 @@ export default function ExpenseForm({
   onOpenChange,
   defaults,
   showTrigger = true,
-  expense,
+  mode = "create",
+  expenseId,
 }: Props) {
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
-  const editingExpense = expense ?? null;
-  const isEditMode = Boolean(editingExpense);
+  const isEditMode = mode === "edit" && Boolean(expenseId);
 
   const getInitialForm = (): FormState => {
     const defaultCategory =
@@ -113,8 +114,8 @@ export default function ExpenseForm({
 
   const mutation = useMutation({
     mutationFn: (payload: any) =>
-      isEditMode && editingExpense
-        ? updateExpense(editingExpense.id, payload)
+      isEditMode && expenseId
+        ? updateExpense(expenseId, payload)
         : createExpense(payload),
     onSuccess: () => {
       toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
@@ -122,13 +123,9 @@ export default function ExpenseForm({
       setForm(getInitialForm());
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      if (isEditMode) {
-        logEvent("expense_update", {
-          propertyId: form.propertyId,
-          amount: parseFloat(form.amount),
-        });
-      } else {
-        onCreated?.();
+      onCreated?.();
+      onSaved?.();
+      if (!isEditMode) {
         logEvent("expense_create", {
           propertyId: form.propertyId,
           amount: parseFloat(form.amount),
