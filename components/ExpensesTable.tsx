@@ -7,6 +7,23 @@ import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
 
+function ReceiptLink({ url }: { url?: string | null }) {
+  if (!url) {
+    return <span className="text-gray-500 dark:text-gray-400">&mdash;</span>;
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline dark:text-blue-300"
+    >
+      View
+    </a>
+  );
+}
+
 export default function ExpensesTable({
   propertyId,
 }: {
@@ -144,7 +161,9 @@ export default function ExpensesTable({
                 <td className="p-2">{r.amount}</td>
                 <td className="p-2">{r.gst}</td>
                 <td className="p-2">{r.notes}</td>
-                <td className="p-2">{r.receiptUrl && <span>📎</span>}</td>
+                <td className="p-2">
+                  <ReceiptLink url={r.receiptUrl} />
+                </td>
                 <td className="p-2">
                   <button
                     className="text-red-600 underline dark:text-red-400"
