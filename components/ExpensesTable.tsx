@@ -143,6 +143,13 @@ export default function ExpensesTable({
           </select>
         )}
         <input
+          type="text"
+          className="p-1 bg-white dark:bg-gray-800 dark:text-white border-0 focus:outline-none focus:ring-0 placeholder-gray-500 dark:placeholder-gray-400"
+          placeholder="Search for an expense"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <input
           type="date"
           className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           value={from}
