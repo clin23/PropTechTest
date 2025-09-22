@@ -17,6 +17,7 @@ import PropertyHero from "./components/PropertyHero";
 import ScrollableSectionBar, { type SectionTab } from "./components/ScrollableSectionBar";
 import RentLedger from "./sections/RentLedger";
 import Expenses from "./sections/Expenses";
+import OtherIncome from "./sections/OtherIncome";
 import Documents from "./sections/Documents";
 import RentReview from "./sections/RentReview";
 import KeyDates from "./sections/KeyDates";
@@ -30,6 +31,7 @@ import PropertyPageSkeleton from "../../../../components/skeletons/PropertyPageS
 const TABS = [
   { id: "rent-ledger", label: "Rent Ledger" },
   { id: "expenses", label: "Expenses" },
+  { id: "other-income", label: "Other Income" },
   { id: "documents", label: "Documents" },
   { id: "tasks", label: "Tasks" },
   { id: "rent-review", label: "Rent Review" },
@@ -135,6 +137,8 @@ export default function PropertyPage() {
         return <RentLedger propertyId={id} />;
       case "expenses":
         return <Expenses propertyId={id} />;
+      case "other-income":
+        return <OtherIncome propertyId={id} />;
       case "documents":
         return <Documents propertyId={id} />;
       case "tasks":
