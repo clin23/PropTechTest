@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createExpense, listProperties, updateExpense } from "../lib/api";
 import { logEvent } from "../lib/log";
@@ -51,25 +51,51 @@ export default function ExpenseForm({
   const setOpen = onOpenChange ?? setInternalOpen;
   const isEditMode = mode === "edit" && Boolean(expenseId);
 
-  const getInitialForm = (): FormState => {
-    const defaultCategory = defaults?.category ?? "";
-    const foundGroup = Object.entries(EXPENSE_CATEGORIES).find(([g, items]) =>
-      items.includes(defaultCategory)
-    )?.[0];
-    return {
-      propertyId: propertyId ?? (defaults?.propertyId ?? ""),
-      date: defaults?.date ?? "",
-      group: foundGroup ?? "",
-      category: defaultCategory,
-      vendor: defaults?.vendor ?? "",
-      amount: defaults?.amount !== undefined ? String(defaults.amount) : "",
-      gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
-      notes: defaults?.notes ?? "",
-      label: (defaults as any)?.label ?? "",
+  const computeInitialForm = useCallback((): FormState => {
+    const typedDefaults = (defaults ?? {}) as Partial<FormState> & {
+      label?: string;
     };
-  };
+    const rawCategory = typedDefaults.category ?? "";
+    const categoryValue =
+      typeof rawCategory === "string" ? rawCategory : String(rawCategory ?? "");
+    const configuredGroup =
+      typeof typedDefaults.group === "string" &&
+      typedDefaults.group in EXPENSE_CATEGORIES
+        ? typedDefaults.group
+        : "";
+    const derivedGroup =
+      configuredGroup ||
+      (categoryValue
+        ? Object.entries(EXPENSE_CATEGORIES).find(([, items]) =>
+            items.includes(categoryValue)
+          )?.[0] ?? ""
+        : "");
 
-  const [form, setForm] = useState<FormState>(getInitialForm());
+    const coerceString = (value: unknown): string =>
+      value === undefined || value === null ? "" : String(value);
+
+    return {
+      propertyId:
+        propertyId ??
+        (typeof typedDefaults.propertyId === "string"
+          ? typedDefaults.propertyId
+          : ""),
+      date:
+        typeof typedDefaults.date === "string" ? typedDefaults.date : "",
+      group: derivedGroup,
+      category: categoryValue,
+      vendor:
+        typeof typedDefaults.vendor === "string" ? typedDefaults.vendor : "",
+      amount: coerceString(typedDefaults.amount),
+      gst: coerceString(typedDefaults.gst),
+      notes:
+        typeof typedDefaults.notes === "string" ? typedDefaults.notes : "",
+      label:
+        typeof typedDefaults.label === "string" ? typedDefaults.label : "",
+    };
+  }, [defaults, propertyId]);
+
+  const [form, setForm] = useState<FormState>(computeInitialForm);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [recent, setRecent] = useState<string[]>([]);
@@ -91,8 +117,8 @@ export default function ExpenseForm({
   };
 
   useEffect(() => {
-    setForm(getInitialForm());
-  }, [propertyId, defaults, open]);
+    setForm(computeInitialForm());
+  }, [computeInitialForm, open]);
 
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
@@ -108,7 +134,7 @@ export default function ExpenseForm({
     onSuccess: () => {
       toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
       setOpen(false);
-      setForm(getInitialForm());
+      setForm(computeInitialForm());
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
@@ -129,7 +155,7 @@ export default function ExpenseForm({
 
   const handleClose = () => {
     setOpen(false);
-    setForm(getInitialForm());
+    setForm(computeInitialForm());
     setError(null);
   };
 
