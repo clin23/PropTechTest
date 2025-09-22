@@ -5,6 +5,7 @@ import ExpenseForm from '../components/ExpenseForm';
 
 vi.mock('../lib/api', () => ({
   createExpense: vi.fn(),
+  updateExpense: vi.fn(),
   listProperties: vi.fn().mockResolvedValue([]),
 }));
 
