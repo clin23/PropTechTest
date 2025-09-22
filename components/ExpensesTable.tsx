@@ -23,6 +23,7 @@ export default function ExpensesTable({
   const [to, setTo] = useState("");
   const [category, setCategory] = useState("");
   const [vendor, setVendor] = useState("");
+  const [search, setSearch] = useState("");
 
   const params = {
     propertyId: propertyId ?? (property || undefined),
@@ -73,6 +74,24 @@ export default function ExpensesTable({
     properties.map((p) => [p.id, p.address])
   );
 
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredData = normalizedSearch
+    ? data.filter((expense) => {
+        const haystack = [
+          expense.date,
+          expense.category,
+          expense.vendor,
+          expense.notes,
+          expense.label,
+          propertyMap[expense.propertyId],
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(normalizedSearch);
+      })
+    : data;
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
@@ -90,6 +109,13 @@ export default function ExpensesTable({
             ))}
           </select>
         )}
+        <input
+          type="text"
+          className="p-1 bg-white dark:bg-gray-800 dark:text-white border-0 focus:outline-none focus:ring-0 placeholder-gray-500 dark:placeholder-gray-400"
+          placeholder="Search for an expense"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <input
           type="date"
           className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
@@ -117,7 +143,7 @@ export default function ExpensesTable({
           onChange={(e) => setVendor(e.target.value)}
         />
       </div>
-      {data.length ? (
+      {filteredData.length ? (
         <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-700">
@@ -133,7 +159,7 @@ export default function ExpensesTable({
             </tr>
           </thead>
           <tbody>
-            {data.map((r) => (
+            {filteredData.map((r) => (
               <tr key={r.id} className="border-t dark:border-gray-700">
                 {!propertyId && (
                   <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
