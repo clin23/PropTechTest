@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { useRouteTransition } from "./RouteProgress";
@@ -25,6 +25,29 @@ export default function PageTransition({ children, routeKey, className }: PageTr
   const reduceMotion = useReducedMotion();
   const { isNavigating, targetPath } = useRouteTransition();
   const skeleton = getRouteSkeleton(targetPath ?? routeKey);
+
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = rootRef.current;
+    if (!node) {
+      return;
+    }
+
+    const scrollContainer = node.closest<HTMLElement>("[data-scroll-container]");
+    if (!scrollContainer) {
+      return;
+    }
+
+    if (scrollContainer.scrollTop !== 0) {
+      if (typeof scrollContainer.scrollTo === "function") {
+        scrollContainer.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      } else {
+        scrollContainer.scrollTop = 0;
+        scrollContainer.scrollLeft = 0;
+      }
+    }
+  }, [routeKey]);
 
   const currentPathname = routeKey ? normalizePath(routeKey) : null;
   const targetPathname = targetPath ? normalizePath(targetPath) : null;
@@ -63,7 +86,7 @@ export default function PageTransition({ children, routeKey, className }: PageTr
       };
 
   return (
-    <div className="relative h-full">
+    <div ref={rootRef} className="relative h-full">
       <AnimatePresence mode="wait">
         <motion.div key={routeKey} {...animationProps} className={className}>
           {children}
