@@ -7,7 +7,6 @@ import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import type { PropertySummary } from "../types/property";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
-import type { ExpenseRow } from "../types/expense";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
 type FormState = {
@@ -55,16 +54,19 @@ export default function ExpenseForm({
 
   const computeInitialForm = useCallback((): FormState => {
     const typedDefaults = (defaults ?? {}) as Partial<FormState> & {
-      label?: string;
+      amount?: string | number;
+      gst?: string | number;
     };
-    const rawCategory = typedDefaults.category ?? "";
-    const categoryValue =
-      typeof rawCategory === "string" ? rawCategory : String(rawCategory ?? "");
+
+    const coerceString = (value: unknown): string =>
+      value === undefined || value === null ? "" : String(value);
+
+    const rawGroup =
+      typeof typedDefaults.group === "string" ? typedDefaults.group : "";
     const configuredGroup =
-      typeof typedDefaults.group === "string" &&
-      typedDefaults.group in EXPENSE_CATEGORIES
-        ? typedDefaults.group
-        : "";
+      rawGroup && rawGroup in EXPENSE_CATEGORIES ? rawGroup : "";
+
+    const categoryValue = coerceString(typedDefaults.category);
     const derivedGroup =
       configuredGroup ||
       (categoryValue
@@ -73,19 +75,37 @@ export default function ExpenseForm({
           )?.[0] ?? ""
         : "");
 
-    const coerceString = (value: unknown): string =>
-      value === undefined || value === null ? "" : String(value);
+    const defaultCategory =
+      derivedGroup && categoryValue
+        ? EXPENSE_CATEGORIES[derivedGroup]?.includes(categoryValue)
+          ? categoryValue
+          : ""
+        : "";
+
+    const defaultLabel = (() => {
+      if (defaultCategory) {
+        return "";
+      }
+      const providedLabel = coerceString(typedDefaults.label);
+      if (providedLabel) {
+        return providedLabel;
+      }
+      if (categoryValue) {
+        return categoryValue;
+      }
+      return "";
+    })();
 
     return {
-      propertyId: propertyId ?? (defaults?.propertyId ?? ""),
-      date: defaults?.date ?? "",
-      group: foundGroup ?? "",
+      propertyId: coerceString(propertyId ?? typedDefaults.propertyId),
+      date: coerceString(typedDefaults.date),
+      group: derivedGroup,
       category: defaultCategory,
-      vendor: defaults?.vendor ?? "",
-      amount: defaults?.amount !== undefined ? String(defaults.amount) : "",
-      gst: defaults?.gst !== undefined ? String(defaults.gst) : "",
-      notes: defaults?.notes ?? "",
-      label: (defaults as any)?.label ?? "",
+      vendor: coerceString(typedDefaults.vendor),
+      amount: coerceString(typedDefaults.amount),
+      gst: coerceString(typedDefaults.gst),
+      notes: coerceString(typedDefaults.notes),
+      label: defaultLabel,
       receipt: null,
     };
   }, [defaults, propertyId]);
@@ -114,10 +134,10 @@ export default function ExpenseForm({
 
   useEffect(() => {
     if (!open) return;
-    setForm(getInitialForm());
+    setForm(computeInitialForm());
     setError(null);
     setFileInputKey((key) => key + 1);
-  }, [propertyId, defaults, open]);
+  }, [open, computeInitialForm]);
 
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
