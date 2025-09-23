@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { listIncome, deleteIncome } from "../lib/api";
 import type { IncomeRow } from "../types/income";
 import EmptyState from "./EmptyState";
+import IncomeForm from "./IncomeForm";
 
 interface IncomesTableProps {
   propertyId: string;
@@ -51,6 +52,7 @@ export default function IncomesTable({
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [category, setCategory] = useState("");
+  const [editingIncome, setEditingIncome] = useState<IncomeRow | null>(null);
 
   const excludedCategories = useMemo(
     () => excludeCategories.map((value) => value.trim().toLowerCase()),
@@ -119,16 +121,46 @@ export default function IncomesTable({
                 <td className="p-2">{r.amount}</td>
                 <td className="p-2">{r.notes}</td>
                 <td className="p-2">
-                  <button
-                    className="text-red-600 underline dark:text-red-400"
-                    onClick={() => {
-                      if (confirm("Delete this income?")) {
-                        deleteMutation.mutate(r.id);
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                      onClick={() => setEditingIncome(r)}
+                      aria-label="Edit income"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path d="M13.586 2.586a2 2 0 0 1 2.828 2.828l-.793.793-2.828-2.828.793-.793zM12.379 4.207 3 13.586V17h3.414l9.379-9.379-3.414-3.414z" />
+                      </svg>
+                      <span className="sr-only">Edit income</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
+                      onClick={() => {
+                        if (confirm("are you sure?")) {
+                          deleteMutation.mutate(r.id);
+                        }
+                      }}
+                      aria-label="Delete income"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path d="M8.5 3a1.5 1.5 0 0 1 3 0H15a1 1 0 1 1 0 2h-1v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5H5a1 1 0 1 1 0-2h3.5zM8 5v10h4V5H8z" />
+                      </svg>
+                      <span className="sr-only">Delete income</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -137,6 +169,18 @@ export default function IncomesTable({
       ) : (
         <EmptyState message="No income records found." />
       )}
+      <IncomeForm
+        propertyId={propertyId}
+        open={Boolean(editingIncome)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingIncome(null);
+          }
+        }}
+        showTrigger={false}
+        initialIncome={editingIncome}
+        onCreated={() => setEditingIncome(null)}
+      />
     </div>
   );
 }

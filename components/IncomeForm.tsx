@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createIncome, listProperties } from "../lib/api";
+import { createIncome, listProperties, updateIncome } from "../lib/api";
 import { useToast } from "./ui/use-toast";
 import { INCOME_CATEGORIES } from "../lib/categories";
 import type { PropertySummary } from "../types/property";
+import type { IncomeRow } from "../types/income";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
+
+const findGroupForCategory = (category: string) => {
+  if (!category) return "";
+  const match = Object.entries(INCOME_CATEGORIES).find(([, values]) =>
+    values.includes(category)
+  );
+  return match ? match[0] : "";
+};
 
 type FormState = {
   propertyId: string;
@@ -25,6 +34,7 @@ interface IncomeFormProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
+  initialIncome?: IncomeRow | null;
 }
 
 export default function IncomeForm({
@@ -33,34 +43,57 @@ export default function IncomeForm({
   open: controlledOpen,
   onOpenChange,
   showTrigger = true,
+  initialIncome = null,
 }: IncomeFormProps) {
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
-  const getInitialForm = (): FormState => ({
-    propertyId: propertyId ?? "",
-    date: "",
-    group: "",
-    category: "",
-    amount: "",
-    notes: "",
-    label: "",
-  });
+  const isEditing = Boolean(initialIncome);
+  const getInitialForm = useCallback((): FormState => {
+    if (initialIncome) {
+      const group = initialIncome.category
+        ? findGroupForCategory(initialIncome.category)
+        : initialIncome.label
+        ? "Other"
+        : "";
+      return {
+        propertyId: propertyId ?? initialIncome.propertyId,
+        date: initialIncome.date ?? "",
+        group,
+        category: initialIncome.category ?? "",
+        amount:
+          typeof initialIncome.amount === "number"
+            ? initialIncome.amount.toString()
+            : "",
+        notes: initialIncome.notes ?? "",
+        label: initialIncome.label ?? "",
+      };
+    }
+    return {
+      propertyId: propertyId ?? "",
+      date: "",
+      group: "",
+      category: "",
+      amount: "",
+      notes: "",
+      label: "",
+    };
+  }, [initialIncome, propertyId]);
   const [form, setForm] = useState<FormState>(getInitialForm());
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     setForm(getInitialForm());
-  }, [propertyId]);
+  }, [getInitialForm]);
 
   useEffect(() => {
     if (!open) {
       setForm(getInitialForm());
       setError(null);
     }
-  }, [open]);
+  }, [getInitialForm, open]);
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
@@ -69,7 +102,9 @@ export default function IncomeForm({
 
   const mutation = useMutation({
     mutationFn: ({ propertyId, data }: { propertyId: string; data: any }) =>
-      createIncome(propertyId, data),
+      isEditing && initialIncome
+        ? updateIncome(propertyId, initialIncome.id, data)
+        : createIncome(propertyId, data),
     onSuccess: (_data, vars) => {
       toast({ title: "Income saved" });
       setOpen(false);
@@ -177,7 +212,7 @@ export default function IncomeForm({
             <label className="block text-gray-700 dark:text-gray-300">
               Category
               <select
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 disabled:opacity-70"
                 value={form.group}
                 onChange={(e) =>
                   setForm({
@@ -187,6 +222,7 @@ export default function IncomeForm({
                     label: "",
                   })
                 }
+                disabled={isEditing}
               >
                 <option value="">Select category</option>
                 {Object.keys(INCOME_CATEGORIES).map((group) => (
