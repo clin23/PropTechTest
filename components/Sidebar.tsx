@@ -132,7 +132,7 @@ export default function Sidebar() {
     <div
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      className={`relative h-screen bg-bg-base border-r border-[var(--border)] transition-all ${
+      className={`relative h-screen bg-bg-base border-r border-[var(--border)] ${
         open ? "w-64" : "w-16"
       }`}
     >

@@ -1,7 +1,7 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
 
 import Skeleton from '../Skeleton';
 import { SharedTile } from '../SharedTile';
@@ -13,24 +13,6 @@ import { getDashboard } from '../../lib/dashboard';
 import { formatMoney } from '../../lib/format';
 import Header from './Header';
 import type { DashboardDTO, PortfolioSummary } from '../../types/dashboard';
-
-const listVariants: Variants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.03,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { y: 8, opacity: 0 },
-  show: {
-    y: 0,
-    opacity: 1,
-    transition: { duration: 0.15, ease: 'easeOut' },
-  },
-};
 
 // Use the first day of the current month to show month-to-date data.
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
@@ -62,21 +44,13 @@ export default function DashboardPage() {
 
   return (
     <div className="relative">
-      <motion.div
-        initial={{ opacity: 1 }}
-        animate={{ opacity: ready ? 0 : 1 }}
-        transition={{ duration: 0.12 }}
-        className={`p-6 ${ready ? 'pointer-events-none absolute inset-0' : ''}`}
-      >
-        <DashboardSkeleton />
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: ready ? 1 : 0 }}
-        transition={{ duration: 0.12 }}
-        className="p-6"
-      >
-        {data && (
+      {!ready && (
+        <div className="p-6">
+          <DashboardSkeleton />
+        </div>
+      )}
+      {data && (
+        <div className="p-6">
           <DashboardContent
             data={data}
             from={from}
@@ -84,8 +58,8 @@ export default function DashboardPage() {
             fyLabel={fyLabel}
             fyHint={fyHint}
           />
-        )}
-      </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -103,87 +77,75 @@ function DashboardContent({
   fyLabel: string;
   fyHint: string;
 }) {
-  const reduceMotion = useReducedMotion();
-  const containerMotion = reduceMotion
-    ? {}
-    : { variants: listVariants, initial: 'hidden' as const, animate: 'show' as const };
-  const itemMotion = reduceMotion ? {} : { variants: itemVariants };
-  const headerMotion = reduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, y: 8 },
-        animate: { opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } },
-      };
-
   return (
     <div className="space-y-6">
-      <motion.div {...headerMotion}>
+      <div>
         <Header from={from} to={to} />
-      </motion.div>
+      </div>
       <div className="grid gap-6 lg:grid-cols-12">
-        <motion.div className="space-y-6 lg:col-span-8" {...containerMotion}>
-          <motion.section className="grid gap-4 md:grid-cols-2" {...containerMotion}>
-            <motion.div className="md:col-span-2" {...itemMotion}>
+        <div className="space-y-6 lg:col-span-8">
+          <section className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
               <PortfolioSummaryTile summary={data.portfolio} />
-            </motion.div>
-            <motion.div {...itemMotion}>
+            </div>
+            <div>
               <MetricCard
                 title="YTD Cashflow"
                 value={formatMoney(data.cashflow.ytdNet.amountCents)}
                 hint="Year to Date"
               />
-            </motion.div>
-            <motion.div {...itemMotion}>
+            </div>
+            <div>
               <MetricCard
                 title="MTD Cashflow"
                 value={formatMoney(data.cashflow.mtdNet.amountCents)}
                 hint="Month to Date"
               />
-            </motion.div>
-            <motion.div {...itemMotion}>
+            </div>
+            <div>
               <MetricCard
                 title={`${fyLabel} Income`}
                 value={formatMoney(data.cashflow.fyIncome.amountCents)}
                 hint={fyHint}
               />
-            </motion.div>
-            <motion.div {...itemMotion}>
+            </div>
+            <div>
               <MetricCard
                 title={`${fyLabel} Expenses`}
                 value={formatMoney(data.cashflow.fyExpense.amountCents)}
                 hint={fyHint}
               />
-            </motion.div>
-          </motion.section>
-          <motion.div {...itemMotion}>
+            </div>
+          </section>
+          <div>
             <CashflowLineChart data={data.lineSeries.points} />
-          </motion.div>
-          <motion.section className="grid gap-4 md:grid-cols-2" {...containerMotion}>
-            <motion.div {...itemMotion}>
+          </div>
+          <section className="grid gap-4 md:grid-cols-2">
+            <div>
               <PieCard
                 title="Income by Property"
                 data={data.incomeByProperty}
                 labelKey="propertyName"
                 valueKey="incomeCents"
               />
-            </motion.div>
-            <motion.div {...itemMotion}>
+            </div>
+            <div>
               <PieCard
                 title="Expenses by Category"
                 data={data.expensesByCategory}
                 labelKey="category"
                 valueKey="amountCents"
               />
-            </motion.div>
-          </motion.section>
-        </motion.div>
-        <motion.section className="space-y-4 lg:col-span-4" {...containerMotion}>
+            </div>
+          </section>
+        </div>
+        <section className="space-y-4 lg:col-span-4">
           {data.properties.map((p) => (
-            <motion.div key={p.propertyId} {...itemMotion}>
+            <div key={p.propertyId}>
               <PropertyCard data={p} />
-            </motion.div>
+            </div>
           ))}
-        </motion.section>
+        </section>
       </div>
     </div>
   );

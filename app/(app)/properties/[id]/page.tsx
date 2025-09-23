@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
 
 import { SharedTile } from "../../../../components/SharedTile";
 import IncomeForm from "../../../../components/IncomeForm";
@@ -52,24 +51,6 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   year: "numeric",
 });
 
-const listVariants: Variants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.03,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { y: 8, opacity: 0 },
-  show: {
-    y: 0,
-    opacity: 1,
-    transition: { duration: 0.15, ease: "easeOut" },
-  },
-};
-
 function formatRent(value?: number) {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return "—";
@@ -116,11 +97,6 @@ export default function PropertyPage() {
     return <div className="p-6">Failed to load property</div>;
   }
 
-  const reduceMotion = useReducedMotion();
-  const listMotionProps = reduceMotion
-    ? {}
-    : { variants: listVariants, initial: "hidden" as const, animate: "show" as const };
-  const itemMotionProps = reduceMotion ? {} : { variants: itemVariants };
   const ready = Boolean(property);
 
   const handleTabSelect = (tab: string) => {
@@ -162,30 +138,19 @@ export default function PropertyPage() {
 
   return (
     <div className="relative">
-      <motion.div
-        initial={{ opacity: 1 }}
-        animate={{ opacity: ready ? 0 : 1 }}
-        transition={{ duration: 0.12 }}
-        className={`p-6 ${ready ? "pointer-events-none absolute inset-0" : ""}`}
-      >
-        <PropertyPageSkeleton />
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: ready ? 1 : 0 }}
-        transition={{ duration: 0.12 }}
-        className="p-6"
-      >
-        {property && (
+      {!ready && (
+        <div className="p-6">
+          <PropertyPageSkeleton />
+        </div>
+      )}
+      {property && (
+        <div className="p-6">
           <div className="space-y-6">
-            <motion.section
-              className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]"
-              {...listMotionProps}
-            >
-              <motion.div className="lg:col-span-2" {...itemMotionProps}>
+            <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
+              <div className="lg:col-span-2">
                 <PropertySummaryTile property={property} />
-              </motion.div>
-              <motion.div {...itemMotionProps}>
+              </div>
+              <div>
                 <PropertyHero
                   property={property}
                   onEdit={() => setEditOpen(true)}
@@ -193,8 +158,8 @@ export default function PropertyPage() {
                   onAddExpense={() => setExpenseOpen(true)}
                   onUploadDocument={() => setDocumentOpen(true)}
                 />
-              </motion.div>
-              <motion.div {...itemMotionProps}>
+              </div>
+              <div>
                 <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
                   <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
                     <ScrollableSectionBar
@@ -214,15 +179,15 @@ export default function PropertyPage() {
                     {renderSection(resolvedTab)}
                   </div>
                 </section>
-              </motion.div>
-            </motion.section>
+              </div>
+            </section>
             <IncomeForm propertyId={id} open={incomeOpen} onOpenChange={setIncomeOpen} showTrigger={false} />
             <ExpenseForm propertyId={id} open={expenseOpen} onOpenChange={setExpenseOpen} showTrigger={false} />
             <DocumentUploadModal propertyId={id} open={documentOpen} onClose={() => setDocumentOpen(false)} />
             <PropertyEditModal property={property} open={editOpen} onClose={() => setEditOpen(false)} />
           </div>
-        )}
-      </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -266,4 +231,3 @@ function PropertySummaryTile({ property }: { property: PropertySummary }) {
     </SharedTile>
   );
 }
-

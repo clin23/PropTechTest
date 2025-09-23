@@ -66,7 +66,7 @@ export default function DashboardPnlMiniChart() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex justify-between text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-text-secondary">
+      <div className="flex justify-between text-xs mt-2 opacity-0 group-hover:opacity-100 text-text-secondary">
         <div>Income: {totals.income}</div>
         <div>Expenses: {totals.expenses}</div>
         <div>Net: {totals.net}</div>

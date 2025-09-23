@@ -23,11 +23,7 @@ export default function PropertiesPage() {
           <PropertiesGridSkeleton />
         </div>
       )}
-      <div
-        className={`p-6 space-y-4 transition-opacity duration-200 ${
-          isPending ? 'opacity-0' : 'opacity-100'
-        }`}
-      >
+      <div className={`p-6 space-y-4 ${isPending ? 'opacity-0' : 'opacity-100'}`}>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Properties</h1>
           <Link
