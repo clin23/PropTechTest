@@ -54,9 +54,7 @@ function RouteProgressBar({ loading }: { loading: boolean }) {
       aria-hidden
       className="pointer-events-none fixed left-0 top-0 z-50 h-0.5 w-full bg-transparent"
     >
-      <div
-        className={`h-full ${loading ? "w-full" : "w-0"} bg-black/60 transition-[width] duration-200`}
-      />
+      <div className={`h-full ${loading ? "w-full" : "w-0"} bg-black/60`} />
     </div>
   );
 }

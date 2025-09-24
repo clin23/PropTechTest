@@ -119,15 +119,15 @@ export default function ScrollableSectionBar({
       tablist:
         "flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap rounded-full border border-gray-200 bg-white/90 px-3 py-2 text-center shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/75 dark:border-gray-700 dark:bg-gray-900/90",
       tabBase:
-        "flex-shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600",
+        "flex-shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600",
       tabActive:
         "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900",
       tabInactive:
         "border-transparent bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
       fadeLeft:
-        "pointer-events-none absolute inset-y-1 left-1 w-6 rounded-l-full bg-gradient-to-r from-white/90 via-white/60 to-transparent transition-opacity duration-200 supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60",
+        "pointer-events-none absolute inset-y-1 left-1 w-6 rounded-l-full bg-gradient-to-r from-white/90 via-white/60 to-transparent supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60",
       fadeRight:
-        "pointer-events-none absolute inset-y-1 right-1 w-6 rounded-r-full bg-gradient-to-l from-white/90 via-white/60 to-transparent transition-opacity duration-200 supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60",
+        "pointer-events-none absolute inset-y-1 right-1 w-6 rounded-r-full bg-gradient-to-l from-white/90 via-white/60 to-transparent supports-[backdrop-filter]:from-white/70 dark:from-gray-900/90 dark:via-gray-900/60",
     },
     contained: {
       root: "flex w-full justify-start",
@@ -135,15 +135,15 @@ export default function ScrollableSectionBar({
       tablist:
         "flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap pb-4",
       tabBase:
-        "flex-shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-gray-600 dark:focus:ring-offset-gray-900",
+        "flex-shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-gray-600 dark:focus:ring-offset-gray-900",
       tabActive:
         "bg-gray-900 text-white shadow-sm dark:bg-gray-100 dark:text-gray-900",
       tabInactive:
         "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white",
       fadeLeft:
-        "pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/70 to-transparent transition-opacity duration-200 dark:from-gray-900 dark:via-gray-900/70",
+        "pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/70 to-transparent dark:from-gray-900 dark:via-gray-900/70",
       fadeRight:
-        "pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent transition-opacity duration-200 dark:from-gray-900 dark:via-gray-900/70",
+        "pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent dark:from-gray-900 dark:via-gray-900/70",
     },
   };
 

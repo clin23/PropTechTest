@@ -97,7 +97,7 @@ export default function ExpensesTable({
   );
 
   const iconButtonClass =
-    "rounded p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100";
+    "rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100";
 
   const editDefaults = useMemo(() => {
     if (!editingExpense) return undefined;
@@ -330,7 +330,7 @@ export default function ExpensesTable({
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleteMutation.isPending}
               >
@@ -338,7 +338,7 @@ export default function ExpensesTable({
               </button>
               <button
                 type="button"
-                className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => {
                   if (!deleteTarget) return;
                   deleteMutation.mutate(deleteTarget.id, {

@@ -33,11 +33,7 @@ export default function TasksPage() {
           <TasksSkeleton />
         </div>
       )}
-      <div
-        className={`p-6 space-y-4 transition-opacity duration-200 ${
-          isLoading ? "opacity-0" : "opacity-100"
-        }`}
-      >
+      <div className={`p-6 space-y-4 ${isLoading ? "opacity-0" : "opacity-100"}`}>
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{title}</h1>
           <Clock className="text-2xl font-semibold" />

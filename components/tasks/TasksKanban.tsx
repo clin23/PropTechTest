@@ -28,7 +28,7 @@ import ColumnDeleteModal from "./ColumnDeleteModal";
 import ColumnCreateModal from "./ColumnCreateModal";
 
 const TAB_BASE_CLASSES =
-  "rounded-full border px-4 py-1.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600";
+  "rounded-full border px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600";
 const TAB_ACTIVE_CLASSES =
   "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900";
 const TAB_INACTIVE_CLASSES =
@@ -978,7 +978,7 @@ function TaskCompletionPrompt({
             type="button"
             onClick={onKeep}
             disabled={archiving}
-            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
           >
             Keep in list
           </button>
@@ -986,7 +986,7 @@ function TaskCompletionPrompt({
             type="button"
             onClick={onArchive}
             disabled={archiving}
-            className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+            className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
           >
             {archiving ? "Archiving…" : "Archive task"}
           </button>
@@ -1019,7 +1019,7 @@ function PropertySelectModal({
 
   const optionClassName = (isActive: boolean) =>
     [
-      "flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-2 text-sm transition",
+      "flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-2 text-sm",
       isActive
         ? "border-gray-900 bg-gray-900 text-white shadow-sm dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
         : "border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800",
@@ -1079,7 +1079,7 @@ function PropertySelectModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 dark:focus:ring-gray-600"
+            className="rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 dark:focus:ring-gray-600"
             aria-label="Close property selector"
           >
             ×
@@ -1131,7 +1131,7 @@ function PropertySelectModal({
                               </button>
                               <span
                                 {...draggableProvided.dragHandleProps}
-                                className="ml-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-lg text-gray-400 transition hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:cursor-grabbing cursor-grab dark:text-gray-500 dark:hover:text-gray-300 dark:focus-visible:ring-gray-600 dark:focus-visible:ring-offset-gray-900"
+                                className="ml-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-lg text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:cursor-grabbing cursor-grab dark:text-gray-500 dark:hover:text-gray-300 dark:focus-visible:ring-gray-600 dark:focus-visible:ring-offset-gray-900"
                                 aria-label={`Reorder ${property.address}`}
                               >
                                 <span aria-hidden="true">⋮⋮</span>

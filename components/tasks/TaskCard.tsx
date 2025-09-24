@@ -46,7 +46,7 @@ export default function TaskCard({
 
   return (
     <div
-      className={`group relative flex flex-col rounded border p-2 transition-colors ${
+      className={`group relative flex flex-col rounded border p-2 ${
         onClick ? "cursor-pointer" : ""
       } ${dueSoon ? "border-yellow-500" : ""}`}
       onClick={onClick}
@@ -82,10 +82,10 @@ export default function TaskCard({
         )}
       </div>
       {!completed && onComplete && (
-        <div className="max-h-0 overflow-hidden transition-[max-height,padding] duration-200 ease-out group-focus-within:max-h-16 group-focus-within:pt-2 group-hover:max-h-16 group-hover:pt-2">
+        <div className="max-h-0 overflow-hidden group-focus-within:max-h-16 group-focus-within:pt-2 group-hover:max-h-16 group-hover:pt-2">
           <button
             type="button"
-            className="w-full rounded bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition hover:bg-gray-700 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 group-focus-within:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 dark:focus-visible:ring-gray-500"
+            className="w-full rounded bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 hover:bg-gray-700 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 group-focus-within:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 dark:focus-visible:ring-gray-500"
             onClick={(event) => {
               event.stopPropagation();
               if (isCompleting) return;
