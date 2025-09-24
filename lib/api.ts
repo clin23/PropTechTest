@@ -158,7 +158,13 @@ export const listLedger = (propertyId: string) =>
   api<LedgerEntry[]>(`/rent-ledger?propertyId=${propertyId}`);
 export const updateLedgerEntry = (
   id: string,
-  payload: { amount?: number; date?: string }
+  payload: {
+    amount?: number;
+    date?: string;
+    status?: "paid" | "unpaid" | "follow_up";
+    evidenceUrl?: string | null;
+    evidenceName?: string | null;
+  }
 ) =>
   api(`/rent-ledger/${id}`, {
     method: 'PATCH',

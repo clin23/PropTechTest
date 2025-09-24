@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createIncome, listProperties, updateIncome } from "../lib/api";
+import {
+  createIncome,
+  listProperties,
+  updateIncome,
+  uploadFile,
+} from "../lib/api";
 import { useToast } from "./ui/use-toast";
 import { INCOME_CATEGORIES } from "../lib/categories";
 import type { PropertySummary } from "../types/property";
@@ -26,6 +31,8 @@ type FormState = {
   amount: string;
   notes: string;
   label: string;
+  evidenceUrl: string;
+  evidenceName: string;
 };
 
 interface IncomeFormProps {
@@ -68,6 +75,8 @@ export default function IncomeForm({
             : "",
         notes: initialIncome.notes ?? "",
         label: initialIncome.label ?? "",
+        evidenceUrl: initialIncome.evidenceUrl ?? "",
+        evidenceName: initialIncome.evidenceName ?? "",
       };
     }
     return {
@@ -78,19 +87,24 @@ export default function IncomeForm({
       amount: "",
       notes: "",
       label: "",
+      evidenceUrl: "",
+      evidenceName: "",
     };
   }, [initialIncome, propertyId]);
   const [form, setForm] = useState<FormState>(getInitialForm());
   const [error, setError] = useState<string | null>(null);
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     setForm(getInitialForm());
+    setEvidenceFile(null);
   }, [getInitialForm]);
 
   useEffect(() => {
     if (!open) {
       setForm(getInitialForm());
+      setEvidenceFile(null);
       setError(null);
     }
   }, [getInitialForm, open]);
@@ -109,6 +123,7 @@ export default function IncomeForm({
       toast({ title: "Income saved" });
       setOpen(false);
       setForm(getInitialForm());
+      setEvidenceFile(null);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["income", vars.propertyId] });
       queryClient.invalidateQueries({ queryKey: ["pnl", vars.propertyId] });
@@ -124,6 +139,7 @@ export default function IncomeForm({
   const handleClose = () => {
     setOpen(false);
     setForm(getInitialForm());
+    setEvidenceFile(null);
     setError(null);
   };
 
@@ -151,7 +167,7 @@ export default function IncomeForm({
           <form
             className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 w-full max-w-md max-h-[90vh] p-4 space-y-2 overflow-y-auto rounded-lg shadow-lg"
             onClick={(e) => e.stopPropagation()}
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               setError(null);
               const targetPropertyId = propertyId ?? form.propertyId;
@@ -171,6 +187,26 @@ export default function IncomeForm({
                 setError("Amount must be a number");
                 return;
               }
+
+              let evidenceUrl = form.evidenceUrl;
+              let evidenceName = form.evidenceName;
+              if (evidenceFile) {
+                try {
+                  const upload = await uploadFile(evidenceFile);
+                  evidenceUrl = upload.url;
+                  evidenceName = evidenceFile.name;
+                } catch (err: any) {
+                  const message =
+                    err instanceof Error ? err.message : "Failed to upload evidence";
+                  setError(message);
+                  toast({ title: "Failed to upload evidence", description: message });
+                  return;
+                }
+              }
+
+              const shouldRemoveExistingEvidence =
+                !evidenceFile && !evidenceUrl && !!initialIncome?.evidenceUrl;
+
               mutation.mutate({
                 propertyId: targetPropertyId,
                 data: {
@@ -179,6 +215,12 @@ export default function IncomeForm({
                   amount: parseFloat(form.amount),
                   notes: form.notes,
                   label: form.label,
+                  evidenceUrl: shouldRemoveExistingEvidence
+                    ? null
+                    : evidenceUrl || undefined,
+                  evidenceName: shouldRemoveExistingEvidence
+                    ? null
+                    : evidenceName || undefined,
                 },
               });
             }}
@@ -304,6 +346,60 @@ export default function IncomeForm({
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
               />
             </label>
+            <div className="space-y-1">
+              <label className="block text-gray-700 dark:text-gray-300">
+                Evidence
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  className="mt-1 block w-full text-sm text-gray-700 file:mr-4 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-300 dark:file:bg-gray-700 dark:file:text-gray-100"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    setEvidenceFile(file);
+                    if (file) {
+                      setForm({
+                        ...form,
+                        evidenceName: file.name,
+                      });
+                    }
+                  }}
+                />
+              </label>
+              {(evidenceFile || form.evidenceUrl) && (
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                  {evidenceFile ? (
+                    <span>Selected: {evidenceFile.name}</span>
+                  ) : (
+                    form.evidenceUrl && (
+                      <a
+                        href={form.evidenceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline hover:text-blue-500 dark:text-blue-300"
+                      >
+                        {form.evidenceName || "View current evidence"}
+                      </a>
+                    )
+                  )}
+                  {(form.evidenceUrl || evidenceFile) && (
+                    <button
+                      type="button"
+                      className="rounded border border-transparent bg-transparent px-2 py-1 text-xs text-red-600 hover:underline dark:text-red-400"
+                      onClick={() => {
+                        setEvidenceFile(null);
+                        setForm({
+                          ...form,
+                          evidenceUrl: "",
+                          evidenceName: "",
+                        });
+                      }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             <label className="block text-gray-700 dark:text-gray-300">
               Notes
               <textarea

@@ -13,7 +13,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   try {
     const body = await req.json();
     const parsed = zIncome.omit({ propertyId: true }).parse(body);
-    const income = { id: randomUUID(), propertyId: params.id, ...parsed };
+    const cleaned = { ...parsed } as any;
+    if (cleaned.evidenceUrl == null || cleaned.evidenceUrl === "") {
+      delete cleaned.evidenceUrl;
+    }
+    if (cleaned.evidenceName == null || cleaned.evidenceName === "") {
+      delete cleaned.evidenceName;
+    }
+    const income = { id: randomUUID(), propertyId: params.id, ...cleaned };
     await prisma.mockData.create({
       data: { id: income.id, type: 'income', data: income },
     });

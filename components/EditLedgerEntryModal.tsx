@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { LedgerEntry } from "../types/property";
+import type { LedgerEntry, LedgerStatus } from "../types/property";
 
 interface Props {
   entry: LedgerEntry;
@@ -12,22 +12,32 @@ interface Props {
 export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) {
   const [datePaid, setDatePaid] = useState(entry.date);
   const [amount, setAmount] = useState(entry.amount.toString());
+  const [status, setStatus] = useState<LedgerStatus>(entry.status);
 
   useEffect(() => {
     setDatePaid(entry.date);
     setAmount(entry.amount.toString());
+    setStatus(entry.status);
   }, [entry]);
 
-  const daysLate = Math.max(
-    0,
-    Math.floor(
-      (new Date(datePaid).getTime() - new Date(entry.date).getTime()) /
-        (1000 * 60 * 60 * 24)
-    )
-  );
+  const daysLate =
+    status === "paid"
+      ? Math.max(
+          0,
+          Math.floor(
+            (new Date(datePaid).getTime() - new Date(entry.date).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        )
+      : 0;
 
   const handleSave = async () => {
-    await onSave({ ...entry, date: datePaid, amount: parseFloat(amount) || 0 });
+    await onSave({
+      ...entry,
+      date: datePaid,
+      amount: parseFloat(amount) || 0,
+      status,
+    });
   };
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -54,6 +64,18 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
           )}
         </div>
         <div className="mb-2">
+          <label className="mb-1 block text-sm">Status</label>
+          <select
+            className="w-full rounded border p-2 dark:bg-gray-700 dark:border-gray-600"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as LedgerStatus)}
+          >
+            <option value="paid">Paid</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="follow_up">Follow up</option>
+          </select>
+        </div>
+        <div className="mb-2">
           <label className="mb-1 block text-sm">Amount</label>
           <input
             type="number"
@@ -63,8 +85,17 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
           />
         </div>
         <div className="mb-2 text-sm">
-          <p>Description: {entry.description}</p>
           <p>Balance: {entry.balance}</p>
+          {entry.evidenceUrl && (
+            <a
+              href={entry.evidenceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline hover:text-blue-500 dark:text-blue-300"
+            >
+              View evidence
+            </a>
+          )}
         </div>
         <div className="mt-4 flex justify-end gap-2">
           <button

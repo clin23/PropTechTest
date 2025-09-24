@@ -48,6 +48,8 @@ export const zIncome = z.object({
   amount: z.number().nonnegative(),
   notes: z.string().optional(),
   label: z.string().optional(),
+  evidenceUrl: z.string().optional().nullable(),
+  evidenceName: z.string().optional().nullable(),
 });
 
 export const vendorSchema = z.object({

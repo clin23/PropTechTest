@@ -7,4 +7,6 @@ export interface IncomeRow {
   amount: number;
   notes?: string;
   label?: string;
+  evidenceUrl?: string;
+  evidenceName?: string;
 }

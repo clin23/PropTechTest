@@ -1,4 +1,4 @@
-import { rentLedger, properties, isActiveProperty } from '../store';
+import { rentLedger, properties, isActiveProperty, incomes } from '../store';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -12,12 +12,23 @@ export async function GET(req: Request) {
     .filter((e) => allowedIds.includes(e.propertyId))
     .map((e) => {
       balance += e.status === 'paid' ? e.amount : 0;
+      const matchingIncome = incomes
+        .filter((income) => income.propertyId === e.propertyId && income.date === e.dueDate)
+        .find((income) => income.evidenceUrl);
+      const evidenceUrl = e.evidenceUrl ?? matchingIncome?.evidenceUrl;
+      const evidenceName =
+        e.evidenceName ??
+        matchingIncome?.evidenceName ??
+        matchingIncome?.label ??
+        matchingIncome?.category;
       return {
         id: e.id,
         date: e.dueDate,
-        description: e.status === 'paid' ? 'Rent paid' : 'Rent due',
         amount: e.amount,
         balance,
+        status: e.status,
+        evidenceUrl,
+        evidenceName,
       };
     });
   return Response.json(entries);
