@@ -28,25 +28,36 @@ const renderSliceLabel = ({ value }: PieLabelRenderProps) => {
 };
 
 export default function PieCard<T extends Record<string, any>>({ title, data, labelKey, valueKey }: PieCardProps<T>) {
+  const hasData = data.some((item) => {
+    const value = item[valueKey];
+    return typeof value === 'number' && value > 0;
+  });
+
   return (
     <div className="p-4 rounded-2xl card">
       <div className="mb-4 text-sm text-text-secondary">{title}</div>
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey={valueKey as string}
-            nameKey={labelKey as string}
-            label={renderSliceLabel}
-          >
-            {data.map((_, idx) => (
-              <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(v: number) => formatMoney(v)} />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
+      {hasData ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey={valueKey as string}
+              nameKey={labelKey as string}
+              label={renderSliceLabel}
+            >
+              {data.map((_, idx) => (
+                <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(v: number) => formatMoney(v)} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[300px] items-center justify-center px-4 text-center text-sm text-text-secondary">
+          log data to see visualisations!
+        </div>
+      )}
     </div>
   );
 }
