@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   DragDropContext,
@@ -409,9 +409,37 @@ export default function TasksKanban({
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
+  const menuContainersRef = useRef<Record<string, HTMLDivElement | null>>({});
   const [renaming, setRenaming] = useState<Column | null>(null);
   const [deleting, setDeleting] = useState<Column | null>(null);
   const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!menuColumn) return;
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const activeContainer = menuContainersRef.current[menuColumn];
+      if (!activeContainer) {
+        setMenuColumn(null);
+        return;
+      }
+
+      const target = event.target;
+      if (target instanceof Node && activeContainer.contains(target)) {
+        return;
+      }
+
+      setMenuColumn(null);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [menuColumn]);
 
   const updateColumnsForCurrentScope = (
     updater: (columns: Column[]) => Column[]
@@ -695,7 +723,16 @@ export default function TasksKanban({
               <div key={col.id} className="w-64 flex-shrink-0">
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="font-semibold">{col.title}</h2>
-                  <div className="relative">
+                  <div
+                    className="relative"
+                    ref={(element) => {
+                      if (element) {
+                        menuContainersRef.current[col.id] = element;
+                      } else {
+                        delete menuContainersRef.current[col.id];
+                      }
+                    }}
+                  >
                     <button
                       onClick={() =>
                         setMenuColumn(menuColumn === col.id ? null : col.id)

@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { prisma } from '../../../../../lib/prisma';
 import { zIncome } from '../../../../../lib/validation';
+import { syncLedgerForIncome, type IncomeRecord } from './ledger';
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const rows = await prisma.mockData.findMany({ where: { type: 'income' } });
@@ -20,7 +21,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (cleaned.evidenceName == null || cleaned.evidenceName === "") {
       delete cleaned.evidenceName;
     }
-    const income = { id: randomUUID(), propertyId: params.id, ...cleaned };
+    const income: IncomeRecord = {
+      id: randomUUID(),
+      propertyId: params.id,
+      ...cleaned,
+    };
     await prisma.mockData.create({
       data: { id: income.id, type: 'income', data: income },
     });
@@ -31,6 +36,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         await prisma.mockData.delete({ where: { id: n.id } });
       }
     }
+    await syncLedgerForIncome(income);
     return Response.json(income);
   } catch (err: any) {
     return new Response(err.message, { status: 400 });
