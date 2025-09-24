@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import type { PropertySummary } from "../types/property";
 
 interface Props {
@@ -9,25 +8,22 @@ interface Props {
 
 export default function PropertyOverviewCard({ property }: Props) {
   return (
-    <div className="border rounded overflow-hidden h-64 grid grid-rows-2">
+    <div className="grid h-64 grid-rows-[65%_35%] overflow-hidden rounded border bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <img
         src={property.imageUrl || "/default-house.svg"}
         alt={`Photo of ${property.address}`}
-        className="w-full h-full object-cover"
+        className="h-full w-full object-cover"
       />
-      <div className="p-4 flex flex-col justify-between">
+      <div className="flex flex-col justify-between gap-3 bg-slate-50 p-4 dark:bg-slate-900">
         <div>
-          <h2 className="text-lg font-semibold">
-            <Link
-              href={`/properties/${property.id}`}
-              className="text-blue-600 underline"
-            >
-              {property.address}
-            </Link>
+          <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            {property.address}
           </h2>
-          <p>Tenant: {property.tenant}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Tenant: {property.tenant}</p>
         </div>
-        <p className="text-right font-semibold">${property.rent}/week</p>
+        <p className="text-right text-lg font-semibold text-slate-900 dark:text-slate-100">
+          ${property.rent}/week
+        </p>
       </div>
     </div>
   );
