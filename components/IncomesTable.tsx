@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { listIncome, deleteIncome } from "../lib/api";
 import type { IncomeRow } from "../types/income";
 import EmptyState from "./EmptyState";
+import EvidenceLink from "./EvidenceLink";
 import IncomeForm from "./IncomeForm";
 
 interface IncomesTableProps {
@@ -108,7 +109,7 @@ export default function IncomesTable({
             <tr className="bg-gray-100 dark:bg-gray-700">
               <th className="p-2 text-left">Date</th>
               <th className="p-2 text-left">Category</th>
-              <th className="p-2 text-left">Evidence</th>
+              <th className="p-2 text-center">Evidence</th>
               <th className="p-2 text-left">Amount</th>
               <th className="p-2 text-left">Notes</th>
               <th className="p-2 text-left">Actions</th>
@@ -119,18 +120,15 @@ export default function IncomesTable({
               <tr key={r.id} className="border-t dark:border-gray-700">
                 <td className="p-2">{r.date}</td>
                 <td className="p-2">{r.category || r.label || "—"}</td>
-                <td className="p-2">
+                <td className="p-2 text-center">
                   {r.evidenceUrl ? (
-                    <a
+                    <EvidenceLink
                       href={r.evidenceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline hover:text-blue-500 dark:text-blue-300"
-                    >
-                      {r.evidenceName || "View"}
-                    </a>
+                      fileName={r.evidenceName}
+                      className="mx-auto"
+                    />
                   ) : (
-                    "—"
+                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                   )}
                 </td>
                 <td className="p-2">{r.amount}</td>
