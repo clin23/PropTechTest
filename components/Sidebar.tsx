@@ -19,7 +19,7 @@ export default function Sidebar() {
 
   const links = [
     {
-      href: "/",
+      href: "/dashboard",
       label: "Dashboard",
       icon: (
         <svg
@@ -139,7 +139,14 @@ export default function Sidebar() {
       <div className="flex flex-col h-full justify-between">
         <nav className="mt-12 space-y-1">
           {links.map((link) => {
-            const active = pathname === link.href;
+            const childLinks = Array.isArray(link.children) ? link.children : [];
+            const childActive = childLinks.some(
+              (child) => pathname === child.href || pathname.startsWith(`${child.href}/`)
+            );
+            const active =
+              pathname === link.href ||
+              pathname.startsWith(`${link.href}/`) ||
+              childActive;
             return (
               <div key={link.href}>
                 <Link
@@ -166,9 +173,9 @@ export default function Sidebar() {
                     {link.label}
                   </span>
                 </Link>
-                {open && link.children && (
+                {open && childLinks.length > 0 && (
                   <div className="ml-8 mt-1 space-y-1">
-                    {link.children.map((child) => (
+                    {childLinks.map((child) => (
                       <Link
                         key={child.href}
                         href={child.href}
@@ -183,7 +190,11 @@ export default function Sidebar() {
                             });
                           }
                         }}
-                        className="block px-2 py-1 text-sm rounded hover:bg-[var(--hover)]"
+                        className={`block px-2 py-1 text-sm rounded hover:bg-[var(--hover)] ${
+                          pathname === child.href || pathname.startsWith(`${child.href}/`)
+                            ? "bg-[rgba(37,99,235,.08)] text-[var(--primary)]"
+                            : ""
+                        }`}
                       >
                         {child.label}
                       </Link>
