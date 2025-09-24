@@ -1,4 +1,9 @@
 import { prisma } from '../../../../../../lib/prisma';
+import {
+  type IncomeRecord,
+  removeLedgerForIncome,
+  syncLedgerForIncome,
+} from '../ledger';
 
 export async function GET(
   _req: Request,
@@ -35,6 +40,7 @@ export async function PATCH(
     where: { id: params.incomeId },
     data: { data },
   });
+  await syncLedgerForIncome(data as IncomeRecord, row.data as IncomeRecord);
   return Response.json(data);
 }
 
@@ -46,6 +52,7 @@ export async function DELETE(
   if (!row || (row.data as any).propertyId !== params.id) {
     return new Response(null, { status: 404 });
   }
+  await removeLedgerForIncome(row.data as IncomeRecord);
   await prisma.mockData.delete({ where: { id: params.incomeId } });
   return new Response(null, { status: 204 });
 }
