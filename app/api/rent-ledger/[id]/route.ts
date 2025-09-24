@@ -4,6 +4,9 @@ import { z } from 'zod';
 const zPatch = z.object({
   amount: z.number().optional(),
   date: z.string().optional(),
+  status: z.enum(["paid", "unpaid", "follow_up"]).optional(),
+  evidenceUrl: z.string().optional().nullable(),
+  evidenceName: z.string().optional().nullable(),
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -17,9 +20,28 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
     if (body.date) {
       data.dueDate = body.date;
-      if (data.status === 'paid') {
-        data.paidDate = body.date;
+    }
+    if (body.status) {
+      data.status = body.status;
+    }
+    if (body.evidenceUrl !== undefined) {
+      if (body.evidenceUrl) {
+        data.evidenceUrl = body.evidenceUrl;
+      } else {
+        delete data.evidenceUrl;
       }
+    }
+    if (body.evidenceName !== undefined) {
+      if (body.evidenceName) {
+        data.evidenceName = body.evidenceName;
+      } else {
+        delete data.evidenceName;
+      }
+    }
+    if (data.status === 'paid') {
+      data.paidDate = body.date ?? data.dueDate;
+    } else if (data.paidDate) {
+      delete data.paidDate;
     }
     await prisma.mockData.update({ where: { id: params.id }, data: { data } });
     return Response.json({ id: params.id });

@@ -14,12 +14,17 @@ export interface PropertySummary {
   events: PropertyEvent[];
 }
 
+export type LedgerStatus = "paid" | "unpaid" | "follow_up";
+
 export interface LedgerEntry {
   id: string;
   date: string;
-  description: string;
   amount: number;
   balance: number;
+  status: LedgerStatus;
+  evidenceUrl?: string;
+  evidenceName?: string;
+  description?: string;
 }
 
 export interface PropertyDocument {

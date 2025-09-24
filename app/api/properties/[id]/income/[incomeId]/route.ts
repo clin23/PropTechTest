@@ -21,6 +21,16 @@ export async function PATCH(
     return Response.json(null);
   }
   const data = { ...row.data, ...body } as any;
+  if (Object.prototype.hasOwnProperty.call(body, "evidenceUrl")) {
+    if (body.evidenceUrl == null || body.evidenceUrl === "") {
+      delete data.evidenceUrl;
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(body, "evidenceName")) {
+    if (body.evidenceName == null || body.evidenceName === "") {
+      delete data.evidenceName;
+    }
+  }
   await prisma.mockData.update({
     where: { id: params.incomeId },
     data: { data },

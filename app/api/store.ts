@@ -30,6 +30,8 @@ export type Income = {
   amount: number;
   notes?: string;
   label?: string;
+  evidenceUrl?: string;
+  evidenceName?: string;
 };
 import { DocumentTag } from '../../types/document';
 
@@ -62,8 +64,10 @@ export type RentEntry = {
   tenantId: string;
   amount: number;
   dueDate: string;
-  status: 'paid' | 'late';
+  status: 'paid' | 'unpaid' | 'follow_up';
   paidDate?: string;
+  evidenceUrl?: string;
+  evidenceName?: string;
 };
 export type TenantNote = {
   id: string;
@@ -411,7 +415,14 @@ const initialRentLedger: RentEntry[] = [
   { id: 'rent2-may', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2025-05-01', status: 'paid', paidDate: '2025-05-01' },
   { id: 'rent2-jun', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2025-06-01', status: 'paid', paidDate: '2025-06-01' },
   { id: 'rent2-jul', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2025-07-01', status: 'paid', paidDate: '2025-07-01' },
-  { id: 'rent2-aug', propertyId: '2', tenantId: 'tenant2', amount: 950, dueDate: '2025-08-01', status: 'late' },
+  {
+    id: 'rent2-aug',
+    propertyId: '2',
+    tenantId: 'tenant2',
+    amount: 950,
+    dueDate: '2025-08-01',
+    status: 'follow_up',
+  },
 ];
 
 const initialTenantNotes: TenantNote[] = [
