@@ -108,6 +108,7 @@ export default function IncomesTable({
             <tr className="bg-gray-100 dark:bg-gray-700">
               <th className="p-2 text-left">Date</th>
               <th className="p-2 text-left">Category</th>
+              <th className="p-2 text-left">Evidence</th>
               <th className="p-2 text-left">Amount</th>
               <th className="p-2 text-left">Notes</th>
               <th className="p-2 text-left">Actions</th>
@@ -117,7 +118,21 @@ export default function IncomesTable({
             {rows.map((r) => (
               <tr key={r.id} className="border-t dark:border-gray-700">
                 <td className="p-2">{r.date}</td>
-                <td className="p-2">{r.category}</td>
+                <td className="p-2">{r.category || r.label || "—"}</td>
+                <td className="p-2">
+                  {r.evidenceUrl ? (
+                    <a
+                      href={r.evidenceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline hover:text-blue-500 dark:text-blue-300"
+                    >
+                      {r.evidenceName || "View"}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td className="p-2">{r.amount}</td>
                 <td className="p-2">{r.notes}</td>
                 <td className="p-2">
