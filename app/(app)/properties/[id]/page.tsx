@@ -167,6 +167,7 @@ export default function PropertyPage() {
                       activeTab={resolvedTab}
                       onTabSelect={handleTabSelect}
                       variant="contained"
+                      className="pt-3 pb-2 sm:pt-4 sm:pb-3"
                     />
                   </div>
                   <div
