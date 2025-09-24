@@ -132,7 +132,7 @@ export default function Sidebar() {
     <div
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      className={`relative h-screen bg-bg-base border-r border-[var(--border)] ${
+      className={`relative h-screen bg-bg-base border-r border-[var(--border)] overflow-hidden transition-[width] duration-300 ease-in-out ${
         open ? "w-64" : "w-16"
       }`}
     >
@@ -154,8 +154,17 @@ export default function Sidebar() {
                       : "border-l-2 border-transparent"
                   }`}
                 >
-                  <span className="h-6 w-6">{link.icon}</span>
-                  {open && <span className="ml-3">{link.label}</span>}
+                  <span className="h-6 w-6 flex-shrink-0">{link.icon}</span>
+                  <span
+                    aria-hidden={!open}
+                    className={`inline-flex items-center whitespace-nowrap overflow-hidden text-sm transition-[margin,max-width,opacity] duration-300 ease-in-out ${
+                      open
+                        ? "ml-3 max-w-[14rem] opacity-100"
+                        : "ml-0 max-w-0 opacity-0"
+                    }`}
+                  >
+                    {link.label}
+                  </span>
                 </Link>
                 {open && link.children && (
                   <div className="ml-8 mt-1 space-y-1">
