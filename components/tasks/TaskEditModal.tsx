@@ -3,6 +3,13 @@ import { useState, useEffect } from "react";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
+import {
+  STATUS_INDICATOR_OPTIONS,
+  coerceStatusIndicatorValue,
+  deriveIndicatorForTask,
+  mergeIndicatorIntoTags,
+  type StatusIndicatorValue,
+} from "./statusIndicator";
 
 const STATUS_OPTIONS = [
   { value: "todo", label: "To-Do" },
@@ -51,8 +58,8 @@ export default function TaskEditModal({
   const [selectedProps, setSelectedProps] = useState<string[]>(
     task.properties.map((p) => p.id)
   );
-  const [status, setStatus] = useState<StatusOptionValue>(
-    normalizeStatus(task.status)
+  const [statusIndicator, setStatusIndicator] = useState<StatusIndicatorValue>(
+    deriveIndicatorForTask({ status: task.status, tags: task.tags })
   );
   const [vendorId, setVendorId] = useState<string>(task.vendor?.id ?? "");
   const [attachments, setAttachments] = useState<
@@ -67,7 +74,9 @@ export default function TaskEditModal({
     setSelectedProps(task.properties.map((p) => p.id));
     setVendorId(task.vendor?.id ?? "");
     setAttachments(task.attachments ?? []);
-    setStatus(normalizeStatus(task.status));
+    setStatusIndicator(
+      deriveIndicatorForTask({ status: task.status, tags: task.tags })
+    );
   }, [task]);
 
   const handleFiles = (files: FileList | null) => {
@@ -87,6 +96,8 @@ export default function TaskEditModal({
     const vendor = vendorId
       ? vendors.find((v) => v.id === vendorId)
       : undefined;
+    const nextTags = mergeIndicatorIntoTags(task.tags, statusIndicator);
+
     onSave({
       title,
       description,
@@ -96,6 +107,7 @@ export default function TaskEditModal({
       vendor: vendor ? { id: vendor.id!, name: vendor.name } : null,
       status,
       attachments,
+      tags: nextTags,
     });
   };
 
@@ -200,10 +212,14 @@ export default function TaskEditModal({
           <label className="mb-1 block text-sm dark:text-gray-200">Status</label>
           <select
             className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            value={status}
-            onChange={(e) => setStatus(normalizeStatus(e.target.value))}
+            value={statusIndicator}
+            onChange={(e) =>
+              setStatusIndicator(
+                coerceStatusIndicatorValue(e.target.value)
+              )
+            }
           >
-            {STATUS_OPTIONS.map((option) => (
+            {STATUS_INDICATOR_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

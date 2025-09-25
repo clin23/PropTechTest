@@ -1,6 +1,10 @@
 "use client";
 import React from "react";
 import type { TaskDto } from "../../types/tasks";
+import {
+  deriveIndicatorForTask,
+  getIndicatorPresentation,
+} from "./statusIndicator";
 
 export default function TaskCard({
   task,
@@ -46,23 +50,10 @@ export default function TaskCard({
     typeof isCompleted === "boolean"
       ? isCompleted
       : normalizedStatus === "done" || normalizedStatus === "complete";
-  const statusInfo = (() => {
-    switch (normalizedStatus) {
-      case "todo":
-      case "to-do":
-        return { color: "bg-blue-500", label: "To-Do" } as const;
-      case "doing":
-        return { color: "bg-orange-500", label: "Doing" } as const;
-      case "done":
-      case "complete":
-      case "completed":
-        return { color: "bg-green-500", label: "Complete" } as const;
-      default:
-        return completed
-          ? ({ color: "bg-green-500", label: "Complete" } as const)
-          : undefined;
-    }
-  })();
+  const indicatorValue = completed
+    ? "done"
+    : deriveIndicatorForTask({ status: task.status, tags: task.tags });
+  const statusInfo = getIndicatorPresentation(indicatorValue);
 
   return (
     <div
