@@ -215,7 +215,7 @@ export default function ExpenseForm({
           onClick={handleClose}
         >
           <form
-            className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full max-w-md p-4 space-y-2 rounded-lg shadow-lg overflow-y-auto"
+            className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full max-w-2xl p-6 space-y-3 rounded-lg shadow-lg overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             onSubmit={(e) => {
               e.preventDefault();
@@ -257,6 +257,9 @@ export default function ExpenseForm({
               }
             }}
           >
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              Log an Expense
+            </h2>
             {!propertyId && (
               <label className="block text-gray-700 dark:text-gray-300">
                 Property
