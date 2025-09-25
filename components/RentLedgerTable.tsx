@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { listLedger, updateLedgerEntry } from "../lib/api";
 import type { LedgerEntry, LedgerStatus } from "../types/property";
 import EditLedgerEntryModal from "./EditLedgerEntryModal";
+import EvidenceLink from "./EvidenceLink";
 
 export default function RentLedgerTable({
   propertyId: propId,
@@ -55,7 +56,7 @@ export default function RentLedgerTable({
             <th className="p-2 text-left">Date</th>
             <th className="p-2 text-left">Status</th>
             <th className="p-2 text-left">Amount</th>
-            <th className="p-2 text-left">Evidence</th>
+            <th className="p-2 text-center">Evidence</th>
             <th className="p-2 text-left">Balance</th>
           </tr>
         </thead>
@@ -71,18 +72,15 @@ export default function RentLedgerTable({
                 <StatusDot status={e.status} />
               </td>
               <td className="p-2">{e.amount}</td>
-              <td className="p-2">
+              <td className="p-2 text-center">
                 {e.evidenceUrl ? (
-                  <a
+                  <EvidenceLink
                     href={e.evidenceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline hover:text-blue-500"
-                  >
-                    {e.evidenceName ?? "View"}
-                  </a>
+                    fileName={e.evidenceName}
+                    className="mx-auto"
+                  />
                 ) : (
-                  "—"
+                  <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                 )}
               </td>
               <td className="p-2">{e.balance}</td>
