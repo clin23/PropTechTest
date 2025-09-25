@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
@@ -41,18 +41,93 @@ export default function TaskEditModal({
     TaskDto["attachments"]
   >(task.attachments ?? []);
 
+  const initialPayloadRef = useRef<string>();
+
+  const createPayload = useCallback(
+    ({
+      title: draftTitle,
+      description: draftDescription,
+      dueDate: draftDueDate,
+      dueTime: draftDueTime,
+      selectedProps: draftSelectedProps,
+      vendorId: draftVendorId,
+      attachments: draftAttachments,
+      statusIndicator: draftIndicator,
+    }: {
+      title: string;
+      description: string;
+      dueDate: string;
+      dueTime: string;
+      selectedProps: string[];
+      vendorId: string;
+      attachments: TaskDto["attachments"];
+      statusIndicator: StatusIndicatorValue;
+    }) => {
+      const resolvedProperties = draftSelectedProps
+        .map((id) => {
+          const property =
+            properties.find((p) => p.id === id) ??
+            task.properties.find((p) => p.id === id);
+          return property ? { id: property.id, address: property.address } : null;
+        })
+        .filter(
+          (value): value is TaskDto["properties"][number] => value !== null
+        );
+
+      const resolvedVendor = draftVendorId
+        ? (() => {
+            const fromList = vendors.find((v) => v.id === draftVendorId);
+            if (fromList?.id) {
+              return { id: fromList.id, name: fromList.name };
+            }
+            if (task.vendor?.id === draftVendorId) {
+              return { id: task.vendor.id, name: task.vendor.name };
+            }
+            return null;
+          })()
+        : null;
+
+      return {
+        title: draftTitle,
+        description: draftDescription,
+        dueDate: draftDueDate || undefined,
+        dueTime: draftDueTime || undefined,
+        properties: resolvedProperties,
+        vendor: resolvedVendor,
+        attachments: draftAttachments,
+        tags: mergeIndicatorIntoTags(task.tags, draftIndicator),
+      } satisfies Partial<TaskDto>;
+    },
+    [properties, vendors, task]
+  );
+
   useEffect(() => {
-    setTitle(task.title);
-    setDescription(task.description ?? "");
-    setDueDate(task.dueDate ?? "");
-    setDueTime(task.dueTime ?? "");
-    setSelectedProps(task.properties.map((p) => p.id));
-    setVendorId(task.vendor?.id ?? "");
-    setAttachments(task.attachments ?? []);
-    setStatusIndicator(
-      deriveIndicatorForTask({ status: task.status, tags: task.tags })
-    );
-  }, [task]);
+    const indicator = deriveIndicatorForTask({
+      status: task.status,
+      tags: task.tags,
+    });
+    const baseState = {
+      title: task.title,
+      description: task.description ?? "",
+      dueDate: task.dueDate ?? "",
+      dueTime: task.dueTime ?? "",
+      selectedProps: task.properties.map((p) => p.id),
+      vendorId: task.vendor?.id ?? "",
+      attachments: task.attachments ?? [],
+      statusIndicator: indicator,
+    } as const;
+
+    initialPayloadRef.current = JSON.stringify(createPayload(baseState));
+
+    setTitle(baseState.title);
+    setDescription(baseState.description);
+    setDueDate(baseState.dueDate);
+    setDueTime(baseState.dueTime);
+    setSelectedProps(baseState.selectedProps);
+    setVendorId(baseState.vendorId);
+    setAttachments(baseState.attachments);
+    setStatusIndicator(baseState.statusIndicator);
+  }, [task, createPayload]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -63,31 +138,47 @@ export default function TaskEditModal({
     setAttachments((a) => [...(a ?? []), ...arr]);
   };
 
-  const handleSave = () => {
-    const props = selectedProps
-      .map((id) => properties.find((p) => p.id === id))
-      .filter(Boolean)
-      .map((p) => ({ id: p!.id, address: p!.address }));
-    const vendor = vendorId
-      ? vendors.find((v) => v.id === vendorId)
-      : undefined;
-    const nextTags = mergeIndicatorIntoTags(task.tags, statusIndicator);
+  const persistChanges = useCallback(
+    (force = false) => {
+      const payload = createPayload({
+        title,
+        description,
+        dueDate,
+        dueTime,
+        selectedProps,
+        vendorId,
+        attachments,
+        statusIndicator,
+      });
 
-    onSave({
-      title,
-      description,
-      dueDate: dueDate || undefined,
-      dueTime: dueTime || undefined,
-      properties: props,
-      vendor: vendor ? { id: vendor.id!, name: vendor.name } : null,
-      status,
+      const serialized = JSON.stringify(payload);
+      if (!force && serialized === initialPayloadRef.current) {
+        return;
+      }
+
+      initialPayloadRef.current = serialized;
+      onSave(payload);
+    },
+    [
       attachments,
-      tags: nextTags,
-    });
+      createPayload,
+      description,
+      dueDate,
+      dueTime,
+      onSave,
+      selectedProps,
+      statusIndicator,
+      title,
+      vendorId,
+    ]
+  );
+
+  const handleSave = () => {
+    persistChanges(true);
   };
 
   const handleClose = () => {
-    handleSave();
+    persistChanges();
     onClose();
   };
 
@@ -112,7 +203,7 @@ export default function TaskEditModal({
           <div className="absolute right-2 top-8 rounded-md border bg-white shadow dark:bg-gray-700">
             <button
               onClick={() => {
-                handleSave();
+                persistChanges();
                 onArchive();
               }}
               className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600"
