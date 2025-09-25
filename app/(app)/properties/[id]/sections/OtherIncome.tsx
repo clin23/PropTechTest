@@ -11,6 +11,8 @@ const CORE_RENT_CATEGORIES = [
   "Rent",
   "Rent payment",
   "Core rent",
+  "Arrears catch-up",
+  "Arrears catchup",
 ];
 
 export default function OtherIncome({ propertyId }: OtherIncomeProps) {

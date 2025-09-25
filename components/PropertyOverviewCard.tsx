@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { KeyboardEvent } from "react";
 import type { PropertySummary } from "../types/property";
 
 interface Props {
