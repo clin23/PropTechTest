@@ -225,6 +225,9 @@ export default function IncomeForm({
               });
             }}
           >
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Log Income
+            </h2>
             {!propertyId && (
               <label className="block text-gray-700 dark:text-gray-300">
                 Property

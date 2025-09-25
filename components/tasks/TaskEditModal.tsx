@@ -80,6 +80,7 @@ export default function TaskEditModal({
       dueTime: dueTime || undefined,
       properties: props,
       vendor: vendor ? { id: vendor.id!, name: vendor.name } : null,
+      status,
       attachments,
       tags: nextTags,
     });
