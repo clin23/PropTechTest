@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     rent: p.rent,
     leaseStart: p.leaseStart,
     leaseEnd: p.leaseEnd,
+    value: p.value,
     events: reminders
       .filter((r) => r.propertyId === p.id)
       .map((r) => ({ date: r.dueDate, title: r.title })),
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
     leaseStart: body.leaseStart || '',
     leaseEnd: body.leaseEnd || '',
     rent: typeof body.rent === 'number' ? body.rent : Number(body.rent) || 0,
+    value: typeof body.value === 'number' ? body.value : body.value ? Number(body.value) : undefined,
     archived: body.archived ?? false,
   };
   properties.push(property);
