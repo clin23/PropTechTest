@@ -1,6 +1,10 @@
 "use client";
 import React from "react";
 import type { TaskDto } from "../../types/tasks";
+import {
+  deriveIndicatorForTask,
+  getIndicatorPresentation,
+} from "./statusIndicator";
 
 export default function TaskCard({
   task,
@@ -41,8 +45,15 @@ export default function TaskCard({
       (startOfDue.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24);
     return diff === 1;
   })();
+  const normalizedStatus = (task.status ?? "").toLowerCase();
   const completed =
-    typeof isCompleted === "boolean" ? isCompleted : task.status === "done";
+    typeof isCompleted === "boolean"
+      ? isCompleted
+      : normalizedStatus === "done" || normalizedStatus === "complete";
+  const indicatorValue = completed
+    ? "done"
+    : deriveIndicatorForTask({ status: task.status, tags: task.tags });
+  const statusInfo = getIndicatorPresentation(indicatorValue);
 
   return (
     <div
@@ -53,13 +64,13 @@ export default function TaskCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="font-medium">{task.title}</div>
-        {completed && (
+        {statusInfo && (
           <span className="inline-flex h-2.5 w-2.5 items-center justify-center">
             <span
-              className="h-2.5 w-2.5 rounded-full bg-green-500"
+              className={`h-2.5 w-2.5 rounded-full ${statusInfo.color}`}
               aria-hidden
             />
-            <span className="sr-only">Completed</span>
+            <span className="sr-only">{statusInfo.label}</span>
           </span>
         )}
       </div>
