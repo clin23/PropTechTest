@@ -4,6 +4,31 @@ import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
 
+const STATUS_OPTIONS = [
+  { value: "todo", label: "To-Do" },
+  { value: "doing", label: "Doing" },
+  { value: "done", label: "Complete" },
+] as const;
+
+type StatusOptionValue = (typeof STATUS_OPTIONS)[number]["value"];
+
+const normalizeStatus = (value: TaskDto["status"]): StatusOptionValue => {
+  const normalized = (value ?? "").toLowerCase();
+  switch (normalized) {
+    case "todo":
+    case "to-do":
+      return "todo";
+    case "doing":
+      return "doing";
+    case "done":
+    case "complete":
+    case "completed":
+      return "done";
+    default:
+      return "todo";
+  }
+};
+
 export default function TaskEditModal({
   task,
   properties,
@@ -26,6 +51,9 @@ export default function TaskEditModal({
   const [selectedProps, setSelectedProps] = useState<string[]>(
     task.properties.map((p) => p.id)
   );
+  const [status, setStatus] = useState<StatusOptionValue>(
+    normalizeStatus(task.status)
+  );
   const [vendorId, setVendorId] = useState<string>(task.vendor?.id ?? "");
   const [attachments, setAttachments] = useState<
     TaskDto["attachments"]
@@ -39,6 +67,7 @@ export default function TaskEditModal({
     setSelectedProps(task.properties.map((p) => p.id));
     setVendorId(task.vendor?.id ?? "");
     setAttachments(task.attachments ?? []);
+    setStatus(normalizeStatus(task.status));
   }, [task]);
 
   const handleFiles = (files: FileList | null) => {
@@ -65,6 +94,7 @@ export default function TaskEditModal({
       dueTime: dueTime || undefined,
       properties: props,
       vendor: vendor ? { id: vendor.id!, name: vendor.name } : null,
+      status,
       attachments,
     });
   };
@@ -162,6 +192,20 @@ export default function TaskEditModal({
             {vendors.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm dark:text-gray-200">Status</label>
+          <select
+            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            value={status}
+            onChange={(e) => setStatus(normalizeStatus(e.target.value))}
+          >
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>

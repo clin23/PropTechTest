@@ -41,8 +41,28 @@ export default function TaskCard({
       (startOfDue.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24);
     return diff === 1;
   })();
+  const normalizedStatus = (task.status ?? "").toLowerCase();
   const completed =
-    typeof isCompleted === "boolean" ? isCompleted : task.status === "done";
+    typeof isCompleted === "boolean"
+      ? isCompleted
+      : normalizedStatus === "done" || normalizedStatus === "complete";
+  const statusInfo = (() => {
+    switch (normalizedStatus) {
+      case "todo":
+      case "to-do":
+        return { color: "bg-blue-500", label: "To-Do" } as const;
+      case "doing":
+        return { color: "bg-orange-500", label: "Doing" } as const;
+      case "done":
+      case "complete":
+      case "completed":
+        return { color: "bg-green-500", label: "Complete" } as const;
+      default:
+        return completed
+          ? ({ color: "bg-green-500", label: "Complete" } as const)
+          : undefined;
+    }
+  })();
 
   return (
     <div
@@ -53,13 +73,13 @@ export default function TaskCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="font-medium">{task.title}</div>
-        {completed && (
+        {statusInfo && (
           <span className="inline-flex h-2.5 w-2.5 items-center justify-center">
             <span
-              className="h-2.5 w-2.5 rounded-full bg-green-500"
+              className={`h-2.5 w-2.5 rounded-full ${statusInfo.color}`}
               aria-hidden
             />
-            <span className="sr-only">Completed</span>
+            <span className="sr-only">{statusInfo.label}</span>
           </span>
         )}
       </div>
