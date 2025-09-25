@@ -6,6 +6,7 @@ export type Property = {
   leaseStart: string;
   leaseEnd: string;
   rent: number;
+  value?: number;
   archived?: boolean;
 };
 export type Tenant = { id: string; name: string; propertyId: string };
@@ -86,6 +87,7 @@ const initialProperties: Property[] = [
     leaseStart: '2025-03-01',
     leaseEnd: '2026-02-28',
     rent: 1200,
+    value: 680_000,
   },
   {
     id: '2',
@@ -94,6 +96,7 @@ const initialProperties: Property[] = [
     leaseStart: '2025-04-01',
     leaseEnd: '2026-03-31',
     rent: 950,
+    value: 590_000,
   },
   {
     id: '3',
@@ -102,6 +105,7 @@ const initialProperties: Property[] = [
     leaseStart: '',
     leaseEnd: '',
     rent: 0,
+    value: 520_000,
     archived: true,
   },
 ];
@@ -898,6 +902,14 @@ const initialReminders: Reminder[] = [
     title: 'Inspection due',
     dueDate: '2025-11-05',
     severity: 'low',
+  },
+  {
+    id: 'rem5',
+    propertyId: '2',
+    type: 'custom',
+    title: 'Smoke alarm check',
+    dueDate: '2025-07-30',
+    severity: 'med',
   },
 ];
 
