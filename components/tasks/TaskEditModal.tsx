@@ -3,6 +3,13 @@ import { useState, useEffect } from "react";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
+import {
+  STATUS_INDICATOR_OPTIONS,
+  coerceStatusIndicatorValue,
+  deriveIndicatorForTask,
+  mergeIndicatorIntoTags,
+  type StatusIndicatorValue,
+} from "./statusIndicator";
 
 export default function TaskEditModal({
   task,
@@ -26,6 +33,9 @@ export default function TaskEditModal({
   const [selectedProps, setSelectedProps] = useState<string[]>(
     task.properties.map((p) => p.id)
   );
+  const [statusIndicator, setStatusIndicator] = useState<StatusIndicatorValue>(
+    deriveIndicatorForTask({ status: task.status, tags: task.tags })
+  );
   const [vendorId, setVendorId] = useState<string>(task.vendor?.id ?? "");
   const [attachments, setAttachments] = useState<
     TaskDto["attachments"]
@@ -39,6 +49,9 @@ export default function TaskEditModal({
     setSelectedProps(task.properties.map((p) => p.id));
     setVendorId(task.vendor?.id ?? "");
     setAttachments(task.attachments ?? []);
+    setStatusIndicator(
+      deriveIndicatorForTask({ status: task.status, tags: task.tags })
+    );
   }, [task]);
 
   const handleFiles = (files: FileList | null) => {
@@ -58,6 +71,8 @@ export default function TaskEditModal({
     const vendor = vendorId
       ? vendors.find((v) => v.id === vendorId)
       : undefined;
+    const nextTags = mergeIndicatorIntoTags(task.tags, statusIndicator);
+
     onSave({
       title,
       description,
@@ -66,6 +81,7 @@ export default function TaskEditModal({
       properties: props,
       vendor: vendor ? { id: vendor.id!, name: vendor.name } : null,
       attachments,
+      tags: nextTags,
     });
   };
 
@@ -162,6 +178,24 @@ export default function TaskEditModal({
             {vendors.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm dark:text-gray-200">Status</label>
+          <select
+            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            value={statusIndicator}
+            onChange={(e) =>
+              setStatusIndicator(
+                coerceStatusIndicatorValue(e.target.value)
+              )
+            }
+          >
+            {STATUS_INDICATOR_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
