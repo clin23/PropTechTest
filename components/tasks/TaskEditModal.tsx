@@ -1,8 +1,15 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
+import {
+  STATUS_INDICATOR_OPTIONS,
+  coerceStatusIndicatorValue,
+  deriveIndicatorForTask,
+  mergeIndicatorIntoTags,
+  type StatusIndicatorValue,
+} from "./statusIndicator";
 
 export default function TaskEditModal({
   task,
@@ -26,20 +33,101 @@ export default function TaskEditModal({
   const [selectedProps, setSelectedProps] = useState<string[]>(
     task.properties.map((p) => p.id)
   );
+  const [statusIndicator, setStatusIndicator] = useState<StatusIndicatorValue>(
+    deriveIndicatorForTask({ status: task.status, tags: task.tags })
+  );
   const [vendorId, setVendorId] = useState<string>(task.vendor?.id ?? "");
   const [attachments, setAttachments] = useState<
     TaskDto["attachments"]
   >(task.attachments ?? []);
 
+  const initialPayloadRef = useRef<string>();
+
+  const createPayload = useCallback(
+    ({
+      title: draftTitle,
+      description: draftDescription,
+      dueDate: draftDueDate,
+      dueTime: draftDueTime,
+      selectedProps: draftSelectedProps,
+      vendorId: draftVendorId,
+      attachments: draftAttachments,
+      statusIndicator: draftIndicator,
+    }: {
+      title: string;
+      description: string;
+      dueDate: string;
+      dueTime: string;
+      selectedProps: string[];
+      vendorId: string;
+      attachments: TaskDto["attachments"];
+      statusIndicator: StatusIndicatorValue;
+    }) => {
+      const resolvedProperties = draftSelectedProps
+        .map((id) => {
+          const property =
+            properties.find((p) => p.id === id) ??
+            task.properties.find((p) => p.id === id);
+          return property ? { id: property.id, address: property.address } : null;
+        })
+        .filter(
+          (value): value is TaskDto["properties"][number] => value !== null
+        );
+
+      const resolvedVendor = draftVendorId
+        ? (() => {
+            const fromList = vendors.find((v) => v.id === draftVendorId);
+            if (fromList?.id) {
+              return { id: fromList.id, name: fromList.name };
+            }
+            if (task.vendor?.id === draftVendorId) {
+              return { id: task.vendor.id, name: task.vendor.name };
+            }
+            return null;
+          })()
+        : null;
+
+      return {
+        title: draftTitle,
+        description: draftDescription,
+        dueDate: draftDueDate || undefined,
+        dueTime: draftDueTime || undefined,
+        properties: resolvedProperties,
+        vendor: resolvedVendor,
+        attachments: draftAttachments,
+        tags: mergeIndicatorIntoTags(task.tags, draftIndicator),
+      } satisfies Partial<TaskDto>;
+    },
+    [properties, vendors, task]
+  );
+
   useEffect(() => {
-    setTitle(task.title);
-    setDescription(task.description ?? "");
-    setDueDate(task.dueDate ?? "");
-    setDueTime(task.dueTime ?? "");
-    setSelectedProps(task.properties.map((p) => p.id));
-    setVendorId(task.vendor?.id ?? "");
-    setAttachments(task.attachments ?? []);
-  }, [task]);
+    const indicator = deriveIndicatorForTask({
+      status: task.status,
+      tags: task.tags,
+    });
+    const baseState = {
+      title: task.title,
+      description: task.description ?? "",
+      dueDate: task.dueDate ?? "",
+      dueTime: task.dueTime ?? "",
+      selectedProps: task.properties.map((p) => p.id),
+      vendorId: task.vendor?.id ?? "",
+      attachments: task.attachments ?? [],
+      statusIndicator: indicator,
+    } as const;
+
+    initialPayloadRef.current = JSON.stringify(createPayload(baseState));
+
+    setTitle(baseState.title);
+    setDescription(baseState.description);
+    setDueDate(baseState.dueDate);
+    setDueTime(baseState.dueTime);
+    setSelectedProps(baseState.selectedProps);
+    setVendorId(baseState.vendorId);
+    setAttachments(baseState.attachments);
+    setStatusIndicator(baseState.statusIndicator);
+  }, [task, createPayload]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -50,27 +138,47 @@ export default function TaskEditModal({
     setAttachments((a) => [...(a ?? []), ...arr]);
   };
 
-  const handleSave = () => {
-    const props = selectedProps
-      .map((id) => properties.find((p) => p.id === id))
-      .filter(Boolean)
-      .map((p) => ({ id: p!.id, address: p!.address }));
-    const vendor = vendorId
-      ? vendors.find((v) => v.id === vendorId)
-      : undefined;
-    onSave({
-      title,
-      description,
-      dueDate: dueDate || undefined,
-      dueTime: dueTime || undefined,
-      properties: props,
-      vendor: vendor ? { id: vendor.id!, name: vendor.name } : null,
+  const persistChanges = useCallback(
+    (force = false) => {
+      const payload = createPayload({
+        title,
+        description,
+        dueDate,
+        dueTime,
+        selectedProps,
+        vendorId,
+        attachments,
+        statusIndicator,
+      });
+
+      const serialized = JSON.stringify(payload);
+      if (!force && serialized === initialPayloadRef.current) {
+        return;
+      }
+
+      initialPayloadRef.current = serialized;
+      onSave(payload);
+    },
+    [
       attachments,
-    });
+      createPayload,
+      description,
+      dueDate,
+      dueTime,
+      onSave,
+      selectedProps,
+      statusIndicator,
+      title,
+      vendorId,
+    ]
+  );
+
+  const handleSave = () => {
+    persistChanges(true);
   };
 
   const handleClose = () => {
-    handleSave();
+    persistChanges();
     onClose();
   };
 
@@ -95,7 +203,7 @@ export default function TaskEditModal({
           <div className="absolute right-2 top-8 rounded-md border bg-white shadow dark:bg-gray-700">
             <button
               onClick={() => {
-                handleSave();
+                persistChanges();
                 onArchive();
               }}
               className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -162,6 +270,24 @@ export default function TaskEditModal({
             {vendors.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm dark:text-gray-200">Status</label>
+          <select
+            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            value={statusIndicator}
+            onChange={(e) =>
+              setStatusIndicator(
+                coerceStatusIndicatorValue(e.target.value)
+              )
+            }
+          >
+            {STATUS_INDICATOR_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>

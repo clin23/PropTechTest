@@ -10,8 +10,19 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const body = await req.json();
-  const parsed = zTask.partial().parse(body);
-  const task = updateTask(params.id, parsed as Partial<TaskDto>);
+  const parsed = zTask.partial().parse(body) as Partial<TaskDto>;
+
+  const payload = Object.entries(parsed).reduce<Partial<TaskDto>>(
+    (acc, [key, value]) => {
+      if (Object.prototype.hasOwnProperty.call(body, key)) {
+        acc[key as keyof TaskDto] = value as TaskDto[keyof TaskDto];
+      }
+      return acc;
+    },
+    {}
+  );
+
+  const task = updateTask(params.id, payload);
   if (!task) return new Response('Not found', { status: 404 });
   return Response.json(task);
 }
