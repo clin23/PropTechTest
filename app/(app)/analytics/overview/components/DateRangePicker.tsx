@@ -80,7 +80,7 @@ export function DateRangePicker({ value, onChange }: Props) {
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm space-y-3" data-testid="date-range-picker">
+    <div className="w-full space-y-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm" data-testid="date-range-picker">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Date range presets">
         {PRESETS.map((preset) => {
           const isActive = preset.key === activePreset;

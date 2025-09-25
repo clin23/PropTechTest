@@ -40,7 +40,6 @@ const PropertyCompare = dynamic(() => import('./components/ChartPropertyCompare'
   ssr: false,
   loading: () => <ChartPlaceholder title="Property Comparison" />,
 });
-
 type ChartRange = { from: string; to: string };
 
 type ChartPlaceholderProps = { title: string };
@@ -182,56 +181,31 @@ function AnalyticsOverviewPage() {
       <Link href="/analytics" className="text-sm text-blue-600 hover:underline">
         &larr; Back to Analytics
       </Link>
-      <div className="mx-auto mt-4 max-w-[1200px] space-y-6">
-        <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-          <DateRangePicker
-            value={{ from: filters.from, to: filters.to }}
-            onChange={(range) => setFilters((prev) => ({ ...prev, ...range }))}
-          />
-          <PropertyMultiSelect
-            properties={propertyOptions}
-            selected={filters.propertyIds}
-            onChange={(next) => setFilters((prev) => ({ ...prev, propertyIds: next }))}
-          />
-          <ExportButtons csvSections={csvSections} charts={charts} />
-        </div>
-
-        {filters.expenseCategory && (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-medium text-gray-600 dark:text-gray-300">Active filters:</span>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
-              onClick={() => setFilters((prev) => ({ ...prev, expenseCategory: undefined }))}
-            >
-              {filters.expenseCategory}
-              <span aria-hidden>&times;</span>
-            </button>
-          </div>
-        )}
-
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <KpiCard title="Net Cashflow" value={kpiQuery.data?.netCashflow} format="currency" precision={0} />
-          <KpiCard
-            title="Gross Yield"
-            value={kpiQuery.data?.grossYield ?? undefined}
-            format="percentage"
-            precision={1}
-            tooltip={kpiQuery.data?.grossYield ? undefined : 'Add property values to see gross yield'}
-          />
-          <KpiCard
-            title="Occupancy Rate"
-            value={kpiQuery.data?.occupancyRate ?? undefined}
-            format="percentage"
-            precision={1}
-          />
-          <KpiCard
-            title="On-Time Collection"
-            value={kpiQuery.data?.onTimeCollection ?? undefined}
-            format="percentage"
-            precision={1}
-          />
-        </div>
+      <div className="mx-auto mt-4 max-w-[1200px]">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+          <div className="space-y-6">
+            <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-4">
+              <KpiCard title="Net Cashflow" value={kpiQuery.data?.netCashflow} format="currency" precision={0} />
+              <KpiCard
+                title="Gross Yield"
+                value={kpiQuery.data?.grossYield ?? undefined}
+                format="percentage"
+                precision={1}
+                tooltip={kpiQuery.data?.grossYield ? undefined : 'Add property values to see gross yield'}
+              />
+              <KpiCard
+                title="Occupancy Rate"
+                value={kpiQuery.data?.occupancyRate ?? undefined}
+                format="percentage"
+                precision={1}
+              />
+              <KpiCard
+                title="On-Time Collection"
+                value={kpiQuery.data?.onTimeCollection ?? undefined}
+                format="percentage"
+                precision={1}
+              />
+            </div>
 
         {!isLoading && !hasData ? (
           <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
@@ -313,6 +287,42 @@ function AnalyticsOverviewPage() {
             </div>
           </>
         )}
+          </div>
+          <aside className="mt-6 space-y-4 lg:sticky lg:top-24 lg:mt-0">
+            <DateRangePicker
+              value={{ from: filters.from, to: filters.to }}
+              onChange={(range) => setFilters((prev) => ({ ...prev, ...range }))}
+            />
+            <PropertyMultiSelect
+              properties={propertyOptions}
+              selected={filters.propertyIds}
+              onChange={(next) => setFilters((prev) => ({ ...prev, propertyIds: next }))}
+            />
+            {filters.expenseCategory && (
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm text-sm">
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span className="font-medium text-gray-700 dark:text-gray-200">Expense category</span>
+                  <button
+                    type="button"
+                    className="text-xs text-blue-600 hover:underline"
+                    onClick={() => setFilters((prev) => ({ ...prev, expenseCategory: undefined }))}
+                  >
+                    Clear
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+                  onClick={() => setFilters((prev) => ({ ...prev, expenseCategory: undefined }))}
+                >
+                  {filters.expenseCategory}
+                  <span aria-hidden>&times;</span>
+                </button>
+              </div>
+            )}
+            <ExportButtons csvSections={csvSections} charts={charts} />
+          </aside>
+        </div>
       </div>
     </div>
   );

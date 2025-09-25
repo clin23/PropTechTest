@@ -33,7 +33,7 @@ export function PropertyMultiSelect({ properties, selected, onChange }: Props) {
   const isAllSelected = selected.length === 0;
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm space-y-3" data-testid="property-filter">
+    <div className="w-full space-y-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm" data-testid="property-filter">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100">Properties</h3>
         <button
