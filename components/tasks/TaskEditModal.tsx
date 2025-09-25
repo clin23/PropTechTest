@@ -11,31 +11,6 @@ import {
   type StatusIndicatorValue,
 } from "./statusIndicator";
 
-const STATUS_OPTIONS = [
-  { value: "todo", label: "To-Do" },
-  { value: "doing", label: "Doing" },
-  { value: "done", label: "Complete" },
-] as const;
-
-type StatusOptionValue = (typeof STATUS_OPTIONS)[number]["value"];
-
-const normalizeStatus = (value: TaskDto["status"]): StatusOptionValue => {
-  const normalized = (value ?? "").toLowerCase();
-  switch (normalized) {
-    case "todo":
-    case "to-do":
-      return "todo";
-    case "doing":
-      return "doing";
-    case "done":
-    case "complete":
-    case "completed":
-      return "done";
-    default:
-      return "todo";
-  }
-};
-
 export default function TaskEditModal({
   task,
   properties,
