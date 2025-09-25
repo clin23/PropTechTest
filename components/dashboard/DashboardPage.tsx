@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import Skeleton from '../Skeleton';
@@ -12,7 +12,7 @@ import PropertyCard from './PropertyCard';
 import { getDashboard } from '../../lib/dashboard';
 import { formatMoney } from '../../lib/format';
 import Header from './Header';
-import type { DashboardDTO, PortfolioSummary } from '../../types/dashboard';
+import type { DashboardDTO, PortfolioSummary, PropertyCardData } from '../../types/dashboard';
 
 // Use the first day of the current month to show month-to-date data.
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
@@ -77,13 +77,75 @@ function DashboardContent({
   fyLabel: string;
   fyHint: string;
 }) {
+  const [isOrderModalOpen, setOrderModalOpen] = useState(false);
+  const [propertyOrder, setPropertyOrder] = useState<string[]>(() =>
+    data.properties.map((property) => property.propertyId),
+  );
+
+  useEffect(() => {
+    setPropertyOrder((previous) => ensurePropertyOrder(previous, data.properties));
+  }, [data.properties]);
+
+  const propertyLookup = useMemo(() => {
+    const lookup = new Map<string, PropertyCardData>();
+    data.properties.forEach((property) => {
+      lookup.set(property.propertyId, property);
+    });
+    return lookup;
+  }, [data.properties]);
+
+  const orderedProperties = useMemo(() => {
+    const completeOrder = ensurePropertyOrder(propertyOrder, data.properties);
+    const resolved = completeOrder
+      .map((propertyId) => propertyLookup.get(propertyId))
+      .filter(Boolean) as PropertyCardData[];
+
+    if (resolved.length === data.properties.length) {
+      return resolved;
+    }
+
+    const missing = data.properties.filter(
+      (property) => !resolved.some((item) => item.propertyId === property.propertyId),
+    );
+
+    return [...resolved, ...missing];
+  }, [data.properties, propertyLookup, propertyOrder]);
+
+  const handleMove = (propertyId: string, direction: 'up' | 'down') => {
+    setPropertyOrder((current) => {
+      const completeOrder = ensurePropertyOrder(current, data.properties);
+      const index = completeOrder.indexOf(propertyId);
+
+      if (index === -1) {
+        return completeOrder;
+      }
+
+      const targetIndex =
+        direction === 'up'
+          ? Math.max(0, index - 1)
+          : Math.min(completeOrder.length - 1, index + 1);
+
+      if (targetIndex === index) {
+        return completeOrder;
+      }
+
+      const updated = [...completeOrder];
+      const [moved] = updated.splice(index, 1);
+      updated.splice(targetIndex, 0, moved);
+
+      return updated;
+    });
+  };
+
+  const showReorderTile = data.properties.length > 3;
+
   return (
     <div className="space-y-6">
       <div>
         <Header from={from} to={to} />
       </div>
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-8">
+      <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+        <div className="space-y-6 lg:col-span-8 lg:sticky lg:top-6 lg:self-start">
           <section className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <PortfolioSummaryTile summary={data.portfolio} />
@@ -140,12 +202,127 @@ function DashboardContent({
           </section>
         </div>
         <section className="space-y-4 lg:col-span-4">
-          {data.properties.map((p) => (
-            <div key={p.propertyId}>
-              <PropertyCard data={p} />
+          {showReorderTile && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setOrderModalOpen(true)}
+                className="w-full rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-gray-800 dark:bg-gray-900"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Property order</p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      Adjust display sequence
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    Manage
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Rearrange how your properties appear on this dashboard.
+                </p>
+              </button>
+            </div>
+          )}
+          {orderedProperties.map((property) => (
+            <div key={property.propertyId}>
+              <PropertyCard data={property} />
             </div>
           ))}
         </section>
+      </div>
+      {isOrderModalOpen && (
+        <PropertyReorderModal
+          properties={orderedProperties}
+          onClose={() => setOrderModalOpen(false)}
+          onMove={handleMove}
+        />
+      )}
+    </div>
+  );
+}
+
+function ensurePropertyOrder(order: string[], properties: PropertyCardData[]) {
+  const propertyIds = properties.map((property) => property.propertyId);
+  const uniqueOrder = order.filter(
+    (propertyId, index) => order.indexOf(propertyId) === index && propertyIds.includes(propertyId),
+  );
+  const missing = propertyIds.filter((propertyId) => !uniqueOrder.includes(propertyId));
+
+  return [...uniqueOrder, ...missing];
+}
+
+function PropertyReorderModal({
+  properties,
+  onClose,
+  onMove,
+}: {
+  properties: PropertyCardData[];
+  onClose: () => void;
+  onMove: (propertyId: string, direction: 'up' | 'down') => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-xl dark:bg-gray-900"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Reorder properties</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Drag handles are replaced with quick controls—use the arrows to move a property up or down.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 transition hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            Done
+          </button>
+        </div>
+        <ul className="space-y-3">
+          {properties.map((property, index) => (
+            <li
+              key={property.propertyId}
+              className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950"
+            >
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{property.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Position {index + 1}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onMove(property.propertyId, 'up')}
+                  className="rounded-full border border-gray-200 bg-white p-2 text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                  disabled={index === 0}
+                  aria-label={`Move ${property.name} up`}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onMove(property.propertyId, 'down')}
+                  className="rounded-full border border-gray-200 bg-white p-2 text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                  disabled={index === properties.length - 1}
+                  aria-label={`Move ${property.name} down`}
+                >
+                  ↓
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-xs text-gray-500 dark:text-gray-500">
+          Changes are saved automatically. Click outside this card to close it.
+        </p>
       </div>
     </div>
   );
