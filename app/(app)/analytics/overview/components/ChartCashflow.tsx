@@ -56,7 +56,12 @@ const ChartCashflow = forwardRef<HTMLDivElement, Props>(({ data, onBrushChange }
   const lines = useMemo(() => SERIES.filter((item) => activeKeys.has(item.key)), [activeKeys]);
 
   return (
-    <div ref={ref} className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm" role="img" aria-label="Cashflow over time">
+    <div
+      ref={ref}
+      className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm"
+      role="img"
+      aria-label="Cashflow over time"
+    >
       <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100">Cashflow Over Time</h3>
       <div className="mt-4 h-72">
         <ResponsiveContainer width="100%" height="100%">

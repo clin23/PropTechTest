@@ -31,9 +31,7 @@ function formatPercentage(value: number, total: number) {
   return `${((value / total) * 100).toFixed(1)}%`;
 }
 
-const ChartExpenseDonut = forwardRef<HTMLDivElement, Props>(
-  ({ data, total, selectedCategory, onSelectCategory }, ref),
-) => {
+const ChartExpenseDonut = forwardRef<HTMLDivElement, Props>(({ data, total, selectedCategory, onSelectCategory }, ref) => {
   return (
     <div
       ref={ref}
@@ -92,7 +90,7 @@ const ChartExpenseDonut = forwardRef<HTMLDivElement, Props>(
       </div>
     </div>
   );
-};
+});
 
 ChartExpenseDonut.displayName = 'ChartExpenseDonut';
 

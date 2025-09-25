@@ -35,7 +35,12 @@ const ChartPropertyCompare = forwardRef<HTMLDivElement, Props>(({ data, hiddenCo
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100">Property Comparison</h3>
         {hiddenCount > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+          <span
+            className={[
+              'inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700',
+              'dark:bg-blue-900/30 dark:text-blue-200',
+            ].join(' ')}
+          >
             +{hiddenCount}
           </span>
         )}
