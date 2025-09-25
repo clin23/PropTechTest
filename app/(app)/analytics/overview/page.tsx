@@ -40,7 +40,6 @@ const PropertyCompare = dynamic(() => import('./components/ChartPropertyCompare'
   ssr: false,
   loading: () => <ChartPlaceholder title="Property Comparison" />,
 });
-
 type ChartRange = { from: string; to: string };
 
 type ChartPlaceholderProps = { title: string };
