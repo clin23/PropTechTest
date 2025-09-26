@@ -1051,9 +1051,75 @@ async function main() {
       evidenceName: '2025-09-01-rent.pdf',
     },
     {
-      id: 'inc-2025-09-02-rent',
+      id: 'inc-2025-09-10-reletting',
       tenantId,
-      date: '2025-09-02',
+      date: '2025-09-10',
+      category: 'Break lease / reletting fee',
+      amount: 220,
+      notes: 'Reletting fee charged after adding new tenant to lease.',
+      label: 'Reletting fee',
+      evidenceUrl: 'https://example.com/income/2025-09-10-reletting.pdf',
+      evidenceName: '2025-09-10-reletting.pdf',
+    },
+    {
+      id: 'inc-2025-09-11-late-fee',
+      tenantId,
+      date: '2025-09-11',
+      category: 'Late fee',
+      amount: 45,
+      notes: 'Fee for late rent submitted after reminder.',
+      label: 'September late fee',
+      evidenceUrl: 'https://example.com/income/2025-09-11-late-fee.pdf',
+      evidenceName: '2025-09-11-late-fee.pdf',
+    },
+    {
+      id: 'inc-2025-09-12-grant',
+      tenantId,
+      date: '2025-09-12',
+      category: 'Government grant/subsidy',
+      amount: 130,
+      notes: 'State government energy efficiency subsidy.',
+      label: 'Energy grant',
+      evidenceUrl: 'https://example.com/income/2025-09-12-grant.pdf',
+      evidenceName: '2025-09-12-grant.pdf',
+    },
+    {
+      id: 'inc-2025-09-13-misc',
+      tenantId,
+      date: '2025-09-13',
+      category: 'Miscellaneous income',
+      amount: 75,
+      notes: 'Laundry machine coin collection.',
+      label: 'Laundry income',
+      evidenceUrl: 'https://example.com/income/2025-09-13-misc.pdf',
+      evidenceName: '2025-09-13-misc.pdf',
+    },
+    {
+      id: 'inc-2025-09-14-arrears',
+      tenantId,
+      date: '2025-09-14',
+      category: 'Arrears catch-up',
+      amount: 320,
+      notes: 'Partial arrears cleared from earlier in year.',
+      label: 'Arrears catch-up',
+      evidenceUrl: 'https://example.com/income/2025-09-14-arrears.pdf',
+      evidenceName: '2025-09-14-arrears.pdf',
+    },
+    {
+      id: 'inc-2025-09-15-insurance',
+      tenantId,
+      date: '2025-09-15',
+      category: 'Insurance payout – rent default',
+      amount: 400,
+      notes: 'Insurance payment covering tenant hardship in July.',
+      label: 'Rent default cover',
+      evidenceUrl: 'https://example.com/income/2025-09-15-insurance.pdf',
+      evidenceName: '2025-09-15-insurance.pdf',
+    },
+    {
+      id: 'inc-2025-09-16-rent',
+      tenantId,
+      date: '2025-09-16',
       category: 'Base rent',
       amount: 650,
       notes: 'Automated transfer received overnight.',
@@ -1062,9 +1128,9 @@ async function main() {
       evidenceName: '2025-09-02-rent.pdf',
     },
     {
-      id: 'inc-2025-09-02-utilities',
+      id: 'inc-2025-09-17-utilities',
       tenantId,
-      date: '2025-09-02',
+      date: '2025-09-17',
       category: 'Utilities reimbursement',
       amount: 92,
       notes: 'Tenant reimbursed water usage charge for winter quarter.',
@@ -1828,6 +1894,85 @@ async function main() {
       status: 'Scheduled',
       date: '2025-09-21T15:00:00+10:00',
       notes: 'Follow-up to confirm landscaping works completed.',
+      inspector: 'Ava Owner',
+    },
+  ];
+
+  for (const inspection of inspectionSeed) {
+    await prisma.mockData.create({
+      data: {
+        id: inspection.id,
+        type: 'inspection',
+        data: inspection,
+      },
+    });
+  }
+
+  const rentLedgerSeed = incomeSeed
+    .filter((income) =>
+      ['Base rent', 'Arrears catch-up'].includes(income.category)
+    )
+    .map((income) => ({
+      id: `ledger-${income.id}`,
+      propertyId,
+      tenantId: income.tenantId ?? tenantId,
+      amount: income.amount,
+      dueDate: income.date,
+      status: 'paid',
+      paidDate: income.date,
+      sourceIncomeId: income.id,
+      description: income.label ?? income.category,
+      evidenceUrl: income.evidenceUrl,
+      evidenceName: income.evidenceName,
+    }));
+
+  for (const ledger of rentLedgerSeed) {
+    await prisma.mockData.create({
+      data: {
+        id: ledger.id,
+        type: 'rentLedger',
+        data: ledger,
+      },
+    });
+  }
+
+  const inspectionSeed = [
+    {
+      id: 'insp-2025-09-01-entry',
+      propertyId,
+      type: 'Entry',
+      status: 'Completed',
+      date: '2025-09-01T09:00:00+10:00',
+      notes: 'Move-in condition documented with photos and meter readings.',
+      inspector: 'Ava Owner',
+      reportUrl: 'https://example.com/inspections/2025-09-01-entry.pdf',
+    },
+    {
+      id: 'insp-2025-09-08-routine',
+      propertyId,
+      type: 'Routine',
+      status: 'Completed',
+      date: '2025-09-08T11:30:00+10:00',
+      notes: 'Routine inspection with focus on wet areas and smoke alarms.',
+      inspector: 'Ava Owner',
+      reportUrl: 'https://example.com/inspections/2025-09-08-routine.pdf',
+    },
+    {
+      id: 'insp-2025-09-15-routine',
+      propertyId,
+      type: 'Routine',
+      status: 'Scheduled',
+      date: '2025-09-15T14:00:00+10:00',
+      notes: 'Follow-up inspection to verify bathroom reseal works.',
+      inspector: 'Sam Tradie',
+    },
+    {
+      id: 'insp-2025-09-22-exit',
+      propertyId,
+      type: 'Exit',
+      status: 'Scheduled',
+      date: '2025-09-22T10:00:00+10:00',
+      notes: 'Exit inspection booked ahead of tenant holiday.',
       inspector: 'Ava Owner',
     },
   ];
