@@ -183,6 +183,39 @@ export default function TaskEditModal({
   };
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (!target) {
+        return;
+      }
+
+      if (menuRef.current?.contains(target)) {
+        return;
+      }
+
+      if (menuButtonRef.current?.contains(target)) {
+        return;
+      }
+
+      setMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [menuOpen]);
 
   return (
     <div
@@ -194,13 +227,17 @@ export default function TaskEditModal({
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          ref={menuButtonRef}
           className="absolute right-2 top-2 text-xl"
           onClick={() => setMenuOpen((o) => !o)}
         >
           ⋯
         </button>
         {menuOpen && (
-          <div className="absolute right-2 top-8 rounded-md border bg-white shadow dark:bg-gray-700">
+          <div
+            ref={menuRef}
+            className="absolute right-2 top-8 rounded-md border bg-white shadow dark:bg-gray-700"
+          >
             <button
               onClick={() => {
                 persistChanges();
