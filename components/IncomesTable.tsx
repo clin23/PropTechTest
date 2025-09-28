@@ -101,6 +101,92 @@ export default function IncomesTable({
   const hasMatches = rows.length > 0;
   const hasRecords = filtered.length > 0;
 
+  let content = (
+    <EmptyState message="No income entries match your filters." />
+  );
+
+  if (!hasRecords) {
+    content = <EmptyState message="No income records found." />;
+  } else if (hasMatches) {
+    content = (
+      <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+        <thead>
+          <tr className="bg-gray-100 dark:bg-gray-700">
+            <th className="p-2 text-left">Date</th>
+            <th className="p-2 text-left">Category</th>
+            <th className="p-2 text-center">Evidence</th>
+            <th className="p-2 text-left">Amount</th>
+            <th className="p-2 text-left">Notes</th>
+            <th className="p-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id} className="border-t dark:border-gray-700">
+              <td className="p-2">{r.date}</td>
+              <td className="p-2">{r.category || r.label || "—"}</td>
+              <td className="p-2 text-center">
+                {r.evidenceUrl ? (
+                  <EvidenceLink
+                    href={r.evidenceUrl}
+                    fileName={r.evidenceName}
+                    className="mx-auto"
+                  />
+                ) : (
+                  <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                )}
+              </td>
+              <td className="p-2">{r.amount}</td>
+              <td className="p-2">{r.notes}</td>
+              <td className="p-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                    onClick={() => setEditingIncome(r)}
+                    aria-label="Edit income"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M13.586 2.586a2 2 0 0 1 2.828 2.828l-.793.793-2.828-2.828.793-.793zM12.379 4.207 3 13.586V17h3.414l9.379-9.379-3.414-3.414z" />
+                    </svg>
+                    <span className="sr-only">Edit income</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
+                    onClick={() => {
+                      if (confirm("are you sure?")) {
+                        deleteMutation.mutate(r.id);
+                      }
+                    }}
+                    aria-label="Delete income"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M8.5 3a1.5 1.5 0 0 1 3 0H15a1 1 0 1 1 0 2h-1v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5H5a1 1 0 1 1 0-2h3.5zM8 5v10h4V5H8z" />
+                    </svg>
+                    <span className="sr-only">Delete income</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
@@ -144,89 +230,7 @@ export default function IncomesTable({
           />
         </div>
       </div>
-      {!hasRecords ? (
-        <EmptyState message="No income records found." />
-      ) : !hasMatches ? (
-        <EmptyState message="No income entries match your filters." />
-      ) : (
-        <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-gray-700">
-              <th className="p-2 text-left">Date</th>
-              <th className="p-2 text-left">Category</th>
-              <th className="p-2 text-center">Evidence</th>
-              <th className="p-2 text-left">Amount</th>
-              <th className="p-2 text-left">Notes</th>
-              <th className="p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t dark:border-gray-700">
-                <td className="p-2">{r.date}</td>
-                <td className="p-2">{r.category || r.label || "—"}</td>
-                <td className="p-2 text-center">
-                  {r.evidenceUrl ? (
-                    <EvidenceLink
-                      href={r.evidenceUrl}
-                      fileName={r.evidenceName}
-                      className="mx-auto"
-                    />
-                  ) : (
-                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
-                  )}
-                </td>
-                <td className="p-2">{r.amount}</td>
-                <td className="p-2">{r.notes}</td>
-                <td className="p-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-                      onClick={() => setEditingIncome(r)}
-                      aria-label="Edit income"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="h-4 w-4"
-                        aria-hidden="true"
-                      >
-                        <path d="M13.586 2.586a2 2 0 0 1 2.828 2.828l-.793.793-2.828-2.828.793-.793zM12.379 4.207 3 13.586V17h3.414l9.379-9.379-3.414-3.414z" />
-                      </svg>
-                      <span className="sr-only">Edit income</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
-                      onClick={() => {
-                        if (confirm("are you sure?")) {
-                          deleteMutation.mutate(r.id);
-                        }
-                      }}
-                      aria-label="Delete income"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="h-4 w-4"
-                        aria-hidden="true"
-                      >
-                        <path d="M8.5 3a1.5 1.5 0 0 1 3 0H15a1 1 0 1 1 0 2h-1v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5H5a1 1 0 1 1 0-2h3.5zM8 5v10h4V5H8z" />
-                      </svg>
-                      <span className="sr-only">Delete income</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <EmptyState message="No income records found." />
-      )}
+      {content}
       <IncomeForm
         propertyId={propertyId}
         open={Boolean(editingIncome)}
