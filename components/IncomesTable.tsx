@@ -52,7 +52,7 @@ export default function IncomesTable({
   });
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [category, setCategory] = useState("");
+  const [search, setSearch] = useState("");
   const [editingIncome, setEditingIncome] = useState<IncomeRow | null>(null);
 
   const excludedCategories = useMemo(
@@ -70,14 +70,122 @@ export default function IncomesTable({
     });
   }, [data, excludedCategories]);
 
-  const rows = filtered.filter((r) => {
-    const afterFrom = from ? new Date(r.date) >= new Date(from) : true;
-    const beforeTo = to ? new Date(r.date) <= new Date(to) : true;
-    const categoryMatch = category
-      ? r.category.toLowerCase().includes(category.toLowerCase())
-      : true;
-    return afterFrom && beforeTo && categoryMatch;
-  });
+  const rows = useMemo(() => {
+    const term = search.trim().toLowerCase();
+
+    return filtered.filter((r) => {
+      const afterFrom = from ? new Date(r.date) >= new Date(from) : true;
+      const beforeTo = to ? new Date(r.date) <= new Date(to) : true;
+
+      if (!term) {
+        return afterFrom && beforeTo;
+      }
+
+      const haystack = [
+        r.category,
+        r.label,
+        r.notes,
+        r.date,
+        r.amount !== undefined ? String(r.amount) : undefined,
+        r.evidenceName,
+      ];
+
+      const matchesTerm = haystack
+        .filter((value): value is string => Boolean(value))
+        .some((value) => value.toLowerCase().includes(term));
+
+      return afterFrom && beforeTo && matchesTerm;
+    });
+  }, [filtered, from, search, to]);
+
+  const hasMatches = rows.length > 0;
+  const hasRecords = filtered.length > 0;
+
+  let content = (
+    <EmptyState message="No income entries match your filters." />
+  );
+
+  if (!hasRecords) {
+    content = <EmptyState message="No income records found." />;
+  } else if (hasMatches) {
+    content = (
+      <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+        <thead>
+          <tr className="bg-gray-100 dark:bg-gray-700">
+            <th className="p-2 text-left">Date</th>
+            <th className="p-2 text-left">Category</th>
+            <th className="p-2 text-center">Evidence</th>
+            <th className="p-2 text-left">Amount</th>
+            <th className="p-2 text-left">Notes</th>
+            <th className="p-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id} className="border-t dark:border-gray-700">
+              <td className="p-2">{r.date}</td>
+              <td className="p-2">{r.category || r.label || "—"}</td>
+              <td className="p-2 text-center">
+                {r.evidenceUrl ? (
+                  <EvidenceLink
+                    href={r.evidenceUrl}
+                    fileName={r.evidenceName}
+                    className="mx-auto"
+                  />
+                ) : (
+                  <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                )}
+              </td>
+              <td className="p-2">{r.amount}</td>
+              <td className="p-2">{r.notes}</td>
+              <td className="p-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                    onClick={() => setEditingIncome(r)}
+                    aria-label="Edit income"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M13.586 2.586a2 2 0 0 1 2.828 2.828l-.793.793-2.828-2.828.793-.793zM12.379 4.207 3 13.586V17h3.414l9.379-9.379-3.414-3.414z" />
+                    </svg>
+                    <span className="sr-only">Edit income</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
+                    onClick={() => {
+                      if (confirm("are you sure?")) {
+                        deleteMutation.mutate(r.id);
+                      }
+                    }}
+                    aria-label="Delete income"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M8.5 3a1.5 1.5 0 0 1 3 0H15a1 1 0 1 1 0 2h-1v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5H5a1 1 0 1 1 0-2h3.5zM8 5v10h4V5H8z" />
+                    </svg>
+                    <span className="sr-only">Delete income</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -96,92 +204,33 @@ export default function IncomesTable({
           onChange={(e) => setTo(e.target.value)}
           placeholder="To"
         />
-        <input
-          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
+        <div className="relative">
+          <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-gray-400">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9 3.5a5.5 5.5 0 1 0 3.356 9.86l3.641 3.642a.75.75 0 1 0 1.06-1.061l-3.64-3.642A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </span>
+          <input
+            type="search"
+            className="w-full min-w-[12rem] rounded border border-gray-300 bg-white py-1 pl-8 pr-2 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            placeholder="Search income"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search income"
+          />
+        </div>
       </div>
-      {rows.length ? (
-        <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-gray-700">
-              <th className="p-2 text-left">Date</th>
-              <th className="p-2 text-left">Category</th>
-              <th className="p-2 text-center">Evidence</th>
-              <th className="p-2 text-left">Amount</th>
-              <th className="p-2 text-left">Notes</th>
-              <th className="p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t dark:border-gray-700">
-                <td className="p-2">{r.date}</td>
-                <td className="p-2">{r.category || r.label || "—"}</td>
-                <td className="p-2 text-center">
-                  {r.evidenceUrl ? (
-                    <EvidenceLink
-                      href={r.evidenceUrl}
-                      fileName={r.evidenceName}
-                      className="mx-auto"
-                    />
-                  ) : (
-                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
-                  )}
-                </td>
-                <td className="p-2">{r.amount}</td>
-                <td className="p-2">{r.notes}</td>
-                <td className="p-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-                      onClick={() => setEditingIncome(r)}
-                      aria-label="Edit income"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="h-4 w-4"
-                        aria-hidden="true"
-                      >
-                        <path d="M13.586 2.586a2 2 0 0 1 2.828 2.828l-.793.793-2.828-2.828.793-.793zM12.379 4.207 3 13.586V17h3.414l9.379-9.379-3.414-3.414z" />
-                      </svg>
-                      <span className="sr-only">Edit income</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
-                      onClick={() => {
-                        if (confirm("are you sure?")) {
-                          deleteMutation.mutate(r.id);
-                        }
-                      }}
-                      aria-label="Delete income"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="h-4 w-4"
-                        aria-hidden="true"
-                      >
-                        <path d="M8.5 3a1.5 1.5 0 0 1 3 0H15a1 1 0 1 1 0 2h-1v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5H5a1 1 0 1 1 0-2h3.5zM8 5v10h4V5H8z" />
-                      </svg>
-                      <span className="sr-only">Delete income</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <EmptyState message="No income records found." />
-      )}
+      {content}
       <IncomeForm
         propertyId={propertyId}
         open={Boolean(editingIncome)}
