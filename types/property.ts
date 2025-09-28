@@ -22,8 +22,8 @@ export interface LedgerEntry {
   amount: number;
   balance: number;
   status: LedgerStatus;
-  evidenceUrl?: string;
-  evidenceName?: string;
+  evidenceUrl?: string | null;
+  evidenceName?: string | null;
   description?: string;
 }
 

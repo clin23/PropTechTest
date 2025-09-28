@@ -40,12 +40,15 @@ export default function RentLedgerTable({
       amount: entry.amount,
       date: entry.date,
       status: entry.status,
+      evidenceUrl: entry.evidenceUrl ?? null,
+      evidenceName: entry.evidenceName ?? null,
     });
-    const updated = entries
-      .map((e) => (e.id === entry.id ? entry : e))
-      .sort((a, b) => a.date.localeCompare(b.date));
-    setEntries(calculateBalances(updated));
-    setSelected(null);
+    setEntries((prev) => {
+      const updated = prev
+        .map((e) => (e.id === entry.id ? { ...e, ...entry } : e))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      return calculateBalances(updated);
+    });
   };
 
   return (
