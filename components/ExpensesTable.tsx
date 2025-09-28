@@ -39,8 +39,6 @@ export default function ExpensesTable({
   const [property, setProperty] = useState(propertyId ?? "");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [category, setCategory] = useState("");
-  const [vendor, setVendor] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ExpenseRow | null>(null);
@@ -50,16 +48,12 @@ export default function ExpensesTable({
     propertyId: propertyId ?? (property || undefined),
     from: from || undefined,
     to: to || undefined,
-    category: category || undefined,
-    vendor: vendor || undefined,
   };
   const queryKey = [
     "expenses",
     params.propertyId || "",
     from,
     to,
-    category,
-    vendor,
   ];
   const { data = [] } = useQuery<ExpenseRow[]>({
     queryKey,
@@ -173,18 +167,6 @@ export default function ExpensesTable({
           onChange={(e) => setTo(e.target.value)}
           placeholder="To"
         />
-        <input
-          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
-        <input
-          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          placeholder="Vendor"
-          value={vendor}
-          onChange={(e) => setVendor(e.target.value)}
-        />
         <div className="relative">
           <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-gray-400">
             <svg
@@ -203,7 +185,7 @@ export default function ExpensesTable({
           </span>
           <input
             type="search"
-            className="w-full min-w-[12rem] rounded border border-gray-300 bg-white py-1 pl-8 pr-2 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className="w-full min-w-[18rem] rounded border border-gray-300 bg-white py-1 pl-8 pr-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             placeholder="Search for an expense"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
