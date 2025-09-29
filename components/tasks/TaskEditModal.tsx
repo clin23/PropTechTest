@@ -4,7 +4,7 @@ import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
 import {
-  STATUS_INDICATOR_OPTIONS,
+  STATUS_INDICATOR_PRESETS,
   coerceStatusIndicatorValue,
   deriveIndicatorForTask,
   mergeIndicatorIntoTags,
@@ -40,6 +40,15 @@ export default function TaskEditModal({
   const [attachments, setAttachments] = useState<
     TaskDto["attachments"]
   >(task.attachments ?? []);
+
+  const updateStatusIndicator = useCallback(
+    (value: Partial<StatusIndicatorValue>) => {
+      setStatusIndicator((prev) =>
+        coerceStatusIndicatorValue({ ...prev, ...value })
+      );
+    },
+    []
+  );
 
   const initialPayloadRef = useRef<string>();
 
@@ -87,6 +96,8 @@ export default function TaskEditModal({
           })()
         : null;
 
+      const sanitizedIndicator = coerceStatusIndicatorValue(draftIndicator);
+
       return {
         title: draftTitle,
         description: draftDescription,
@@ -95,17 +106,19 @@ export default function TaskEditModal({
         properties: resolvedProperties,
         vendor: resolvedVendor,
         attachments: draftAttachments,
-        tags: mergeIndicatorIntoTags(task.tags, draftIndicator),
+        tags: mergeIndicatorIntoTags(task.tags, sanitizedIndicator),
       } satisfies Partial<TaskDto>;
     },
     [properties, vendors, task]
   );
 
   useEffect(() => {
-    const indicator = deriveIndicatorForTask({
-      status: task.status,
-      tags: task.tags,
-    });
+    const indicator = coerceStatusIndicatorValue(
+      deriveIndicatorForTask({
+        status: task.status,
+        tags: task.tags,
+      })
+    );
     const baseState = {
       title: task.title,
       description: task.description ?? "",
@@ -145,11 +158,11 @@ export default function TaskEditModal({
         description,
         dueDate,
         dueTime,
-        selectedProps,
-        vendorId,
-        attachments,
-        statusIndicator,
-      });
+      selectedProps,
+      vendorId,
+      attachments,
+      statusIndicator: coerceStatusIndicatorValue(statusIndicator),
+    });
 
       const serialized = JSON.stringify(payload);
       if (!force && serialized === initialPayloadRef.current) {
@@ -311,23 +324,78 @@ export default function TaskEditModal({
             ))}
           </select>
         </div>
-        <div>
-          <label className="mb-1 block text-sm dark:text-gray-200">Status</label>
-          <select
-            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            value={statusIndicator}
-            onChange={(e) =>
-              setStatusIndicator(
-                coerceStatusIndicatorValue(e.target.value)
-              )
-            }
-          >
-            {STATUS_INDICATOR_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-sm dark:text-gray-200">
+              Status label
+            </label>
+            <input
+              className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              value={statusIndicator.label}
+              onChange={(e) =>
+                updateStatusIndicator({ label: e.target.value })
+              }
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm dark:text-gray-200">
+              Status colour
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                className="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-transparent p-1 dark:border-gray-600"
+                value={statusIndicator.color}
+                onChange={(e) =>
+                  updateStatusIndicator({ color: e.target.value })
+                }
+                aria-label="Choose status colour"
+              />
+              <input
+                type="text"
+                className="flex-1 rounded-md border border-gray-300 p-2 font-mono text-sm uppercase tracking-wide dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                value={statusIndicator.color}
+                onChange={(e) =>
+                  updateStatusIndicator({ color: e.target.value })
+                }
+                placeholder="#3b82f6"
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Provide any hex colour code or pick from the presets.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {STATUS_INDICATOR_PRESETS.map((preset) => {
+                const isActive =
+                  preset.color === statusIndicator.color &&
+                  preset.label === statusIndicator.label;
+                return (
+                  <button
+                    key={`${preset.label}-${preset.color}`}
+                    type="button"
+                    className={`flex items-center gap-2 rounded border px-2 py-1 text-xs transition ${
+                      isActive
+                        ? "border-gray-900 bg-gray-100 dark:border-gray-100 dark:bg-gray-800"
+                        : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
+                    }`}
+                    onClick={() =>
+                      updateStatusIndicator({
+                        label: preset.label,
+                        color: preset.color,
+                      })
+                    }
+                  >
+                    <span
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: preset.color }}
+                      aria-hidden
+                    />
+                    <span>{preset.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
         <div>
           <label className="mb-1 block text-sm dark:text-gray-200">Attachments</label>
