@@ -211,13 +211,16 @@ export default function ExpenseForm({
 
       {open && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/50"
           onClick={handleClose}
         >
-          <form
-            className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full max-w-2xl p-6 space-y-3 rounded-lg shadow-lg overflow-y-auto"
+          <div
+            className="flex h-full w-full items-start justify-center p-4 sm:p-6 md:items-center"
             onClick={(e) => e.stopPropagation()}
-            onSubmit={(e) => {
+          >
+            <form
+              className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full max-w-2xl max-h-full p-6 space-y-3 rounded-lg shadow-lg overflow-y-auto"
+              onSubmit={(e) => {
               e.preventDefault();
               setError(null);
               if (
@@ -461,6 +464,7 @@ export default function ExpenseForm({
             </div>
           </form>
         </div>
+      </div>
       )}
     </div>
   );
