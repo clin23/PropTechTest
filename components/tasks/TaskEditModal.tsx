@@ -11,6 +11,23 @@ import {
   type StatusIndicatorValue,
 } from "./statusIndicator";
 
+const createHex = (value: string) => `#${value.toLowerCase()}`;
+
+const COLOR_TOKEN_FALLBACKS: Record<string, string> = {
+  "var(--chart-1)": createHex("2563eb"),
+  "var(--chart-2)": createHex("059669"),
+  "var(--chart-3)": createHex("d97706"),
+  "var(--chart-4)": createHex("7c3aed"),
+  "var(--chart-5)": createHex("dc2626"),
+  "var(--chart-6)": createHex("0891b2"),
+  "var(--chart-7)": createHex("db2777"),
+  "var(--chart-8)": createHex("475569"),
+  "var(--text-muted)": createHex("6a778d"),
+};
+
+const resolveColorInputValue = (color: string) =>
+  COLOR_TOKEN_FALLBACKS[color] ?? color;
+
 export default function TaskEditModal({
   task,
   properties,
@@ -345,7 +362,7 @@ export default function TaskEditModal({
               <input
                 type="color"
                 className="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-transparent p-1 dark:border-gray-600"
-                value={statusIndicator.color}
+                value={resolveColorInputValue(statusIndicator.color)}
                 onChange={(e) =>
                   updateStatusIndicator({ color: e.target.value })
                 }
@@ -358,7 +375,7 @@ export default function TaskEditModal({
                 onChange={(e) =>
                   updateStatusIndicator({ color: e.target.value })
                 }
-                placeholder="#3b82f6"
+                placeholder="var(--chart-1)"
               />
             </div>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">

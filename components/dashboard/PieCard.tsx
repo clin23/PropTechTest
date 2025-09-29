@@ -16,7 +16,14 @@ interface PieCardProps<T> {
   valueKey: keyof T;
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f97316', '#e11d48', '#8b5cf6', '#14b8a6'];
+const COLORS = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-5)',
+  'var(--chart-4)',
+  'var(--chart-6)',
+];
 
 const integerFormatter = new Intl.NumberFormat('en-AU', { maximumFractionDigits: 0 });
 

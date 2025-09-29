@@ -111,12 +111,15 @@ function AnalyticsOverviewPage() {
   }, [filters]);
 
   useEffect(() => {
+    if (!initialFromUrl) {
+      return;
+    }
+
     if (!isSameState(initialFromUrl, filters)) {
       setFilters(initialFromUrl);
       setDebouncedFilters(initialFromUrl);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFromUrl.from, initialFromUrl.to, initialFromUrl.expenseCategory, initialFromUrl.propertyIds.join(',')]);
+  }, [filters, initialFromUrl]);
 
   useEffect(() => {
     const params = buildSearchParams(debouncedFilters).toString();
