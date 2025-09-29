@@ -2,22 +2,67 @@ import type { TaskDto } from "../../types/tasks";
 
 export const STATUS_INDICATOR_TAG_PREFIX = "__status_indicator:";
 
-export const STATUS_INDICATOR_OPTIONS = [
-  { value: "todo", label: "To-Do", color: "bg-blue-500" },
-  { value: "doing", label: "Doing", color: "bg-orange-500" },
-  { value: "done", label: "Complete", color: "bg-green-500" },
-] as const;
+export type StatusIndicatorValue = {
+  label: string;
+  color: string;
+};
 
-export type StatusIndicatorValue =
-  (typeof STATUS_INDICATOR_OPTIONS)[number]["value"];
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
 
-const optionByValue = STATUS_INDICATOR_OPTIONS.reduce(
-  (acc, option) => {
-    acc[option.value] = option;
-    return acc;
-  },
-  {} as Record<StatusIndicatorValue, (typeof STATUS_INDICATOR_OPTIONS)[number]>
-);
+const DEFAULT_INDICATOR: StatusIndicatorValue = {
+  label: "To-Do",
+  color: "#3b82f6",
+};
+
+const normalizeHexColor = (value?: string) => {
+  if (!value) return DEFAULT_INDICATOR.color;
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    const [r, g, b] = trimmed.slice(1).split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return DEFAULT_INDICATOR.color;
+};
+
+export const normalizeStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => {
+  const label = (() => {
+    const trimmed = (value?.label ?? "").trim();
+    return trimmed || DEFAULT_INDICATOR.label;
+  })();
+
+  return {
+    label,
+    color: normalizeHexColor(value?.color),
+  };
+};
+
+const FALLBACK_INDICATOR = normalizeStatusIndicatorValue(DEFAULT_INDICATOR);
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
 
 const normalizeString = (value?: string | null) =>
   (value ?? "").trim().toLowerCase();
@@ -26,8 +71,8 @@ const isDoneStatus = (status?: string | null) => {
   const normalized = normalizeString(status);
   return (
     normalized === "done" ||
-    normalized === "completed" ||
-    normalized === "complete"
+    normalized === "complete" ||
+    normalized === "completed"
   );
 };
 
@@ -41,20 +86,6 @@ const isDoingStatus = (status?: string | null) => {
   );
 };
 
-export const isStatusIndicatorValue = (
-  value: string
-): value is StatusIndicatorValue =>
-  STATUS_INDICATOR_OPTIONS.some((option) => option.value === value);
-
-export const coerceStatusIndicatorValue = (
-  value?: string | null
-): StatusIndicatorValue => {
-  if (value && isStatusIndicatorValue(value)) {
-    return value;
-  }
-  return "todo";
-};
-
 export const extractIndicatorFromTags = (
   tags?: string[] | null
 ): StatusIndicatorValue | null => {
@@ -63,27 +94,66 @@ export const extractIndicatorFromTags = (
     tag.startsWith(STATUS_INDICATOR_TAG_PREFIX)
   );
   if (!match) return null;
-  const [, value] = match.split(STATUS_INDICATOR_TAG_PREFIX);
-  return value && isStatusIndicatorValue(value) ? value : null;
+  const [, rawValue] = match.split(STATUS_INDICATOR_TAG_PREFIX);
+  if (!rawValue) return null;
+
+  if (rawValue in LEGACY_INDICATOR_OPTIONS) {
+    return normalizeStatusIndicatorValue(LEGACY_INDICATOR_OPTIONS[rawValue]);
+  }
+
+  try {
+    const decoded = decodeURIComponent(rawValue);
+    const parsed = JSON.parse(decoded) as Partial<StatusIndicatorValue>;
+    return normalizeStatusIndicatorValue(parsed);
+  } catch (error) {
+    console.warn("Failed to parse status indicator tag", error);
+    return null;
+  }
 };
 
 export const deriveIndicatorForTask = (
   task: Pick<TaskDto, "status" | "tags">
 ): StatusIndicatorValue => {
-  if (isDoneStatus(task.status)) {
-    return "done";
-  }
-
   const tagged = extractIndicatorFromTags(task.tags);
   if (tagged) {
     return tagged;
   }
 
   if (isDoingStatus(task.status)) {
-    return "doing";
+    return normalizeStatusIndicatorValue(LEGACY_INDICATOR_OPTIONS.doing);
   }
 
-  return "todo";
+  const normalized = normalizeString(task.status);
+  if (
+    normalized &&
+    normalized !== "done" &&
+    normalized in LEGACY_INDICATOR_OPTIONS
+  ) {
+    return normalizeStatusIndicatorValue(
+      LEGACY_INDICATOR_OPTIONS[normalized as keyof typeof LEGACY_INDICATOR_OPTIONS]
+    );
+  }
+
+  if (isDoneStatus(task.status)) {
+    return normalizeStatusIndicatorValue({
+      label: LEGACY_INDICATOR_OPTIONS.done.label,
+      color: "#6b7280",
+    });
+  }
+
+  if (typeof task.status === "string" && task.status.trim()) {
+    const label = task.status
+      .split(/[_-]+/)
+      .filter(Boolean)
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(" ");
+    return normalizeStatusIndicatorValue({
+      label,
+      color: "#6b7280",
+    });
+  }
+
+  return FALLBACK_INDICATOR;
 };
 
 export const mergeIndicatorIntoTags = (
@@ -94,9 +164,13 @@ export const mergeIndicatorIntoTags = (
     (tag) => !tag.startsWith(STATUS_INDICATOR_TAG_PREFIX)
   ) ?? [];
 
-  return [...base, `${STATUS_INDICATOR_TAG_PREFIX}${indicator}`];
+  const serialized = encodeURIComponent(
+    JSON.stringify(normalizeStatusIndicatorValue(indicator))
+  );
+
+  return [...base, `${STATUS_INDICATOR_TAG_PREFIX}${serialized}`];
 };
 
 export const getIndicatorPresentation = (
   indicator: StatusIndicatorValue
-) => optionByValue[indicator];
+): StatusIndicatorValue => normalizeStatusIndicatorValue(indicator);
