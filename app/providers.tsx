@@ -13,8 +13,7 @@ interface ThemeContextValue {
 
 export const ThemeContext = createContext<ThemeContextValue>({
   theme: 'light',
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  toggleTheme: () => {},
+  toggleTheme: () => undefined,
 });
 
 export default function Providers({ children }: { children: ReactNode }) {

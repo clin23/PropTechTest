@@ -1,4 +1,4 @@
-import { computeExpenseBreakdown } from '../../expenses/route';
+import { computeExpenseBreakdown } from '../../../../../lib/analytics/expenses';
 import { toCSV } from '../../../../../lib/export';
 import { seedIfEmpty } from '../../../store';
 

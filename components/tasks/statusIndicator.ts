@@ -11,21 +11,21 @@ type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
 
 const DEFAULT_INDICATOR_PRESET = Object.freeze({
   label: "To-Do",
-  color: "#3b82f6",
+  color: "var(--chart-1)",
 });
 
 const LEGACY_PRESET_REGISTRY = Object.freeze({
   todo: DEFAULT_INDICATOR_PRESET,
-  doing: Object.freeze({ label: "In Progress", color: "#f97316" }),
-  done: Object.freeze({ label: "Complete", color: "#22c55e" }),
+  doing: Object.freeze({ label: "In Progress", color: "var(--chart-3)" }),
+  done: Object.freeze({ label: "Complete", color: "var(--chart-2)" }),
 });
 
 const CUSTOM_STATUS_PRESETS: StatusIndicatorPreset[] = Object.freeze([
-  Object.freeze({ label: "Blocked", color: "#ef4444" }),
-  Object.freeze({ label: "On Hold", color: "#a855f7" }),
-  Object.freeze({ label: "Needs Review", color: "#0ea5e9" }),
-  Object.freeze({ label: "Scheduled", color: "#8b5cf6" }),
-  Object.freeze({ label: "Waiting", color: "#facc15" }),
+  Object.freeze({ label: "Blocked", color: "var(--chart-5)" }),
+  Object.freeze({ label: "On Hold", color: "var(--chart-4)" }),
+  Object.freeze({ label: "Needs Review", color: "var(--chart-6)" }),
+  Object.freeze({ label: "Scheduled", color: "var(--chart-7)" }),
+  Object.freeze({ label: "Waiting", color: "var(--chart-8)" }),
 ]);
 
 export const STATUS_INDICATOR_PRESETS: readonly StatusIndicatorPreset[] = [
@@ -58,6 +58,10 @@ const sanitizeIndicatorColor = (value?: string | null) => {
   }
 
   const trimmed = value.trim();
+
+  if (/^var\(--[a-z0-9-]+\)$/i.test(trimmed)) {
+    return trimmed;
+  }
 
   if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
     return `#${expandShortHexCode(trimmed.slice(1)).toLowerCase()}`;
@@ -170,7 +174,7 @@ export const deriveIndicatorForTask = (
   if (isDoneStatus(task.status)) {
     return sanitizeStatusIndicatorValue({
       label: LEGACY_PRESET_REGISTRY.done.label,
-      color: "#6b7280",
+      color: "var(--text-muted)",
     });
   }
 
@@ -182,7 +186,7 @@ export const deriveIndicatorForTask = (
       .join(" ");
     return sanitizeStatusIndicatorValue({
       label,
-      color: "#6b7280",
+      color: "var(--text-muted)",
     });
   }
 

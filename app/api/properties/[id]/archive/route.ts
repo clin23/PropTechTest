@@ -1,4 +1,4 @@
-import { properties } from '../../store';
+import { properties } from '../../../store';
 
 export async function POST(
   _req: Request,
