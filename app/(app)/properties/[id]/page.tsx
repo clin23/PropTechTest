@@ -13,7 +13,7 @@ import { getProperty } from "../../../../lib/api";
 import type { PropertySummary } from "../../../../types/property";
 import { useURLState } from "../../../../lib/useURLState";
 import PropertyHero from "./components/PropertyHero";
-import ScrollableSectionBar, { type SectionTab } from "./components/ScrollableSectionBar";
+import ScrollableSectionBar from "./components/ScrollableSectionBar";
 import RentLedger from "./sections/RentLedger";
 import Expenses from "./sections/Expenses";
 import OtherIncome from "./sections/OtherIncome";
@@ -26,23 +26,11 @@ import Inspections from "./sections/Inspections";
 import CreateListing from "./sections/CreateListing";
 import Vendors from "./sections/Vendors";
 import PropertyPageSkeleton from "../../../../components/skeletons/PropertyPageSkeleton";
-
-const TABS = [
-  { id: "rent-ledger", label: "Rent Ledger" },
-  { id: "expenses", label: "Expenses" },
-  { id: "other-income", label: "Other Income" },
-  { id: "documents", label: "Documents" },
-  { id: "tasks", label: "Tasks" },
-  { id: "rent-review", label: "Rent Review" },
-  { id: "key-dates", label: "Key Dates" },
-  { id: "tenant-crm", label: "Tenant CRM" },
-  { id: "inspections", label: "Inspections" },
-  { id: "create-listing", label: "Create Listing" },
-  { id: "vendors", label: "Vendors" },
-] as const satisfies SectionTab[];
-
-type TabId = (typeof TABS)[number]["id"];
-const DEFAULT_TAB: TabId = "rent-ledger";
+import {
+  DEFAULT_PROPERTY_TAB,
+  PROPERTY_TABS,
+  type PropertyTabId,
+} from "./tabs";
 
 const rentFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -71,9 +59,9 @@ function formatDateValue(value?: string) {
 
 export default function PropertyPage() {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useURLState<TabId>({
+  const [activeTab, setActiveTab] = useURLState<PropertyTabId>({
     key: "tab",
-    defaultValue: DEFAULT_TAB,
+    defaultValue: DEFAULT_PROPERTY_TAB,
   });
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -85,8 +73,10 @@ export default function PropertyPage() {
     queryFn: () => getProperty(id),
   });
 
-  const resolvedTab = useMemo<TabId>(() => {
-    return TABS.some((tab) => tab.id === activeTab) ? activeTab : DEFAULT_TAB;
+  const resolvedTab = useMemo<PropertyTabId>(() => {
+    return PROPERTY_TABS.some((tab) => tab.id === activeTab)
+      ? activeTab
+      : DEFAULT_PROPERTY_TAB;
   }, [activeTab]);
 
   if (isError) {
@@ -100,13 +90,17 @@ export default function PropertyPage() {
   const ready = Boolean(property);
 
   const handleTabSelect = (tab: string) => {
-    const match = TABS.find((item) => item.id === tab);
+    const match = PROPERTY_TABS.find((item) => item.id === tab);
     if (match) {
       setActiveTab(match.id);
     }
   };
 
-  const renderSection = (tabId: TabId) => {
+  const handleNavigateToTab = (tabId: PropertyTabId) => {
+    setActiveTab(tabId);
+  };
+
+  const renderSection = (tabId: PropertyTabId) => {
     if (!property) return null;
     switch (tabId) {
       case "rent-ledger":
@@ -157,13 +151,14 @@ export default function PropertyPage() {
                   onAddIncome={() => setIncomeOpen(true)}
                   onAddExpense={() => setExpenseOpen(true)}
                   onUploadDocument={() => setDocumentOpen(true)}
+                  onNavigateToTab={handleNavigateToTab}
                 />
               </div>
               <div>
                 <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
                   <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
                     <ScrollableSectionBar
-                      tabs={TABS}
+                      tabs={PROPERTY_TABS}
                       activeTab={resolvedTab}
                       onTabSelect={handleTabSelect}
                       variant="contained"

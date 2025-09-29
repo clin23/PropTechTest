@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import type { KeyboardEvent } from "react";
 import type { PropertySummary } from "../../../../../types/property";
 import { Button } from "../../../../../components/ui/button";
+import { type PropertyTabId } from "../tabs";
 import ActionButtons from "./ActionButtons";
 
 interface PropertyHeroProps {
@@ -11,6 +13,7 @@ interface PropertyHeroProps {
   onAddIncome: () => void;
   onAddExpense: () => void;
   onUploadDocument: () => void;
+  onNavigateToTab: (tabId: PropertyTabId) => void;
 }
 
 const rentFormatter = new Intl.NumberFormat(undefined, {
@@ -48,20 +51,26 @@ export default function PropertyHero({
   onAddIncome,
   onAddExpense,
   onUploadDocument,
+  onNavigateToTab,
 }: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
   const nextEvent = property.events?.[0];
 
   const rentDisplay = formatRent(property.rent);
 
-  const summaryItems = [
-    { label: "Tenant", value: property.tenant || "—" },
+  const summaryItems: Array<{
+    label: string;
+    value: string;
+    tabId: PropertyTabId;
+  }> = [
+    { label: "Tenant", value: property.tenant || "—", tabId: "tenant-crm" },
     {
       label: "Rent / week",
       value: rentDisplay === "—" ? rentDisplay : `${rentDisplay}/week`,
+      tabId: "rent-ledger",
     },
-    { label: "Lease start", value: formatDate(property.leaseStart) },
-    { label: "Lease end", value: formatDate(property.leaseEnd) },
+    { label: "Lease start", value: formatDate(property.leaseStart), tabId: "documents" },
+    { label: "Lease end", value: formatDate(property.leaseEnd), tabId: "documents" },
   ];
 
   if (nextEvent) {
@@ -72,8 +81,23 @@ export default function PropertyHero({
         nextEventDate === "—"
           ? nextEvent.title
           : `${nextEventDate} · ${nextEvent.title}`,
+      tabId: "key-dates",
     });
   }
+
+  const handleSummaryActivate = (tabId: PropertyTabId) => {
+    onNavigateToTab(tabId);
+  };
+
+  const handleSummaryKeyDown = (
+    event: KeyboardEvent<HTMLDivElement>,
+    tabId: PropertyTabId,
+  ) => {
+    if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+      event.preventDefault();
+      handleSummaryActivate(tabId);
+    }
+  };
 
   return (
     <section className="overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -103,7 +127,15 @@ export default function PropertyHero({
         </div>
         <dl className="grid grid-cols-1 gap-4 text-sm text-gray-700 dark:text-gray-200 sm:grid-cols-2">
           {summaryItems.map((item) => (
-            <div key={item.label} className="space-y-1">
+            <div
+              key={item.label}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleSummaryActivate(item.tabId)}
+              onKeyDown={(event) => handleSummaryKeyDown(event, item.tabId)}
+              className="space-y-1 rounded-md border border-transparent p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-gray-200 hover:bg-gray-50 dark:hover:border-gray-700 dark:hover:bg-gray-800/70 dark:focus-visible:ring-offset-gray-900"
+              aria-label={`View ${item.label} details`}
+            >
               <dt className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {item.label}
               </dt>
