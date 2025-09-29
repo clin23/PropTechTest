@@ -5,7 +5,9 @@ import type { KeyboardEvent } from "react";
 import type { PropertySummary } from "../../../../../types/property";
 import { Button } from "../../../../../components/ui/button";
 import { type PropertyTabId } from "../tabs";
+import { sortPropertyEvents } from "../lib/sortEvents";
 import ActionButtons from "./ActionButtons";
+import NextKeyDates from "./NextKeyDates";
 
 interface PropertyHeroProps {
   property: PropertySummary;
@@ -54,7 +56,7 @@ export default function PropertyHero({
   onNavigateToTab,
 }: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
-  const nextEvent = property.events?.[0];
+  const sortedEvents = sortPropertyEvents(property.events);
 
   const rentDisplay = formatRent(property.rent);
 
@@ -72,18 +74,6 @@ export default function PropertyHero({
     { label: "Lease start", value: formatDate(property.leaseStart), tabId: "documents" },
     { label: "Lease end", value: formatDate(property.leaseEnd), tabId: "documents" },
   ];
-
-  if (nextEvent) {
-    const nextEventDate = formatDate(nextEvent.date);
-    summaryItems.push({
-      label: "Next key date",
-      value:
-        nextEventDate === "—"
-          ? nextEvent.title
-          : `${nextEventDate} · ${nextEvent.title}`,
-      tabId: "key-dates",
-    });
-  }
 
   const handleSummaryActivate = (tabId: PropertyTabId) => {
     onNavigateToTab(tabId);
@@ -145,6 +135,7 @@ export default function PropertyHero({
             </div>
           ))}
         </dl>
+        <NextKeyDates events={sortedEvents} onNavigate={onNavigateToTab} />
       </div>
       <div className="border-t bg-gray-50 px-6 py-4 dark:border-gray-800 dark:bg-gray-900/60">
         <ActionButtons
