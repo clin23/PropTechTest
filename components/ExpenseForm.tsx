@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createExpense, listProperties, uploadExpenseReceipt } from "../lib/api";
 import { logEvent } from "../lib/log";
@@ -209,118 +210,155 @@ export default function ExpenseForm({
         </button>
       )}
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50"
-          onClick={handleClose}
-        >
-          <div
-            className="flex h-full w-full items-start justify-center p-4 sm:p-6 md:items-center"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="expense-modal"
+            className="fixed inset-0 z-50 flex h-full w-full items-start justify-center bg-black/50 p-4 sm:p-6 md:items-center"
+            onClick={handleClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
-            <form
-              className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full max-w-2xl max-h-full p-6 space-y-3 rounded-lg shadow-lg overflow-y-auto"
+            <motion.form
+              className="h-full w-full max-w-2xl max-h-full space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
+              onClick={(e) => e.stopPropagation()}
               onSubmit={(e) => {
-              e.preventDefault();
-              setError(null);
-              if (
-                !form.propertyId ||
-                !form.date ||
-                !form.group ||
-                !form.vendor ||
-                !form.amount ||
-                (!form.category && !form.label)
-              ) {
-                setError("Please fill in all required fields");
-                return;
-              }
-              if (form.category && form.label) {
-                setError("Please choose either an expense or a custom label");
-                return;
-              }
-              if (isNaN(parseFloat(form.amount))) {
-                setError("Amount must be a number");
-                return;
-              }
-              mutation.mutate({
-                expense: {
-                  propertyId: form.propertyId,
-                  date: form.date,
-                  category: form.category,
-                  vendor: form.vendor,
-                  amount: parseFloat(form.amount),
-                  gst: form.gst ? parseFloat(form.gst) : 0,
-                  notes: form.notes,
-                  label: form.label,
-                },
-                receipt: form.receipt,
-              });
-              if (form.group) {
-                addRecent(form.group);
-              }
-            }}
-          >
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              Log an Expense
-            </h2>
-            {!propertyId && (
+                e.preventDefault();
+                setError(null);
+                if (
+                  !form.propertyId ||
+                  !form.date ||
+                  !form.group ||
+                  !form.vendor ||
+                  !form.amount ||
+                  (!form.category && !form.label)
+                ) {
+                  setError("Please fill in all required fields");
+                  return;
+                }
+                if (form.category && form.label) {
+                  setError("Please choose either an expense or a custom label");
+                  return;
+                }
+                if (isNaN(parseFloat(form.amount))) {
+                  setError("Amount must be a number");
+                  return;
+                }
+                mutation.mutate({
+                  expense: {
+                    propertyId: form.propertyId,
+                    date: form.date,
+                    category: form.category,
+                    vendor: form.vendor,
+                    amount: parseFloat(form.amount),
+                    gst: form.gst ? parseFloat(form.gst) : 0,
+                    notes: form.notes,
+                    label: form.label,
+                  },
+                  receipt: form.receipt,
+                });
+                if (form.group) {
+                  addRecent(form.group);
+                }
+              }}
+              initial={{ opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 24, scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+            >
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Log an Expense
+              </h2>
+              {!propertyId && (
+                <label className="block text-gray-700 dark:text-gray-300">
+                  Property
+                  <select
+                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    value={form.propertyId}
+                    onChange={(e) =>
+                      setForm({ ...form, propertyId: e.target.value })
+                    }
+                  >
+                    <option value="">Select property</option>
+                    {properties.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.address}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <label className="block text-gray-700 dark:text-gray-300">
-                Property
+                Date
+                <input
+                  type="date"
+                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                />
+              </label>
+              <label className="block text-gray-700 dark:text-gray-300">
+                Category
                 <select
                   className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.propertyId}
+                  value={form.group}
                   onChange={(e) =>
-                    setForm({ ...form, propertyId: e.target.value })
+                    setForm({ ...form, group: e.target.value, category: "" })
                   }
                 >
-                  <option value="">Select property</option>
-                  {properties.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.address}
+                  <option value="">Select category</option>
+                  {recent.length > 0 && (
+                    <optgroup label="Recent">
+                      {recent.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {humanize(cat)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {Object.keys(EXPENSE_CATEGORIES).map((group) => (
+                    <option key={group} value={group}>
+                      {humanize(group)}
                     </option>
                   ))}
                 </select>
               </label>
-            )}
-            <label className="block text-gray-700 dark:text-gray-300">
-              Date
-              <input
-                type="date"
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-              />
-            </label>
-            <label className="block text-gray-700 dark:text-gray-300">
-              Category
-              <select
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.group}
-                onChange={(e) =>
-                  setForm({ ...form, group: e.target.value, category: "" })
-                }
-              >
-                <option value="">Select category</option>
-                {recent.length > 0 && (
-                  <optgroup label="Recent">
-                    {recent.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {humanize(cat)}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {Object.keys(EXPENSE_CATEGORIES).map((group) => (
-                  <option key={group} value={group}>
-                    {humanize(group)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {form.group && (
-              form.category === "" && form.label === "" ? (
-                <div className="flex items-start gap-2">
-                  <label className="block flex-1 text-gray-700 dark:text-gray-300">
+              {form.group && (
+                form.category === "" && form.label === "" ? (
+                  <div className="flex items-start gap-2">
+                    <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                      Expense
+                      <select
+                        className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                        value={form.category}
+                        onChange={(e) =>
+                          setForm({ ...form, category: e.target.value, label: "" })
+                        }
+                      >
+                        <option value="">Select expense</option>
+                        {EXPENSE_CATEGORIES[form.group].map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <span className="self-center text-gray-500">OR</span>
+                    <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                      Custom label
+                      <input
+                        className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                        value={form.label}
+                        onChange={(e) =>
+                          setForm({ ...form, label: e.target.value, category: "" })
+                        }
+                      />
+                    </label>
+                  </div>
+                ) : form.category !== "" ? (
+                  <label className="block text-gray-700 dark:text-gray-300">
                     Expense
                     <select
                       className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
@@ -337,8 +375,8 @@ export default function ExpenseForm({
                       ))}
                     </select>
                   </label>
-                  <span className="self-center text-gray-500">OR</span>
-                  <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                ) : (
+                  <label className="block text-gray-700 dark:text-gray-300">
                     Custom label
                     <input
                       className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
@@ -348,124 +386,94 @@ export default function ExpenseForm({
                       }
                     />
                   </label>
-                </div>
-              ) : form.category !== "" ? (
-                <label className="block text-gray-700 dark:text-gray-300">
-                  Expense
-                  <select
-                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                    value={form.category}
-                    onChange={(e) =>
-                      setForm({ ...form, category: e.target.value, label: "" })
-                    }
-                  >
-                    <option value="">Select expense</option>
-                    {EXPENSE_CATEGORIES[form.group].map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : (
+                )
+              )}
+              {!form.group && (
                 <label className="block text-gray-700 dark:text-gray-300">
                   Custom label
                   <input
                     className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                     value={form.label}
-                    onChange={(e) =>
-                      setForm({ ...form, label: e.target.value, category: "" })
-                    }
+                    onChange={(e) => setForm({ ...form, label: e.target.value })}
                   />
                 </label>
-              )
-            )}
-            {!form.group && (
+              )}
               <label className="block text-gray-700 dark:text-gray-300">
-                Custom label
+                Vendor
                 <input
                   className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.label}
-                  onChange={(e) => setForm({ ...form, label: e.target.value })}
+                  value={form.vendor}
+                  onChange={(e) => setForm({ ...form, vendor: e.target.value })}
                 />
               </label>
-            )}
-            <label className="block text-gray-700 dark:text-gray-300">
-              Vendor
-              <input
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.vendor}
-                onChange={(e) => setForm({ ...form, vendor: e.target.value })}
-              />
-            </label>
-            <label className="block text-gray-700 dark:text-gray-300">
-              Amount
-              <input
-                type="number"
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              />
-            </label>
-            <label className="block text-gray-700 dark:text-gray-300">
-              GST
-              <input
-                type="number"
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.gst}
-                onChange={(e) => setForm({ ...form, gst: e.target.value })}
-              />
-            </label>
-            <label className="block text-gray-700 dark:text-gray-300">
-              Notes
-              <textarea
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
-            </label>
-            <label className="block text-gray-700 dark:text-gray-300">
-              Receipt
-              <input
-                key={fileInputKey}
-                type="file"
-                accept="image/jpeg,image/png,application/pdf"
-                className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    receipt: e.target.files && e.target.files[0]
-                      ? e.target.files[0]
-                      : null,
-                  })
-                }
-              />
-              {form.receipt && (
-                <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Selected: {form.receipt.name}
-                </div>
-              )}
-            </label>
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 dark:text-gray-100 rounded"
-                onClick={handleClose}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-2 py-1 bg-green-500 text-white rounded"
-              >
-                {isEditMode ? "Update" : "Save"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-      )}
+              <label className="block text-gray-700 dark:text-gray-300">
+                Amount
+                <input
+                  type="number"
+                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                />
+              </label>
+              <label className="block text-gray-700 dark:text-gray-300">
+                GST
+                <input
+                  type="number"
+                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                  value={form.gst}
+                  onChange={(e) => setForm({ ...form, gst: e.target.value })}
+                />
+              </label>
+              <label className="block text-gray-700 dark:text-gray-300">
+                Notes
+                <textarea
+                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
+              </label>
+              <label className="block text-gray-700 dark:text-gray-300">
+                Receipt
+                <input
+                  key={fileInputKey}
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      receipt: e.target.files && e.target.files[0]
+                        ? e.target.files[0]
+                        : null,
+                    })
+                  }
+                />
+                {form.receipt && (
+                  <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Selected: {form.receipt.name}
+                  </div>
+                )}
+              </label>
+              {error && <p className="text-red-600 text-sm">{error}</p>}
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  className="px-2 py-1 bg-gray-100 dark:bg-gray-700 dark:text-gray-100 rounded"
+                  onClick={handleClose}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-2 py-1 bg-green-500 text-white rounded"
+                >
+                  {isEditMode ? "Update" : "Save"}
+                </button>
+              </div>
+            </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
