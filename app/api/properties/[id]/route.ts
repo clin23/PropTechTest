@@ -20,7 +20,7 @@ export async function GET(
   }
   const events = reminders
     .filter((r) => r.propertyId === params.id)
-    .map((r) => ({ date: r.dueDate, title: r.title }));
+    .map((r) => ({ date: r.dueDate, title: r.title, severity: r.severity }));
   return Response.json({ ...property, events });
 }
 
@@ -41,7 +41,7 @@ export async function PATCH(
   if (body.archived !== undefined) property.archived = body.archived;
   const events = reminders
     .filter((r) => r.propertyId === params.id)
-    .map((r) => ({ date: r.dueDate, title: r.title }));
+    .map((r) => ({ date: r.dueDate, title: r.title, severity: r.severity }));
   return Response.json({ ...property, events });
 }
 
