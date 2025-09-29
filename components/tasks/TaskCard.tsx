@@ -67,7 +67,8 @@ export default function TaskCard({
         {statusInfo && (
           <span className="inline-flex h-2.5 w-2.5 items-center justify-center">
             <span
-              className={`h-2.5 w-2.5 rounded-full ${statusInfo.color}`}
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: statusInfo.color }}
               aria-hidden
             />
             <span className="sr-only">{statusInfo.label}</span>
