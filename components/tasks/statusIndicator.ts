@@ -9,18 +9,18 @@ export type StatusIndicatorValue = {
 
 type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
 
-const DEFAULT_INDICATOR_TEMPLATE: StatusIndicatorValue = {
+export const DEFAULT_STATUS_INDICATOR: StatusIndicatorPreset = Object.freeze({
   label: "To-Do",
   color: "#3b82f6",
-};
+});
 
 const sanitizeIndicatorLabel = (value?: string | null) => {
   const trimmed = (value ?? "").trim();
-  return trimmed || DEFAULT_INDICATOR_TEMPLATE.label;
+  return trimmed || DEFAULT_STATUS_INDICATOR.label;
 };
 
 const sanitizeIndicatorColor = (value?: string | null) => {
-  if (!value) return DEFAULT_INDICATOR_TEMPLATE.color;
+  if (!value) return DEFAULT_STATUS_INDICATOR.color;
 
   const trimmed = value.trim();
 
@@ -33,7 +33,7 @@ const sanitizeIndicatorColor = (value?: string | null) => {
     return trimmed.toLowerCase();
   }
 
-  return DEFAULT_INDICATOR_TEMPLATE.color;
+  return DEFAULT_STATUS_INDICATOR.color;
 };
 
 export const sanitizeStatusIndicatorValue = (
@@ -44,11 +44,11 @@ export const sanitizeStatusIndicatorValue = (
 });
 
 const FALLBACK_INDICATOR = sanitizeStatusIndicatorValue(
-  DEFAULT_INDICATOR_TEMPLATE
+  DEFAULT_STATUS_INDICATOR
 );
 
 const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
-  todo: { label: "To-Do", color: "#3b82f6" },
+  todo: DEFAULT_STATUS_INDICATOR,
   doing: { label: "In Progress", color: "#f97316" },
   done: { label: "Complete", color: "#22c55e" },
 };
