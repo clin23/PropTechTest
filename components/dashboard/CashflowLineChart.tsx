@@ -120,9 +120,9 @@ export default function CashflowLineChart({ data }: Props) {
           />
           <Tooltip formatter={(v: number) => formatMoney(v)} labelFormatter={(l) => formatChartDate(l)} />
           <Legend />
-          <Line type="monotone" dataKey="cashInCents" name="Cash In" stroke="#22c55e" />
-          <Line type="monotone" dataKey="cashOutCents" name="Cash Out" stroke="#ef4444" />
-          <Line type="monotone" dataKey="netCents" name="Net" stroke="#3b82f6" />
+          <Line type="monotone" dataKey="cashInCents" name="Cash In" stroke="var(--chart-2)" />
+          <Line type="monotone" dataKey="cashOutCents" name="Cash Out" stroke="var(--chart-5)" />
+          <Line type="monotone" dataKey="netCents" name="Net" stroke="var(--chart-1)" />
         </LineChart>
       </ResponsiveContainer>
     </div>

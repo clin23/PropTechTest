@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AnalyticsState, AnalyticsStateType } from './schemas';
 
@@ -50,13 +50,17 @@ export function useUrlState(state: AnalyticsStateType, onChange: (s: AnalyticsSt
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams();
+  const hasInitialised = useRef(false);
 
   useEffect(() => {
-    // Parse initial
+    if (hasInitialised.current) {
+      return;
+    }
+
+    hasInitialised.current = true;
     const parsed = parse(search as any as URLSearchParams);
     onChange(parsed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onChange, search]);
 
   useEffect(() => {
     const params = serialize(state);
