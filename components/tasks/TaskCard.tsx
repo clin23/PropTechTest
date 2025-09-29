@@ -50,9 +50,10 @@ export default function TaskCard({
     typeof isCompleted === "boolean"
       ? isCompleted
       : normalizedStatus === "done" || normalizedStatus === "complete";
-  const indicatorValue = completed
-    ? "done"
-    : deriveIndicatorForTask({ status: task.status, tags: task.tags });
+  const indicatorValue = deriveIndicatorForTask({
+    status: task.status,
+    tags: task.tags,
+  });
   const statusInfo = getIndicatorPresentation(indicatorValue);
 
   return (

@@ -68,6 +68,70 @@ export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
   { label: "Waiting", color: "#facc15" },
 ];
 
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const isDoneStatus = (status?: string | null) => {
+  const normalized = normalizeString(status);
+  return (
+    normalized === "done" ||
+    normalized === "complete" ||
+    normalized === "completed"
+  );
+};
+
+const expandShortHex = (value: string) =>
+  value
+    .split("")
+    .map((char) => char + char)
+    .join("");
+
+const sanitizeColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    return `#${expandShortHex(trimmed.slice(1)).toLowerCase()}`;
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: sanitizeLabel(value?.label),
+  color: sanitizeColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
 const normalizeString = (value?: string | null) =>
   (value ?? "").trim().toLowerCase();
 
@@ -131,6 +195,13 @@ export const deriveIndicatorForTask = (
     return coerceStatusIndicatorValue(
       LEGACY_INDICATOR_OPTIONS[normalized as keyof typeof LEGACY_INDICATOR_OPTIONS]
     );
+  }
+
+  if (isDoneStatus(task.status)) {
+    return coerceStatusIndicatorValue({
+      label: LEGACY_INDICATOR_OPTIONS.done.label,
+      color: "#6b7280",
+    });
   }
 
   if (typeof task.status === "string" && task.status.trim()) {
