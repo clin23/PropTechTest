@@ -37,24 +37,28 @@ export default function PieCard<T extends Record<string, any>>({ title, data, la
     <div className="p-4 rounded-2xl card">
       <div className="mb-4 text-sm text-text-secondary">{title}</div>
       {hasData ? (
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey={valueKey as string}
-              nameKey={labelKey as string}
-              label={renderSliceLabel}
-            >
-              {data.map((_, idx) => (
-                <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(v: number) => formatMoney(v)} />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+        <div className="h-[320px] sm:h-[360px] lg:h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart margin={{ top: 16, right: 32, bottom: 16, left: 32 }}>
+              <Pie
+                data={data}
+                dataKey={valueKey as string}
+                nameKey={labelKey as string}
+                label={renderSliceLabel}
+                outerRadius="75%"
+                labelLine
+              >
+                {data.map((_, idx) => (
+                  <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v: number) => formatMoney(v)} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       ) : (
-        <div className="flex h-[300px] items-center justify-center px-4 text-center text-sm text-text-secondary">
+        <div className="flex h-[320px] items-center justify-center px-4 text-center text-sm text-text-secondary sm:h-[360px] lg:h-[400px]">
           log data to see visualisations!
         </div>
       )}

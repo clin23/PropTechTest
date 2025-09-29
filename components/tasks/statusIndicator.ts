@@ -114,6 +114,10 @@ export const deriveIndicatorForTask = (
     return tagged;
   }
 
+  if (isDoneStatus(task.status)) {
+    return coerceStatusIndicatorValue(LEGACY_INDICATOR_OPTIONS.done);
+  }
+
   if (isDoingStatus(task.status)) {
     return coerceStatusIndicatorValue(LEGACY_INDICATOR_OPTIONS.doing);
   }
