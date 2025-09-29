@@ -7,6 +7,18 @@ export type ReminderType =
 
 export type ReminderSeverity = 'low' | 'med' | 'high';
 
+export type ReminderDocumentDto = {
+  id: string;
+  name: string;
+  url?: string;
+};
+
+export type ReminderChecklistItemDto = {
+  id: string;
+  text: string;
+  completed?: boolean;
+};
+
 export type ReminderDto = {
   id: string;
   propertyId: string;
@@ -14,6 +26,11 @@ export type ReminderDto = {
   type: ReminderType;
   title: string;
   dueDate: string; // ISO date
+  dueTime?: string;
+  recurrence?: string | null;
   severity: ReminderSeverity;
+  documents?: ReminderDocumentDto[];
+  checklist?: ReminderChecklistItemDto[];
+  taskId?: string | null;
 };
 
