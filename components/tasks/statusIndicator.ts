@@ -62,8 +62,583 @@ export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
   { label: "Waiting", color: "#facc15" },
 ];
 
-const normalizeString = (value?: string | null) =>
-  (value ?? "").trim().toLowerCase();
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const DEFAULT_INDICATOR: StatusIndicatorValue = {
+  label: "To-Do",
+  color: "#3b82f6",
+};
+
+const normalizeHexColor = (value?: string) => {
+  if (!value) return DEFAULT_INDICATOR.color;
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    const [r, g, b] = trimmed.slice(1).split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return DEFAULT_INDICATOR.color;
+};
+
+export const normalizeStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => {
+  const label = (() => {
+    const trimmed = (value?.label ?? "").trim();
+    return trimmed || DEFAULT_INDICATOR.label;
+  })();
+
+  return {
+    label,
+    color: normalizeHexColor(value?.color),
+  };
+};
+
+const FALLBACK_INDICATOR = normalizeStatusIndicatorValue(DEFAULT_INDICATOR);
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const normalizeIndicatorLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const normalizeIndicatorColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    const [r, g, b] = trimmed.slice(1).split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const normalizeStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: normalizeIndicatorLabel(value?.label),
+  color: normalizeIndicatorColor(value?.color),
+});
+
+const FALLBACK_INDICATOR = normalizeStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const normalizeIndicatorLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const normalizeIndicatorColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    const [r, g, b] = trimmed.slice(1).split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const normalizeStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: normalizeIndicatorLabel(value?.label),
+  color: normalizeIndicatorColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = normalizeStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const coerceIndicatorLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const coerceIndicatorColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    const [r, g, b] = trimmed.slice(1).split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: coerceIndicatorLabel(value?.label),
+  color: coerceIndicatorColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const normalizeIndicatorLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const normalizeIndicatorColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    const [r, g, b] = trimmed.slice(1).split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: normalizeIndicatorLabel(value?.label),
+  color: normalizeIndicatorColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const normalizeIndicatorLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const sanitizeColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    const [r, g, b] = trimmed.slice(1).split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: normalizeIndicatorLabel(value?.label),
+  color: sanitizeColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const sanitizeIndicatorLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const sanitizeColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    const [r, g, b] = trimmed.slice(1).split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: sanitizeIndicatorLabel(value?.label),
+  color: sanitizeColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const sanitizeIndicatorLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const expandHexTriplet = (value: string) =>
+  value
+    .split("")
+    .map((char) => char + char)
+    .join("");
+
+const sanitizeColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    return `#${expandHexTriplet(trimmed.slice(1)).toLowerCase()}`;
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: sanitizeIndicatorLabel(value?.label),
+  color: sanitizeColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const sanitizeLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const expandHexTriplet = (value: string) =>
+  value
+    .split("")
+    .map((char) => char + char)
+    .join("");
+
+const sanitizeColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    return `#${expandHexTriplet(trimmed.slice(1)).toLowerCase()}`;
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: sanitizeLabel(value?.label),
+  color: sanitizeColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
+
+const sanitizeLabel = (value?: string) => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "To-Do";
+  return trimmed;
+};
+
+const expandShortHex = (value: string) =>
+  value
+    .split("")
+    .map((char) => char + char)
+    .join("");
+
+const sanitizeColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    return `#${expandShortHex(trimmed.slice(1)).toLowerCase()}`;
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: sanitizeLabel(value?.label),
+  color: sanitizeColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+type StatusIndicatorPreset = Readonly<StatusIndicatorValue>;
 
 const isDoneStatus = (status?: string | null) => {
   const normalized = normalizeString(status);
@@ -73,6 +648,62 @@ const isDoneStatus = (status?: string | null) => {
     normalized === "completed"
   );
 };
+
+const expandShortHex = (value: string) =>
+  value
+    .split("")
+    .map((char) => char + char)
+    .join("");
+
+const sanitizeColor = (value?: string) => {
+  if (!value) {
+    return "#3b82f6";
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#([0-9a-f]{3})$/i.test(trimmed)) {
+    return `#${expandShortHex(trimmed.slice(1)).toLowerCase()}`;
+  }
+
+  if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return "#3b82f6";
+};
+
+export const coerceStatusIndicatorValue = (
+  value?: Partial<StatusIndicatorValue> | null
+): StatusIndicatorValue => ({
+  label: sanitizeLabel(value?.label),
+  color: sanitizeColor(value?.color),
+});
+
+const DEFAULT_INDICATOR = coerceStatusIndicatorValue({
+  label: "To-Do",
+  color: "#3b82f6",
+});
+
+const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
+  todo: { label: "To-Do", color: "#3b82f6" },
+  doing: { label: "In Progress", color: "#f97316" },
+  done: { label: "Complete", color: "#22c55e" },
+};
+
+export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
+  LEGACY_INDICATOR_OPTIONS.todo,
+  LEGACY_INDICATOR_OPTIONS.doing,
+  LEGACY_INDICATOR_OPTIONS.done,
+  { label: "Blocked", color: "#ef4444" },
+  { label: "On Hold", color: "#a855f7" },
+  { label: "Needs Review", color: "#0ea5e9" },
+  { label: "Scheduled", color: "#8b5cf6" },
+  { label: "Waiting", color: "#facc15" },
+];
+
+const normalizeString = (value?: string | null) =>
+  (value ?? "").trim().toLowerCase();
 
 const isDoingStatus = (status?: string | null) => {
   const normalized = normalizeString(status);
@@ -115,6 +746,10 @@ export const deriveIndicatorForTask = (
   const tagged = extractIndicatorFromTags(task.tags);
   if (tagged) {
     return tagged;
+  }
+
+  if (isDoneStatus(task.status)) {
+    return coerceStatusIndicatorValue(LEGACY_INDICATOR_OPTIONS.done);
   }
 
   if (isDoingStatus(task.status)) {
