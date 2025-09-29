@@ -5,7 +5,7 @@ import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
 import {
   STATUS_INDICATOR_PRESETS,
-  coerceStatusIndicatorValue,
+  normalizeStatusIndicatorValue,
   deriveIndicatorForTask,
   mergeIndicatorIntoTags,
   type StatusIndicatorValue,
@@ -44,7 +44,7 @@ export default function TaskEditModal({
   const updateStatusIndicator = useCallback(
     (value: Partial<StatusIndicatorValue>) => {
       setStatusIndicator((prev) =>
-        coerceStatusIndicatorValue({ ...prev, ...value })
+        normalizeStatusIndicatorValue({ ...prev, ...value })
       );
     },
     []
@@ -96,7 +96,7 @@ export default function TaskEditModal({
           })()
         : null;
 
-      const sanitizedIndicator = coerceStatusIndicatorValue(draftIndicator);
+      const sanitizedIndicator = normalizeStatusIndicatorValue(draftIndicator);
 
       return {
         title: draftTitle,
@@ -113,7 +113,7 @@ export default function TaskEditModal({
   );
 
   useEffect(() => {
-    const indicator = coerceStatusIndicatorValue(
+    const indicator = normalizeStatusIndicatorValue(
       deriveIndicatorForTask({
         status: task.status,
         tags: task.tags,
@@ -161,7 +161,7 @@ export default function TaskEditModal({
       selectedProps,
       vendorId,
       attachments,
-      statusIndicator: coerceStatusIndicatorValue(statusIndicator),
+      statusIndicator: normalizeStatusIndicatorValue(statusIndicator),
     });
 
       const serialized = JSON.stringify(payload);
