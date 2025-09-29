@@ -50,9 +50,10 @@ export default function TaskCard({
     typeof isCompleted === "boolean"
       ? isCompleted
       : normalizedStatus === "done" || normalizedStatus === "complete";
-  const indicatorValue = completed
-    ? "done"
-    : deriveIndicatorForTask({ status: task.status, tags: task.tags });
+  const indicatorValue = deriveIndicatorForTask({
+    status: task.status,
+    tags: task.tags,
+  });
   const statusInfo = getIndicatorPresentation(indicatorValue);
 
   return (
@@ -67,7 +68,8 @@ export default function TaskCard({
         {statusInfo && (
           <span className="inline-flex h-2.5 w-2.5 items-center justify-center">
             <span
-              className={`h-2.5 w-2.5 rounded-full ${statusInfo.color}`}
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: statusInfo.color }}
               aria-hidden
             />
             <span className="sr-only">{statusInfo.label}</span>
