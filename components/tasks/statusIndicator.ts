@@ -47,25 +47,44 @@ const FALLBACK_INDICATOR = sanitizeStatusIndicatorValue(
   DEFAULT_STATUS_INDICATOR
 );
 
-const LEGACY_INDICATOR_OPTIONS: Record<string, StatusIndicatorPreset> = {
-  todo: DEFAULT_STATUS_INDICATOR,
-  doing: { label: "In Progress", color: "#f97316" },
-  done: { label: "Complete", color: "#22c55e" },
-};
+const LEGACY_TODO_PRESET: StatusIndicatorPreset = DEFAULT_STATUS_INDICATOR;
+const LEGACY_DOING_PRESET: StatusIndicatorPreset = Object.freeze({
+  label: "In Progress",
+  color: "#f97316",
+});
+const LEGACY_DONE_PRESET: StatusIndicatorPreset = Object.freeze({
+  label: "Complete",
+  color: "#22c55e",
+});
 
 export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
-  LEGACY_INDICATOR_OPTIONS.todo,
-  LEGACY_INDICATOR_OPTIONS.doing,
-  LEGACY_INDICATOR_OPTIONS.done,
-  { label: "Blocked", color: "#ef4444" },
-  { label: "On Hold", color: "#a855f7" },
-  { label: "Needs Review", color: "#0ea5e9" },
-  { label: "Scheduled", color: "#8b5cf6" },
-  { label: "Waiting", color: "#facc15" },
+  LEGACY_TODO_PRESET,
+  LEGACY_DOING_PRESET,
+  LEGACY_DONE_PRESET,
+  Object.freeze({ label: "Blocked", color: "#ef4444" }),
+  Object.freeze({ label: "On Hold", color: "#a855f7" }),
+  Object.freeze({ label: "Needs Review", color: "#0ea5e9" }),
+  Object.freeze({ label: "Scheduled", color: "#8b5cf6" }),
+  Object.freeze({ label: "Waiting", color: "#facc15" }),
 ];
 
 const normalizeString = (value?: string | null) =>
   (value ?? "").trim().toLowerCase();
+
+const getLegacyIndicatorPreset = (
+  key?: string | null
+): StatusIndicatorPreset | null => {
+  switch (normalizeString(key)) {
+    case "todo":
+      return LEGACY_TODO_PRESET;
+    case "doing":
+      return LEGACY_DOING_PRESET;
+    case "done":
+      return LEGACY_DONE_PRESET;
+    default:
+      return null;
+  }
+};
 
 const isDoneStatus = (status?: string | null) => {
   const normalized = normalizeString(status);
@@ -153,8 +172,9 @@ export const extractIndicatorFromTags = (
   const [, rawValue] = match.split(STATUS_INDICATOR_TAG_PREFIX);
   if (!rawValue) return null;
 
-  if (rawValue in LEGACY_INDICATOR_OPTIONS) {
-    return sanitizeStatusIndicatorValue(LEGACY_INDICATOR_OPTIONS[rawValue]);
+  const legacyPreset = getLegacyIndicatorPreset(rawValue);
+  if (legacyPreset) {
+    return sanitizeStatusIndicatorValue(legacyPreset);
   }
 
   try {
@@ -180,23 +200,20 @@ export const deriveIndicatorForTask = (
   }
 
   if (isDoingStatus(task.status)) {
-    return sanitizeStatusIndicatorValue(LEGACY_INDICATOR_OPTIONS.doing);
+    return sanitizeStatusIndicatorValue(LEGACY_DOING_PRESET);
   }
 
   const normalized = normalizeString(task.status);
-  if (
-    normalized &&
-    normalized !== "done" &&
-    normalized in LEGACY_INDICATOR_OPTIONS
-  ) {
-    return sanitizeStatusIndicatorValue(
-      LEGACY_INDICATOR_OPTIONS[normalized as keyof typeof LEGACY_INDICATOR_OPTIONS]
-    );
+  if (normalized && normalized !== "done") {
+    const legacyPreset = getLegacyIndicatorPreset(normalized);
+    if (legacyPreset) {
+      return sanitizeStatusIndicatorValue(legacyPreset);
+    }
   }
 
   if (isDoneStatus(task.status)) {
     return sanitizeStatusIndicatorValue({
-      label: LEGACY_INDICATOR_OPTIONS.done.label,
+      label: LEGACY_DONE_PRESET.label,
       color: "#6b7280",
     });
   }
