@@ -1,6 +1,5 @@
-import { expenses, properties, isActiveProperty } from '../../store';
-import { seedIfEmpty } from '../../store';
-import type { ExpenseBreakdown } from '../../../../types/analytics';
+import { expenses, seedIfEmpty } from '../../store';
+import { computeExpenseBreakdown } from '../../../../lib/analytics/expenses';
 
 function getRange(search: URLSearchParams) {
   const from = search.get('from');
@@ -13,37 +12,6 @@ function getRange(search: URLSearchParams) {
   fromDate.setMonth(fromDate.getMonth() - 5);
   fromDate.setDate(1);
   return { from: fromDate, to: toDate };
-}
-
-export function computeExpenseBreakdown(params: {
-  from?: Date;
-  to?: Date;
-  propertyId?: string;
-}): ExpenseBreakdown {
-  const { from, to, propertyId } = params;
-  const fromDate = from || new Date('1970-01-01');
-  const toDate = to || new Date('2100-01-01');
-  const allowed = propertyId
-    ? [propertyId]
-    : properties.filter(isActiveProperty).map((p) => p.id);
-
-  const filtered = expenses.filter(
-    (e) =>
-      allowed.includes(e.propertyId) &&
-      new Date(e.date) >= fromDate &&
-      new Date(e.date) <= toDate,
-  );
-
-  const map = new Map<string, number>();
-  for (const e of filtered) {
-    map.set(e.category, (map.get(e.category) || 0) + e.amount);
-  }
-  const slices = Array.from(map.entries()).map(([category, amount]) => ({
-    category,
-    amount,
-  }));
-  const total = slices.reduce((s, x) => s + x.amount, 0);
-  return { slices, total };
 }
 
 export async function GET(req: Request) {
