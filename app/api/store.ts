@@ -51,13 +51,30 @@ export type ReminderType =
   | 'inspection_due'
   | 'custom';
 export type ReminderSeverity = 'high' | 'med' | 'low';
+export type ReminderDocument = {
+  id: string;
+  name: string;
+  url?: string;
+};
+
+export type ReminderChecklistItem = {
+  id: string;
+  text: string;
+  completed?: boolean;
+};
+
 export type Reminder = {
   id: string;
   propertyId: string;
   type: ReminderType;
   title: string;
   dueDate: string;
+  dueTime?: string;
+  recurrence?: string | null;
   severity: ReminderSeverity;
+  documents?: ReminderDocument[];
+  checklist?: ReminderChecklistItem[];
+  taskId?: string | null;
 };
 export type RentEntry = {
   id: string;
@@ -1464,7 +1481,20 @@ const initialReminders: Reminder[] = [
     type: 'lease_expiry',
     title: 'Lease expires',
     dueDate: '2025-08-01',
+    dueTime: '09:00',
+    recurrence: 'One-off',
     severity: 'high',
+    documents: [
+      {
+        id: 'rem1-doc1',
+        name: 'Lease agreement',
+        url: 'https://example.com/docs/lease-agreement.pdf',
+      },
+    ],
+    checklist: [
+      { id: 'rem1-check1', text: 'Confirm renewal intentions' },
+      { id: 'rem1-check2', text: 'Send renewal paperwork' },
+    ],
   },
   {
     id: 'rem2',
@@ -1472,7 +1502,11 @@ const initialReminders: Reminder[] = [
     type: 'rent_review',
     title: 'Rent review',
     dueDate: '2025-09-20',
+    dueTime: '10:00',
+    recurrence: 'Annual',
     severity: 'med',
+    documents: [],
+    checklist: [{ id: 'rem2-check1', text: 'Compare local market rents' }],
   },
   {
     id: 'rem3',
@@ -1480,7 +1514,11 @@ const initialReminders: Reminder[] = [
     type: 'insurance_renewal',
     title: 'Insurance renewal',
     dueDate: '2025-10-10',
+    dueTime: '12:00',
+    recurrence: 'Annual',
     severity: 'low',
+    documents: [],
+    checklist: [],
   },
   {
     id: 'rem4',
@@ -1488,7 +1526,11 @@ const initialReminders: Reminder[] = [
     type: 'inspection_due',
     title: 'Inspection due',
     dueDate: '2025-11-05',
+    dueTime: '15:30',
+    recurrence: 'Quarterly',
     severity: 'low',
+    documents: [],
+    checklist: [{ id: 'rem4-check1', text: 'Notify tenants of inspection' }],
   },
   {
     id: 'rem5',
@@ -1496,7 +1538,19 @@ const initialReminders: Reminder[] = [
     type: 'custom',
     title: 'Smoke alarm check',
     dueDate: '2025-07-30',
+    dueTime: '08:00',
+    recurrence: 'Annual',
     severity: 'med',
+    documents: [
+      {
+        id: 'rem5-doc1',
+        name: 'Alarm service certificate',
+      },
+    ],
+    checklist: [
+      { id: 'rem5-check1', text: 'Book technician' },
+      { id: 'rem5-check2', text: 'Record compliance certificate' },
+    ],
   },
 ];
 
@@ -1884,6 +1938,59 @@ export const listTasks = (filters: TaskFilters = {}): TaskDto[] => {
   }
 
   return data;
+};
+
+const cloneReminderDocuments = (docs?: ReminderDocument[]) =>
+  docs?.map((doc) => ({ ...doc })) ?? [];
+
+const cloneReminderChecklist = (items?: ReminderChecklistItem[]) =>
+  items?.map((item) => ({ ...item })) ?? [];
+
+export const createReminder = (
+  data: Omit<Reminder, 'id'> & Partial<Pick<Reminder, 'id'>>,
+): Reminder => {
+  const reminder: Reminder = {
+    ...data,
+    id: data.id ?? crypto.randomUUID(),
+    recurrence: data.recurrence ?? null,
+    documents: cloneReminderDocuments(data.documents),
+    checklist: cloneReminderChecklist(data.checklist),
+    taskId: data.taskId ?? null,
+  };
+  reminders.push(reminder);
+  return reminder;
+};
+
+export const updateReminder = (
+  id: string,
+  data: Partial<Omit<Reminder, 'id'>>,
+): Reminder | null => {
+  const idx = reminders.findIndex((r) => r.id === id);
+  if (idx === -1) return null;
+  const current = reminders[idx];
+  const updated: Reminder = {
+    ...current,
+    ...data,
+    recurrence:
+      data.recurrence !== undefined ? data.recurrence : current.recurrence ?? null,
+    documents:
+      data.documents !== undefined
+        ? cloneReminderDocuments(data.documents)
+        : current.documents,
+    checklist:
+      data.checklist !== undefined
+        ? cloneReminderChecklist(data.checklist)
+        : current.checklist,
+  };
+  reminders[idx] = updated;
+  return updated;
+};
+
+export const deleteReminder = (id: string): Reminder | null => {
+  const idx = reminders.findIndex((r) => r.id === id);
+  if (idx === -1) return null;
+  const [removed] = reminders.splice(idx, 1);
+  return removed ?? null;
 };
 
 export const createTask = (

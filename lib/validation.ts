@@ -107,23 +107,57 @@ export const zOccupancy = z.object({
   occupancyRate: z.number(),
 });
 
+const zReminderType = z.enum([
+  'lease_expiry',
+  'rent_review',
+  'insurance_renewal',
+  'inspection_due',
+  'custom',
+]);
+
+const zReminderSeverity = z.enum(['low', 'med', 'high']);
+
+export const zReminderDocument = z.object({
+  id: z.string(),
+  name: z.string(),
+  url: z.string().url().optional(),
+});
+
+export const zReminderChecklistItem = z.object({
+  id: z.string(),
+  text: z.string(),
+  completed: z.boolean().optional(),
+});
+
 export const zReminder = z.object({
   id: z.string(),
   propertyId: z.string(),
   propertyAddress: z.string(),
-  type: z.enum([
-    'lease_expiry',
-    'rent_review',
-    'insurance_renewal',
-    'inspection_due',
-    'custom',
-  ]),
+  type: zReminderType,
   title: z.string(),
   dueDate: z.string(),
-  severity: z.enum(['low', 'med', 'high']),
+  dueTime: z.string().optional(),
+  recurrence: z.string().nullable().optional(),
+  severity: zReminderSeverity,
+  documents: z.array(zReminderDocument).optional(),
+  checklist: z.array(zReminderChecklistItem).optional(),
+  taskId: z.string().nullable().optional(),
 });
 
 export const zReminders = z.array(zReminder);
+
+export const zReminderPayload = z.object({
+  propertyId: z.string(),
+  type: zReminderType,
+  title: z.string().min(1),
+  dueDate: z.string().min(1),
+  dueTime: z.string().optional(),
+  recurrence: z.string().nullable().optional(),
+  severity: zReminderSeverity,
+  documents: z.array(zReminderDocument).optional(),
+  checklist: z.array(zReminderChecklistItem).optional(),
+  addToTasks: z.boolean().optional(),
+});
 
 export const zTask = z.object({
   id: z.string().optional(),
