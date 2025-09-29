@@ -71,15 +71,6 @@ export const STATUS_INDICATOR_PRESETS: StatusIndicatorPreset[] = [
 const normalizeString = (value?: string | null) =>
   (value ?? "").trim().toLowerCase();
 
-const isDoneStatus = (status?: string | null) => {
-  const normalized = normalizeString(status);
-  return (
-    normalized === "done" ||
-    normalized === "completed" ||
-    normalized === "complete"
-  );
-};
-
 const isDoingStatus = (status?: string | null) => {
   const normalized = normalizeString(status);
   return (
@@ -132,7 +123,11 @@ export const deriveIndicatorForTask = (
   }
 
   const normalized = normalizeString(task.status);
-  if (normalized && normalized in LEGACY_INDICATOR_OPTIONS) {
+  if (
+    normalized &&
+    normalized !== "done" &&
+    normalized in LEGACY_INDICATOR_OPTIONS
+  ) {
     return coerceStatusIndicatorValue(
       LEGACY_INDICATOR_OPTIONS[normalized as keyof typeof LEGACY_INDICATOR_OPTIONS]
     );
