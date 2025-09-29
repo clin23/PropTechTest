@@ -55,7 +55,7 @@ export default function NextKeyDates({ events, onNavigate }: NextKeyDatesProps) 
       tabIndex={0}
       onClick={handleNavigate}
       onKeyDown={handleKeyDown}
-      className="group flex w-full flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-left transition hover:border-gray-300 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-700 dark:bg-gray-800/40 dark:hover:border-gray-600 dark:hover:bg-gray-800/70 dark:focus-visible:ring-offset-gray-900"
+      className="group flex w-full flex-col gap-2.5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-left transition hover:border-gray-300 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-700 dark:bg-gray-800/40 dark:hover:border-gray-600 dark:hover:bg-gray-800/70 dark:focus-visible:ring-offset-gray-900"
       aria-label="View next key dates"
     >
       <div className="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -63,13 +63,13 @@ export default function NextKeyDates({ events, onNavigate }: NextKeyDatesProps) 
         <span className="text-xs font-medium text-blue-600 group-hover:underline">View key dates</span>
       </div>
       <div className="-mx-1 overflow-x-auto pb-1">
-        <ol className="mx-1 flex min-w-full gap-3">
+        <ol className="mx-1 flex min-w-full gap-2.5">
           {sortedEvents.map((event) => {
             const severityClass = event.severity ? severityStyles[event.severity] : severityStyles.low;
             return (
               <li key={`${event.title}-${event.date}`} className="min-w-[180px] flex-1">
                 <div
-                  className={`h-full rounded-md border-l-4 px-4 py-3 text-sm text-gray-900 shadow-sm transition dark:text-gray-100 ${severityClass}`}
+                  className={`h-full rounded-md border-l-4 px-3 py-2.5 text-sm text-gray-900 shadow-sm transition dark:text-gray-100 ${severityClass}`}
                 >
                   <div className="font-semibold">{event.title}</div>
                   <div className="text-xs text-gray-600 dark:text-gray-300">{formatDate(event.date)}</div>

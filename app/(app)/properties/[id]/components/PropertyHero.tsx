@@ -57,7 +57,6 @@ export default function PropertyHero({
 }: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
   const sortedEvents = sortPropertyEvents(property.events);
-  const nextEvent = sortedEvents[0];
 
   const rentDisplay = formatRent(property.rent);
 
@@ -75,18 +74,6 @@ export default function PropertyHero({
     { label: "Lease start", value: formatDate(property.leaseStart), tabId: "documents" },
     { label: "Lease end", value: formatDate(property.leaseEnd), tabId: "documents" },
   ];
-
-  if (nextEvent) {
-    const nextEventDate = formatDate(nextEvent.date);
-    summaryItems.push({
-      label: "Next key date",
-      value:
-        nextEventDate === "—"
-          ? nextEvent.title
-          : `${nextEventDate} · ${nextEvent.title}`,
-      tabId: "key-dates",
-    });
-  }
 
   const handleSummaryActivate = (tabId: PropertyTabId) => {
     onNavigateToTab(tabId);
