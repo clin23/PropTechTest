@@ -1,6 +1,7 @@
 export interface PropertyEvent {
   date: string;
   title: string;
+  severity?: "high" | "med" | "low";
 }
 
 export interface PropertySummary {

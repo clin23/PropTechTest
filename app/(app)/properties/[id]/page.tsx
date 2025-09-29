@@ -31,6 +31,7 @@ import {
   PROPERTY_TABS,
   type PropertyTabId,
 } from "./tabs";
+import { sortPropertyEvents } from "./lib/sortEvents";
 
 const rentFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -190,7 +191,8 @@ export default function PropertyPage() {
 
 function PropertySummaryTile({ property }: { property: PropertySummary }) {
   const rentDisplay = formatRent(property.rent);
-  const nextEvent = property.events?.[0];
+  const sortedEvents = sortPropertyEvents(property.events);
+  const nextEvent = sortedEvents[0];
   let nextEventDisplay = "—";
   if (nextEvent) {
     const nextDate = formatDateValue(nextEvent.date);
