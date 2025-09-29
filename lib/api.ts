@@ -39,6 +39,18 @@ export interface NotificationSettings {
   quietHoursEnd?: string;
 }
 
+export interface ReminderDocument {
+  id: string;
+  name: string;
+  url?: string;
+}
+
+export interface ReminderChecklistItem {
+  id: string;
+  text: string;
+  completed?: boolean;
+}
+
 export interface Reminder {
   id: string;
   propertyId: string;
@@ -46,7 +58,12 @@ export interface Reminder {
   type: 'lease_expiry' | 'rent_review' | 'insurance_renewal' | 'inspection_due' | 'custom';
   title: string;
   dueDate: string;
+  dueTime?: string;
+  recurrence?: string | null;
   severity: 'high' | 'med' | 'low';
+  documents?: ReminderDocument[];
+  checklist?: ReminderChecklistItem[];
+  taskId?: string | null;
 }
 
 export interface TenantNote {
@@ -420,6 +437,36 @@ export const listReminders = (params?: { propertyId?: string }) => {
   const query = params?.propertyId ? `?propertyId=${params.propertyId}` : '';
   return api<Reminder[]>(`/reminders${query}`);
 };
+export const createReminder = (payload: {
+  propertyId: string;
+  type: Reminder['type'];
+  title: string;
+  dueDate: string;
+  dueTime?: string;
+  recurrence?: string | null;
+  severity: Reminder['severity'];
+  documents?: ReminderDocument[];
+  checklist?: ReminderChecklistItem[];
+  addToTasks?: boolean;
+}) =>
+  api<Reminder>('/reminders', { method: 'POST', body: JSON.stringify(payload) });
+export const updateReminder = (
+  id: string,
+  payload: {
+    propertyId: string;
+    type: Reminder['type'];
+    title: string;
+    dueDate: string;
+    dueTime?: string;
+    recurrence?: string | null;
+    severity: Reminder['severity'];
+    documents?: ReminderDocument[];
+    checklist?: ReminderChecklistItem[];
+    addToTasks?: boolean;
+  },
+) => api<Reminder>(`/reminders/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+export const deleteReminder = (id: string) =>
+  api(`/reminders/${id}`, { method: 'DELETE' });
 export const listNotifications = () => api<Notification[]>('/notifications');
 export const getPnlSummary = (
   period: 'last6m' | 'last12m',

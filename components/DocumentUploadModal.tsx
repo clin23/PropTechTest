@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { uploadFile, createDocument } from "../lib/api";
 import { DocumentTag } from "../types/document";
@@ -14,8 +15,6 @@ interface Props {
 export default function DocumentUploadModal({ open, onClose, propertyId }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
-
-  if (!open) return null;
 
   const handleUpload = async () => {
     if (!file) return;
@@ -35,27 +34,55 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white p-4 rounded space-y-2 w-80">
-        <h2 className="text-lg font-medium">Upload Document</h2>
-        <input
-          type="file"
-          className="border p-1 w-full"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-        />
-        <div className="flex justify-end gap-2 pt-2">
-          <button className="px-2 py-1 bg-gray-100" onClick={() => { setFile(null); onClose(); }}>
-            Cancel
-          </button>
-          <button
-            className="px-2 py-1 bg-blue-600 text-white"
-            disabled={!file}
-            onClick={handleUpload}
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="document-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => {
+            setFile(null);
+            onClose();
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <motion.div
+            className="w-full max-w-xs space-y-2 rounded-lg bg-white p-4 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.96 }}
+            transition={{ duration: 0.2 }}
           >
-            Upload
-          </button>
-        </div>
-      </div>
-    </div>
+            <h2 className="text-lg font-medium">Upload Document</h2>
+            <input
+              type="file"
+              className="w-full rounded border p-1"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                className="rounded bg-gray-100 px-2 py-1"
+                onClick={() => {
+                  setFile(null);
+                  onClose();
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded bg-blue-600 px-2 py-1 text-white disabled:opacity-60"
+                disabled={!file}
+                onClick={handleUpload}
+              >
+                Upload
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
