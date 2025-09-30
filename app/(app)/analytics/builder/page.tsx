@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { saveProject, getProject } from '../../../../lib/savedAnalytics';
@@ -30,17 +30,19 @@ export default function AnalyticsBuilderPage() {
   const exportRef = useRef<HTMLDivElement>(null);
   const params = useSearchParams();
 
+  const savedProjectId = useMemo(() => params.get('saved'), [params]);
+
   useEffect(() => {
-    const savedId = params.get('saved');
-    if (savedId) {
-      const project = getProject(savedId);
-      if (project) {
-        setState(project.state);
-        setLocked(true);
-      }
+    if (!savedProjectId) {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    const project = getProject(savedProjectId);
+    if (project) {
+      setState(project.state);
+      setLocked(true);
+    }
+  }, [savedProjectId]);
 
   const filtersApplied = Object.values(state.filters).some(arr => (arr || []).length > 0);
   const hasIncomeFilters = (state.filters.incomeTypes || []).length > 0;

@@ -534,7 +534,35 @@ export default function TasksKanban({
     const remaining = columns.filter((column) => column.id !== id);
     const fallbackColumns = remaining.length ? remaining : createDefaultColumns();
     const fallback = fallbackColumns[0]?.id || "todo";
-    updateColumnsForCurrentScope(() => fallbackColumns);
+    if (!selectedPropertyId) {
+      setColumnsByProperty((prev) => {
+        let changed = false;
+        const next: ColumnMap = { ...prev };
+
+        Object.entries(prev).forEach(([key, current]) => {
+          if (!current?.length) return;
+          const filtered = current.filter((column) => column.id !== id);
+          if (filtered.length === current.length) return;
+          changed = true;
+          next[key] = filtered.length ? cloneColumns(filtered) : createDefaultColumns();
+        });
+
+        if (!prev[DEFAULT_SCOPE]?.length) {
+          const base = createDefaultColumns();
+          const filtered = base.filter((column) => column.id !== id);
+          if (filtered.length !== base.length) {
+            changed = true;
+            next[DEFAULT_SCOPE] = filtered.length
+              ? cloneColumns(filtered)
+              : createDefaultColumns();
+          }
+        }
+
+        return changed ? next : prev;
+      });
+    } else {
+      updateColumnsForCurrentScope(() => cloneColumns(fallbackColumns));
+    }
     tasks
       .filter((t) => t.status === id)
       .forEach((t) =>
