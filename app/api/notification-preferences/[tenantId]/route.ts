@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
-import { logEvent } from '../../../../../lib/log';
+import { logEvent } from '../../../../lib/log';
 import {
   notificationPreferenceStore,
   nextId,
-} from '../../../tenant-crm/store';
+} from '../../tenant-crm/store';
 import {
   zNotificationPreference,
-} from '../../../../../lib/tenant-crm/schemas';
+} from '../../../../lib/tenant-crm/schemas';
 
 export async function GET(
   _req: Request,
