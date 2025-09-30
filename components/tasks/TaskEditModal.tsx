@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type ChangeEvent } from "react";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
@@ -27,6 +27,118 @@ const COLOR_TOKEN_FALLBACKS: Record<string, string> = {
 
 const resolveColorInputValue = (color: string) =>
   COLOR_TOKEN_FALLBACKS[color] ?? color;
+
+type RgbColor = { r: number; g: number; b: number };
+type HslColor = { h: number; s: number; l: number };
+
+const HEX_COLOR_REGEX = /^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+const expandShorthandHex = (hex: string) =>
+  hex.length === 3
+    ? hex
+        .split("")
+        .map((char) => `${char}${char}`)
+        .join("")
+    : hex;
+
+const parseHexColor = (color: string): RgbColor | null => {
+  const trimmed = color.trim();
+  if (!HEX_COLOR_REGEX.test(trimmed)) {
+    return null;
+  }
+  const normalized = trimmed.startsWith("#")
+    ? trimmed.slice(1).toLowerCase()
+    : trimmed.toLowerCase();
+  const expanded = expandShorthandHex(normalized);
+
+  const r = parseInt(expanded.slice(0, 2), 16);
+  const g = parseInt(expanded.slice(2, 4), 16);
+  const b = parseInt(expanded.slice(4, 6), 16);
+
+  return { r, g, b };
+};
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
+const componentToHex = (value: number) =>
+  clamp(Math.round(value), 0, 255).toString(16).padStart(2, "0");
+
+const rgbToHex = ({ r, g, b }: RgbColor) =>
+  `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
+
+const rgbToHsl = ({ r, g, b }: RgbColor): HslColor => {
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const delta = max - min;
+
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (delta !== 0) {
+    s =
+      l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+
+    switch (max) {
+      case rNorm:
+        h = ((gNorm - bNorm) / delta + (gNorm < bNorm ? 6 : 0)) * 60;
+        break;
+      case gNorm:
+        h = ((bNorm - rNorm) / delta + 2) * 60;
+        break;
+      default:
+        h = ((rNorm - gNorm) / delta + 4) * 60;
+        break;
+    }
+  }
+
+  return { h, s: s * 100, l: l * 100 };
+};
+
+const hslToHex = (h: number, s: number, l: number) => {
+  const hue = ((h % 360) + 360) % 360;
+  const saturation = clamp(s, 0, 100) / 100;
+  const lightness = clamp(l, 0, 100) / 100;
+
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const x = chroma * (1 - Math.abs(((hue / 60) % 2) - 1));
+  const m = lightness - chroma / 2;
+
+  let rPrime = 0;
+  let gPrime = 0;
+  let bPrime = 0;
+
+  if (hue < 60) {
+    rPrime = chroma;
+    gPrime = x;
+  } else if (hue < 120) {
+    rPrime = x;
+    gPrime = chroma;
+  } else if (hue < 180) {
+    gPrime = chroma;
+    bPrime = x;
+  } else if (hue < 240) {
+    gPrime = x;
+    bPrime = chroma;
+  } else if (hue < 300) {
+    rPrime = x;
+    bPrime = chroma;
+  } else {
+    rPrime = chroma;
+    bPrime = x;
+  }
+
+  const r = Math.round((rPrime + m) * 255);
+  const g = Math.round((gPrime + m) * 255);
+  const b = Math.round((bPrime + m) * 255);
+
+  return rgbToHex({ r, g, b });
+};
 
 export default function TaskEditModal({
   task,
@@ -58,6 +170,10 @@ export default function TaskEditModal({
     TaskDto["attachments"]
   >(task.attachments ?? []);
 
+  const resolvedColorValue = resolveColorInputValue(statusIndicator.color);
+  const rgbColor = parseHexColor(resolvedColorValue);
+  const paletteHue = rgbColor ? Math.round(rgbToHsl(rgbColor).h) : 0;
+
   const updateStatusIndicator = useCallback(
     (value: Partial<StatusIndicatorValue>) => {
       setStatusIndicator((prev) =>
@@ -65,6 +181,41 @@ export default function TaskEditModal({
       );
     },
     []
+  );
+
+  const handleRgbChange = useCallback(
+    (channel: keyof RgbColor) => (event: ChangeEvent<HTMLInputElement>) => {
+      const nextValue = Number(event.target.value);
+      if (Number.isNaN(nextValue)) {
+        return;
+      }
+
+      const current = parseHexColor(resolveColorInputValue(statusIndicator.color));
+      if (!current) {
+        return;
+      }
+
+      const updated: RgbColor = {
+        r: channel === "r" ? nextValue : current.r,
+        g: channel === "g" ? nextValue : current.g,
+        b: channel === "b" ? nextValue : current.b,
+      };
+
+      updateStatusIndicator({ color: rgbToHex(updated) });
+    },
+    [statusIndicator.color, updateStatusIndicator]
+  );
+
+  const handlePaletteChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const nextHue = Number(event.target.value);
+      if (Number.isNaN(nextHue)) {
+        return;
+      }
+
+      updateStatusIndicator({ color: hslToHex(nextHue, 100, 50) });
+    },
+    [updateStatusIndicator]
   );
 
   const initialPayloadRef = useRef<string>();
@@ -377,6 +528,72 @@ export default function TaskEditModal({
                 }
                 placeholder="var(--chart-1)"
               />
+            </div>
+            <div className="mt-3">
+              {rgbColor ? (
+                <div className="space-y-3">
+                  {(["r", "g", "b"] as const).map((channel) => {
+                    const channelLabel = channel.toUpperCase();
+                    const currentValue = rgbColor[channel];
+                    const gradientStart = rgbToHex({
+                      r: channel === "r" ? 0 : rgbColor.r,
+                      g: channel === "g" ? 0 : rgbColor.g,
+                      b: channel === "b" ? 0 : rgbColor.b,
+                    });
+                    const gradientEnd = rgbToHex({
+                      r: channel === "r" ? 255 : rgbColor.r,
+                      g: channel === "g" ? 255 : rgbColor.g,
+                      b: channel === "b" ? 255 : rgbColor.b,
+                    });
+
+                    return (
+                      <label
+                        key={channel}
+                        className="flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                      >
+                        <span className="w-6">{channelLabel}</span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={255}
+                          value={currentValue}
+                          onChange={handleRgbChange(channel)}
+                          className="h-2 flex-1 cursor-pointer appearance-none rounded-full"
+                          style={{
+                            background: `linear-gradient(90deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
+                          }}
+                          aria-label={`Adjust ${channelLabel} channel`}
+                        />
+                        <span className="w-10 text-right text-[0.7rem] text-gray-600 dark:text-gray-400">
+                          {currentValue}
+                        </span>
+                      </label>
+                    );
+                  })}
+                  <div>
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Colour palette
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={360}
+                      value={paletteHue}
+                      onChange={handlePaletteChange}
+                      className="h-3 w-full cursor-pointer appearance-none rounded-full"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)",
+                      }}
+                      aria-label="Select from colour palette"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Enter a hex colour to enable RGB sliders and palette selection.
+                </p>
+              )}
             </div>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Provide any hex colour code or pick from the presets.
