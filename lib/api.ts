@@ -9,6 +9,20 @@ import type {
 } from "../types/property";
 import type { PnlSummary } from '../types/pnl';
 import type { TaskDto } from '../types/tasks';
+import type {
+  Tenant as TenantDto,
+  TenantCreate,
+  TenantUpdate,
+  TenantDirectoryResponse,
+  TenantDetailResponse,
+  TenantNote as TenantNoteDto,
+  TenantNoteCreate,
+  TenantNoteListResponse,
+  CommLogEntry,
+  CommLogCreate,
+  CommLogListResponse,
+  NotificationPreference as NotificationPreferenceDto,
+} from './tenant-crm/schemas';
 
 export interface Inspection {
   id: string;
@@ -66,13 +80,6 @@ export interface Reminder {
   taskId?: string | null;
 }
 
-export interface TenantNote {
-  id: string;
-  propertyId: string;
-  text: string;
-  createdAt: string;
-}
-
 export interface PropertyDataExport {
   property: {
     id: string;
@@ -112,7 +119,7 @@ export interface PropertyDataExport {
     dueDate: string;
     severity: string;
   }[];
-  tenantNotes: TenantNote[];
+  tenantNotes: TenantNoteDto[];
   tasks: TaskDto[];
 }
 
@@ -187,12 +194,90 @@ export const updateLedgerEntry = (
     method: 'PATCH',
     body: JSON.stringify(payload),
   });
-export const listTenantNotes = (propertyId: string) =>
-  api<TenantNote[]>(`/tenant-crm?propertyId=${propertyId}`);
-export const addTenantNote = (propertyId: string, text: string) =>
-  api<TenantNote>(`/tenant-crm`, {
+type TenantQuery = Partial<{
+  search: string;
+  tag: string;
+  riskFlag: string;
+  propertyId: string;
+  status: string;
+  page: number;
+  pageSize: number;
+}>;
+
+const buildQuery = (params?: Record<string, any>) => {
+  if (!params) return '';
+  const searchParams = new URLSearchParams();
+  Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .forEach(([key, value]) => searchParams.append(key, String(value)));
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : '';
+};
+
+export const fetchTenants = (params?: TenantQuery) =>
+  api<TenantDirectoryResponse>(`/tenants${buildQuery(params)}`);
+
+export const getTenant = (id: string) => api<TenantDetailResponse>(`/tenants/${id}`);
+
+export const createTenant = (payload: TenantCreate) =>
+  api<TenantDto>('/tenants', {
     method: 'POST',
-    body: JSON.stringify({ propertyId, text }),
+    body: JSON.stringify(payload),
+  });
+
+export const updateTenant = (id: string, payload: TenantUpdate) =>
+  api<TenantDto>(`/tenants/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+export const deleteTenant = (id: string) => api(`/tenants/${id}`, { method: 'DELETE' });
+
+export const listTenantNotes = (params: {
+  tenantId?: string;
+  propertyId?: string;
+  tag?: string;
+  page?: number;
+  pageSize?: number;
+}) => api<TenantNoteListResponse>(`/tenant-notes${buildQuery(params)}`);
+
+export const createTenantNote = (payload: TenantNoteCreate) =>
+  api<TenantNoteDto>('/tenant-notes', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const updateTenantNote = (id: string, payload: Partial<TenantNoteDto>) =>
+  api<TenantNoteDto>(`/tenant-notes/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+export const listCommLog = (params: {
+  tenantId?: string;
+  type?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+}) => api<CommLogListResponse>(`/comm-log${buildQuery(params)}`);
+
+export const createCommLogEntry = (payload: CommLogCreate) =>
+  api<CommLogEntry>('/comm-log', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const getNotificationPreferences = (tenantId: string) =>
+  api<NotificationPreferenceDto | null>(`/notification-preferences/${tenantId}`);
+
+export const updateNotificationPreferences = (
+  tenantId: string,
+  payload: NotificationPreferenceDto
+) =>
+  api<NotificationPreferenceDto>(`/notification-preferences/${tenantId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
   });
 
 // Inspections
