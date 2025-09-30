@@ -65,7 +65,6 @@ export default function PropertyHero({
     value: string;
     tabId: PropertyTabId;
   }> = [
-    { label: "Tenant", value: property.tenant || "—", tabId: "tenant-crm" },
     {
       label: "Rent / week",
       value: rentDisplay === "—" ? rentDisplay : `${rentDisplay}/week`,
@@ -114,6 +113,9 @@ export default function PropertyHero({
           >
             {property.address}
           </Link>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            Current tenant: {property.tenant || "—"}
+          </p>
         </div>
         <dl className="grid grid-cols-1 gap-4 text-sm text-gray-700 dark:text-gray-200 sm:grid-cols-2">
           {summaryItems.map((item) => (

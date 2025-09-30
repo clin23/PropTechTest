@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listProperties, getProperty } from "../lib/api";
+import { listProperties, getProperty, fetchTenants, getTenant } from "../lib/api";
 import type { PropertySummary } from "../types/property";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -16,6 +16,13 @@ export default function Sidebar() {
     queryKey: ["properties"],
     queryFn: listProperties,
   });
+
+  const { data: tenantDirectory } = useQuery({
+    queryKey: ["tenant-nav"],
+    queryFn: () => fetchTenants({ pageSize: 25 }),
+  });
+
+  const tenantLinks = tenantDirectory?.items ?? [];
 
   const links = [
     {
@@ -92,6 +99,50 @@ export default function Sidebar() {
       ),
     },
     {
+      href: "/tenants",
+      label: "Tenants",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M7.5 7.5a3 3 0 116 0 3 3 0 01-6 0z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4 19.5c0-2.485 2.239-4.5 5-4.5h3c2.761 0 5 2.015 5 4.5"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M17.75 10.5a2.25 2.25 0 11-4.5 0"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16 14c1.79 0 3.25 1.232 3.25 2.75"
+          />
+        </svg>
+      ),
+      children: tenantLinks.map((tenant) => ({
+        href: `/tenants/${tenant.id}`,
+        label: tenant.fullName,
+        prefetch: () =>
+          queryClient.prefetchQuery({
+            queryKey: ["tenant", tenant.id],
+            queryFn: () => getTenant(tenant.id),
+          }),
+      })),
+    },
+    {
       href: "/properties",
       label: "Properties",
       icon: (
@@ -124,6 +175,11 @@ export default function Sidebar() {
       children: propertyList.map((p) => ({
         href: `/properties/${p.id}`,
         label: p.address,
+        prefetch: () =>
+          queryClient.prefetchQuery({
+            queryKey: ["property", p.id],
+            queryFn: () => getProperty(p.id),
+          }),
       })),
     },
   ];
@@ -182,13 +238,7 @@ export default function Sidebar() {
                         prefetch
                         onMouseEnter={() => {
                           router.prefetch(child.href);
-                          const id = child.href.split("/").pop();
-                          if (id) {
-                            queryClient.prefetchQuery({
-                              queryKey: ["property", id],
-                              queryFn: () => getProperty(id),
-                            });
-                          }
+                          child.prefetch?.();
                         }}
                         className={`block px-2 py-1 text-sm rounded hover:bg-[var(--hover)] ${
                           pathname === child.href || pathname.startsWith(`${child.href}/`)
