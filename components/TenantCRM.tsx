@@ -87,7 +87,7 @@ export default function TenantCRM({ propertyId }: Props) {
     return tenants[0];
   }, [tenants, selectedTenantId]);
 
-  const notes: TenantNoteDto[] = notesData ?? [];
+  const notes: TenantNoteDto[] = Array.isArray(notesData) ? notesData : [];
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
