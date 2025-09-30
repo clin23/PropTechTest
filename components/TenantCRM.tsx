@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createTenantNote,
@@ -130,13 +131,21 @@ export default function TenantCRM({ propertyId }: Props) {
       </section>
 
       <section className="md:col-span-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Notes</h2>
             <p className="text-sm text-muted-foreground">
               {selectedTenant ? selectedTenant.fullName : "Select a tenant to view their notes."}
             </p>
           </div>
+          {selectedTenant ? (
+            <Link
+              href={`/tenants/${selectedTenant.id}`}
+              className="inline-flex items-center justify-center rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition hover:bg-primary/20"
+            >
+              Open full profile
+            </Link>
+          ) : null}
         </div>
         <div className="mt-4 space-y-4">
           <div className="rounded-md border bg-background p-4">
