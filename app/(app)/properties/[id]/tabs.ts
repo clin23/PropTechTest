@@ -8,7 +8,6 @@ export const PROPERTY_TABS = [
   { id: "tasks", label: "Tasks" },
   { id: "key-dates", label: "Key Dates" },
   { id: "rent-review", label: "Rent Review" },
-  { id: "tenant-crm", label: "Tenant CRM" },
   { id: "inspections", label: "Inspections" },
   { id: "create-listing", label: "Create Listing" },
   { id: "vendors", label: "Vendors" },

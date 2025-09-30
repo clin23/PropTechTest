@@ -6,7 +6,6 @@ import ExpensesTable from "./ExpensesTable";
 import RentLedgerTable from "./RentLedgerTable";
 import PropertyDocumentsTable from "./PropertyDocumentsTable";
 import PropertyRentReview from "./PropertyRentReview";
-import TenantCRM from "./TenantCRM";
 import UpcomingReminders from "./UpcomingReminders";
 
 interface Props {
@@ -19,7 +18,6 @@ const tabs = [
   { id: "documents", label: "Documents" },
   { id: "rent-review", label: "Rent Review" },
   { id: "key-dates", label: "Key Dates" },
-  { id: "tenant-crm", label: "Tenant CRM" },
 ] as const;
 
 export default function PropertyDetailTabs({ propertyId }: Props) {
@@ -78,7 +76,6 @@ export default function PropertyDetailTabs({ propertyId }: Props) {
       {active === "documents" && <PropertyDocumentsTable propertyId={propertyId} />}
       {active === "rent-review" && <PropertyRentReview propertyId={propertyId} />}
       {active === "key-dates" && <UpcomingReminders propertyId={propertyId} />}
-      {active === "tenant-crm" && <TenantCRM propertyId={propertyId} />}
     </div>
   );
 }

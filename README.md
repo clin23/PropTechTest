@@ -12,12 +12,14 @@ PropTechTest is a lightweight, dashboard-first property management prototype for
 - **Rent review** calculator and notice generation within each property.
 - **Settings** for notification preferences.
 - **Tasks** module with Kanban, Calendar and Gantt views.
+- **Tenant CRM** workspace with centralized notes, communication logs, and notification preferences accessible from the sidebar.
 
 ## Navigation
 
 A collapsible sidebar links to:
 
 - Dashboard
+- Tenants
 - Inspections
 - Applications
 - Listings
@@ -125,6 +127,22 @@ Mock API routes are available to hide or restore properties:
 - `POST /api/properties/:id/unarchive` restores an archived property.
 
 Archived properties are excluded from listings unless `includeArchived=true` is specified.
+
+### Tenant CRM endpoints
+
+The mock API exposes a lightweight Tenant CRM surface compatible with the in-app directory and profile pages:
+
+- `GET /api/tenants` — paginated tenant directory with filtering by `search`, `tag`, `riskFlag`, `propertyId`.
+- `POST /api/tenants` — create a tenant.
+- `GET /api/tenants/:id` — tenant profile with tenancy summaries, arrears snapshot and latest contact.
+- `PATCH /api/tenants/:id` — update tenant metadata.
+- `DELETE /api/tenants/:id` — archive tenants without active tenancies.
+- `GET|POST /api/tenant-notes` — list and create timeline notes.
+- `PATCH /api/tenant-notes/:id` — update note tags/body/pin state.
+- `GET|POST /api/comm-log` — retrieve and log communication events.
+- `GET|PUT /api/notification-preferences/:tenantId` — manage per-tenant delivery channels.
+
+When `MOCK_MODE=true` these routes operate on in-memory collections seeded from `app/api/tenant-crm/store.ts`. All responses are validated with Zod schemas shared between client and server (`lib/tenant-crm/schemas.ts`).
 
 ### Property P&L summary endpoint
 

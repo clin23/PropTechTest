@@ -21,7 +21,6 @@ import Documents from "./sections/Documents";
 import RentReview from "./sections/RentReview";
 import KeyDates from "./sections/KeyDates";
 import TasksSection from "./sections/Tasks";
-import TenantCRM from "./sections/TenantCRM";
 import Inspections from "./sections/Inspections";
 import CreateListing from "./sections/CreateListing";
 import Vendors from "./sections/Vendors";
@@ -118,8 +117,6 @@ export default function PropertyPage() {
         return <RentReview propertyId={id} />;
       case "key-dates":
         return <KeyDates propertyId={id} />;
-      case "tenant-crm":
-        return <TenantCRM propertyId={id} />;
       case "inspections":
         return <Inspections propertyId={id} />;
       case "create-listing":
