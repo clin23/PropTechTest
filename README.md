@@ -12,13 +12,14 @@ PropTechTest is a lightweight, dashboard-first property management prototype for
 - **Rent review** calculator and notice generation within each property.
 - **Settings** for notification preferences.
 - **Tasks** module with Kanban, Calendar and Gantt views.
-- **Tenant CRM** directory with property-scoped notes, communication log, and notification preferences.
+- **Tenant CRM** workspace with centralized notes, communication logs, and notification preferences accessible from the sidebar.
 
 ## Navigation
 
 A collapsible sidebar links to:
 
 - Dashboard
+- Tenants
 - Inspections
 - Applications
 - Listings
@@ -129,7 +130,7 @@ Archived properties are excluded from listings unless `includeArchived=true` is 
 
 ### Tenant CRM endpoints
 
-The mock API exposes a lightweight Tenant CRM surface compatible with the in-app directory, profile page, and property tabs:
+The mock API exposes a lightweight Tenant CRM surface compatible with the in-app directory and profile pages:
 
 - `GET /api/tenants` — paginated tenant directory with filtering by `search`, `tag`, `riskFlag`, `propertyId`.
 - `POST /api/tenants` — create a tenant.
