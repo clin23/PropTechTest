@@ -11,10 +11,6 @@ import type {
 } from '../../../lib/api/tenants';
 import { useTenants } from '../../../lib/api/tenants';
 
-export const metadata = {
-  title: 'Tenant CRM',
-};
-
 export default function TenantDirectoryPage() {
   const [selectedTenant, setSelectedTenant] = useState<string | undefined>();
   const [search, setSearch] = useState('');
