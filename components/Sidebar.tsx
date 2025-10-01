@@ -99,6 +99,46 @@ export default function Sidebar() {
       ),
     },
     {
+      href: "/properties",
+      label: "Properties",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.6}
+        >
+          <rect x={6} y={4.5} width={12} height={14.5} rx={2} />
+          <rect x={9.25} y={2} width={5.5} height={2.5} rx={1.25} />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.5 11.5l1.5 1.5L14 10"
+          />
+          <path
+            strokeLinecap="round"
+            d="M13.5 11.5H16m-2.5 2.5H16"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.5 18.5V16l2.5-2 2.5 2v2.5M9.5 18.5h5M11.75 20v-1.5h1.5V20"
+          />
+        </svg>
+      ),
+      children: propertyList.map((p) => ({
+        href: `/properties/${p.id}`,
+        label: p.address,
+        prefetch: () =>
+          queryClient.prefetchQuery({
+            queryKey: ["property", p.id],
+            queryFn: () => getProperty(p.id),
+          }),
+      })),
+    },
+    {
       href: "/tenants",
       label: "Tenants",
       icon: (
@@ -139,46 +179,6 @@ export default function Sidebar() {
           queryClient.prefetchQuery({
             queryKey: ["tenant", tenant.id],
             queryFn: () => getTenant(tenant.id),
-          }),
-      })),
-    },
-    {
-      href: "/properties",
-      label: "Properties",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.6}
-        >
-          <rect x={6} y={4.5} width={12} height={14.5} rx={2} />
-          <rect x={9.25} y={2} width={5.5} height={2.5} rx={1.25} />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.5 11.5l1.5 1.5L14 10"
-          />
-          <path
-            strokeLinecap="round"
-            d="M13.5 11.5H16m-2.5 2.5H16"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.5 18.5V16l2.5-2 2.5 2v2.5M9.5 18.5h5M11.75 20v-1.5h1.5V20"
-          />
-        </svg>
-      ),
-      children: propertyList.map((p) => ({
-        href: `/properties/${p.id}`,
-        label: p.address,
-        prefetch: () =>
-          queryClient.prefetchQuery({
-            queryKey: ["property", p.id],
-            queryFn: () => getProperty(p.id),
           }),
       })),
     },
