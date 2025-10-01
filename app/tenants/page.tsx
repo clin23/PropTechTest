@@ -2,20 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { TenantDetailPanel } from '../../../components/tenants/TenantDetail';
-import { TenantListPanel } from '../../../components/tenants/TenantList';
-import type {
-  TenantListFilters,
-  TenantListItem,
-  TenantListQuery,
-} from '../../../lib/api/tenants';
-import { useTenants } from '../../../lib/api/tenants';
+import { TenantDetailPanel } from '../../components/tenants/TenantDetail';
+import { TenantListPanel } from '../../components/tenants/TenantList';
+import type { TenantListFilters, TenantListItem, TenantListQuery } from '../../lib/api/tenants';
+import { useTenants } from '../../lib/api/tenants';
 
-export const metadata = {
-  title: 'Tenant CRM',
-};
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handle = window.setTimeout(() => setDebounced(value), delay);
+    return () => window.clearTimeout(handle);
+  }, [value, delay]);
+  return debounced;
+}
 
-export default function TenantDirectoryPage() {
+export default function TenantsPage() {
   const [selectedTenant, setSelectedTenant] = useState<string | undefined>();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<TenantListFilters>({
@@ -120,7 +121,8 @@ function HelpTooltip() {
           <p className="font-semibold text-foreground">Need a hand?</p>
           <p className="mt-1 text-muted-foreground">
             Search tenants, use <kbd className="rounded border px-1">/</kbd> shortcuts in notes, and press
-            <kbd className="ml-1 rounded border px-1">Ctrl</kbd>+<kbd className="rounded border px-1">K</kbd> to jump to search. Contact support if something feels off.
+            <kbd className="ml-1 rounded border px-1">Ctrl</kbd>+<kbd className="rounded border px-1">K</kbd> to jump to
+            search. Contact support if something feels off.
           </p>
         </div>
       ) : null}
@@ -158,11 +160,3 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function useDebouncedValue<T>(value: T, delay: number) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handle = window.setTimeout(() => setDebounced(value), delay);
-    return () => window.clearTimeout(handle);
-  }, [value, delay]);
-  return debounced;
-}

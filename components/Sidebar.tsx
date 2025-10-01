@@ -35,31 +35,16 @@ export default function Sidebar() {
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <rect
-            x={4}
-            y={4}
-            width={16}
-            height={16}
-            rx={3}
-            strokeWidth={2}
-          />
-          <line x1={12} y1={4} x2={12} y2={20} strokeWidth={2} />
-          <line x1={4} y1={12} x2={20} y2={12} strokeWidth={2} />
-          <path
-            d="M6.5 11 L9 7.5 10.8 9.8 12 8.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-          />
-          <circle cx={16} cy={8} r={3} strokeWidth={2} />
-          <path
-            d="M16 5v3h3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-          />
-          <rect x={14.5} y={14.5} width={4} height={4} rx={1} strokeWidth={0} fill="currentColor" />
+          <path d="M4.75 5.5A1.75 1.75 0 016.5 3.75h6.086a1.75 1.75 0 011.238.512l3.914 3.914a1.75 1.75 0 01.512 1.238V18.5A1.75 1.75 0 0116.5 20.25h-10A1.75 1.75 0 014.75 18.5V5.5z" />
+          <path d="M13.25 3.75v2.5a2 2 0 002 2h2.5" />
+          <circle cx={16.25} cy={8} r={2.25} />
+          <path d="M15 8h2.5" />
+          <path d="M7.25 15.75l2.5-3 2.25 2.5 3.25-4.25 1.5 1.5" />
+          <path d="M7.25 12.75v3M10 11v4.75M12.75 12.75v3M16.25 10v5.75" />
         </svg>
       ),
     },
@@ -97,6 +82,46 @@ export default function Sidebar() {
           />
         </svg>
       ),
+    },
+    {
+      href: "/properties",
+      label: "Properties",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.6}
+        >
+          <rect x={6} y={4.5} width={12} height={14.5} rx={2} />
+          <rect x={9.25} y={2} width={5.5} height={2.5} rx={1.25} />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.5 11.5l1.5 1.5L14 10"
+          />
+          <path
+            strokeLinecap="round"
+            d="M13.5 11.5H16m-2.5 2.5H16"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.5 18.5V16l2.5-2 2.5 2v2.5M9.5 18.5h5M11.75 20v-1.5h1.5V20"
+          />
+        </svg>
+      ),
+      children: propertyList.map((p) => ({
+        href: `/properties/${p.id}`,
+        label: p.address,
+        prefetch: () =>
+          queryClient.prefetchQuery({
+            queryKey: ["property", p.id],
+            queryFn: () => getProperty(p.id),
+          }),
+      })),
     },
     {
       href: "/tenants",
@@ -139,46 +164,6 @@ export default function Sidebar() {
           queryClient.prefetchQuery({
             queryKey: ["tenant", tenant.id],
             queryFn: () => getTenant(tenant.id),
-          }),
-      })),
-    },
-    {
-      href: "/properties",
-      label: "Properties",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.6}
-        >
-          <rect x={6} y={4.5} width={12} height={14.5} rx={2} />
-          <rect x={9.25} y={2} width={5.5} height={2.5} rx={1.25} />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.5 11.5l1.5 1.5L14 10"
-          />
-          <path
-            strokeLinecap="round"
-            d="M13.5 11.5H16m-2.5 2.5H16"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.5 18.5V16l2.5-2 2.5 2v2.5M9.5 18.5h5M11.75 20v-1.5h1.5V20"
-          />
-        </svg>
-      ),
-      children: propertyList.map((p) => ({
-        href: `/properties/${p.id}`,
-        label: p.address,
-        prefetch: () =>
-          queryClient.prefetchQuery({
-            queryKey: ["property", p.id],
-            queryFn: () => getProperty(p.id),
           }),
       })),
     },
