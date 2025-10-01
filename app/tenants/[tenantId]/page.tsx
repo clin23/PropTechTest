@@ -1,4 +1,4 @@
-import TenantProfile from '../../../../components/tenant-crm/TenantProfile';
+import TenantProfile from "../../../components/tenant-crm/TenantProfile";
 
 interface TenantProfilePageProps {
   params: { tenantId: string };
