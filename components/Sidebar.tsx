@@ -35,31 +35,16 @@ export default function Sidebar() {
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <rect
-            x={4}
-            y={4}
-            width={16}
-            height={16}
-            rx={3}
-            strokeWidth={2}
-          />
-          <line x1={12} y1={4} x2={12} y2={20} strokeWidth={2} />
-          <line x1={4} y1={12} x2={20} y2={12} strokeWidth={2} />
-          <path
-            d="M6.5 11 L9 7.5 10.8 9.8 12 8.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-          />
-          <circle cx={16} cy={8} r={3} strokeWidth={2} />
-          <path
-            d="M16 5v3h3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-          />
-          <rect x={14.5} y={14.5} width={4} height={4} rx={1} strokeWidth={0} fill="currentColor" />
+          <path d="M4.75 5.5A1.75 1.75 0 016.5 3.75h6.086a1.75 1.75 0 011.238.512l3.914 3.914a1.75 1.75 0 01.512 1.238V18.5A1.75 1.75 0 0116.5 20.25h-10A1.75 1.75 0 014.75 18.5V5.5z" />
+          <path d="M13.25 3.75v2.5a2 2 0 002 2h2.5" />
+          <circle cx={16.25} cy={8} r={2.25} />
+          <path d="M15 8h2.5" />
+          <path d="M7.25 15.75l2.5-3 2.25 2.5 3.25-4.25 1.5 1.5" />
+          <path d="M7.25 12.75v3M10 11v4.75M12.75 12.75v3M16.25 10v5.75" />
         </svg>
       ),
     },
