@@ -16,7 +16,12 @@ import type { DashboardDTO, PortfolioSummary, PropertyCardData } from '../../typ
 
 // Use the first day of the current month to show month-to-date data.
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
-const formatISODate = (d: Date) => d.toISOString().split('T')[0];
+const formatISODate = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 const getAustralianFinancialYearBounds = (date: Date) => {
   const month = date.getMonth();
   const year = date.getFullYear();
