@@ -1556,6 +1556,19 @@ const initialReminders: Reminder[] = [
 
 const initialTasks: TaskDto[] = [
   {
+    id: 'task-action-button-transitions',
+    title: 'Action Button Transitions',
+    description:
+      'Backlog change request to smooth the appearance and disappearance of action button popups.',
+    cadence: 'Immediate',
+    properties: [],
+    status: 'todo',
+    priority: 'normal',
+    tags: ['change-request', 'backlog'],
+    createdAt: '2025-09-26T12:51:00.000Z',
+    updatedAt: '2025-09-26T12:51:00.000Z',
+  },
+  {
     id: 'task1',
     title: 'Fix leaking tap',
     cadence: 'Immediate',
