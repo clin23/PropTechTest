@@ -64,9 +64,7 @@ export async function GET(req: Request) {
   seedIfEmpty();
 
   const url = new URL(req.url);
-  const to = url.searchParams.get('to') ?? formatToday();
-  const defaultFrom = `${to.slice(0, 7)}-01`;
-  const from = url.searchParams.get('from') ?? defaultFrom;
+  let to = url.searchParams.get('to') ?? formatToday();
 
   const activeProperties = properties.filter(isActiveProperty);
   const activePropertyIds = new Set(activeProperties.map((property) => property.id));
@@ -100,6 +98,20 @@ export async function GET(req: Request) {
       category: expense.category,
       amount: expense.amount,
     }));
+
+  const latestActivityDate = [...incomeEntries, ...expenseEntries]
+    .map((entry) => entry.date)
+    .reduce((latest, current) => (current > latest ? current : latest), '');
+
+  if (latestActivityDate && to > latestActivityDate) {
+    to = latestActivityDate;
+  }
+
+  const defaultFrom = `${to.slice(0, 7)}-01`;
+  let from = url.searchParams.get('from') ?? defaultFrom;
+  if (from > to) {
+    from = defaultFrom;
+  }
 
   const yearStart = to.slice(0, 4) + '-01-01';
   const monthStart = defaultFrom;
