@@ -10,46 +10,45 @@ import type {
 
 const now = () => new Date().toISOString();
 
-const tNow = now();
+const createInitialTenantDirectory = (): Tenant[] => {
+  const timestamp = now();
+  return [
+    {
+      id: 'tenant1',
+      fullName: 'Alice Tenant',
+      email: 'alice@example.com',
+      phone: '+61 400 111 222',
+      altContacts: [{ name: 'Bob Support', phone: '+61 400 333 444' }],
+      tags: ['A-grade'],
+      currentPropertyId: '1',
+      currentTenancyId: 'tenancy1',
+      riskFlags: [],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+    {
+      id: 'tenant2',
+      fullName: 'Bob Renter',
+      email: 'bob@example.com',
+      phone: '+61 400 555 666',
+      tags: ['watchlist'],
+      currentPropertyId: '2',
+      currentTenancyId: 'tenancy2',
+      riskFlags: ['arrears'],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+    {
+      id: 'tenant3',
+      fullName: 'Charlie Prospect',
+      tags: ['prospect'],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+  ];
+};
 
-export const tenantDirectory: Tenant[] = [
-  {
-    id: 'tenant1',
-    fullName: 'Alice Tenant',
-    email: 'alice@example.com',
-    phone: '+61 400 111 222',
-    altContacts: [
-      { name: 'Bob Support', phone: '+61 400 333 444' },
-    ],
-    tags: ['A-grade'],
-    currentPropertyId: '1',
-    currentTenancyId: 'tenancy1',
-    riskFlags: [],
-    createdAt: tNow,
-    updatedAt: tNow,
-  },
-  {
-    id: 'tenant2',
-    fullName: 'Bob Renter',
-    email: 'bob@example.com',
-    phone: '+61 400 555 666',
-    tags: ['watchlist'],
-    currentPropertyId: '2',
-    currentTenancyId: 'tenancy2',
-    riskFlags: ['arrears'],
-    createdAt: tNow,
-    updatedAt: tNow,
-  },
-  {
-    id: 'tenant3',
-    fullName: 'Charlie Prospect',
-    tags: ['prospect'],
-    createdAt: tNow,
-    updatedAt: tNow,
-  },
-];
-
-export const tenancySummaries: Tenancy[] = [
+const createInitialTenancySummaries = (): Tenancy[] => [
   {
     id: 'tenancy1',
     tenantId: 'tenant1',
@@ -73,7 +72,7 @@ export const tenancySummaries: Tenancy[] = [
   },
 ];
 
-export const tenantNotesStore: TenantNote[] = [
+const createInitialTenantNotes = (): TenantNote[] => [
   {
     id: 'note1',
     tenantId: 'tenant1',
@@ -86,7 +85,7 @@ export const tenantNotesStore: TenantNote[] = [
   },
 ];
 
-export const commLogStore: CommLogEntry[] = [
+const createInitialCommLogStore = (): CommLogEntry[] => [
   {
     id: 'comm1',
     tenantId: 'tenant2',
@@ -99,13 +98,32 @@ export const commLogStore: CommLogEntry[] = [
   },
 ];
 
-export const notificationPreferenceStore: NotificationPreference[] = [
+const createInitialNotificationPreferences = (): NotificationPreference[] => [
   {
     id: 'pref1',
     tenantId: 'tenant1',
     channels: { email: true, sms: true, push: false },
   },
 ];
+
+export const tenantDirectory: Tenant[] = createInitialTenantDirectory();
+export const tenancySummaries: Tenancy[] = createInitialTenancySummaries();
+export const tenantNotesStore: TenantNote[] = createInitialTenantNotes();
+export const commLogStore: CommLogEntry[] = createInitialCommLogStore();
+export const notificationPreferenceStore: NotificationPreference[] =
+  createInitialNotificationPreferences();
+
+export const resetTenantCrmStore = () => {
+  tenantDirectory.splice(0, tenantDirectory.length, ...createInitialTenantDirectory());
+  tenancySummaries.splice(0, tenancySummaries.length, ...createInitialTenancySummaries());
+  tenantNotesStore.splice(0, tenantNotesStore.length, ...createInitialTenantNotes());
+  commLogStore.splice(0, commLogStore.length, ...createInitialCommLogStore());
+  notificationPreferenceStore.splice(
+    0,
+    notificationPreferenceStore.length,
+    ...createInitialNotificationPreferences()
+  );
+};
 
 export function nextId(prefix: string) {
   return `${prefix}_${randomUUID()}`;

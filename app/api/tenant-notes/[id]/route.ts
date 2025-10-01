@@ -27,3 +27,17 @@ export async function PATCH(
   logEvent('tenant_note_updated', { noteId: note.id });
   return NextResponse.json(payload);
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const index = tenantNotesStore.findIndex((item) => item.id === params.id);
+  if (index === -1) {
+    return NextResponse.json({ message: 'Not found' }, { status: 404 });
+  }
+
+  tenantNotesStore.splice(index, 1);
+  logEvent('tenant_note_deleted', { noteId: params.id });
+  return NextResponse.json({ ok: true });
+}

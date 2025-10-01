@@ -2,6 +2,16 @@ import { useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 
 import { api } from '../api';
+import type { PropertySummary } from '../types/property';
+import type {
+  Tenant as TenantRecord,
+  TenantDirectoryResponse,
+  TenantDetailResponse,
+  TenantNote as TenantNoteRecord,
+  TenantNoteListResponse,
+  CommLogListResponse,
+  NotificationPreference as NotificationPreferenceRecord,
+} from '../tenant-crm/schemas';
 
 export type TenantListItem = {
   id: string;
@@ -219,69 +229,162 @@ function nextId(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function normalizeTag(tag?: string) {
+  return tag?.trim().toLowerCase();
+}
+
+function deriveStatuses(tenant: TenantRecord): Array<TenantListItem['status']> {
+  const tags = tenant.tags?.map(normalizeTag) ?? [];
+  const hasArrears = tenant.riskFlags?.includes('arrears');
+  const statuses: TenantListItem['status'][] = [];
+  const addStatus = (status: TenantListItem['status']) => {
+    if (!statuses.includes(status)) {
+      statuses.push(status);
+    }
+  };
+
+  if (tags.includes('watchlist') || hasArrears) {
+    addStatus('WATCHLIST');
+  }
+  if (tags.includes('a-grade') || tags.includes('a grade') || tenant.currentPropertyId) {
+    addStatus('A_GRADE');
+  }
+  if (tags.includes('prospect')) {
+    addStatus('PROSPECT');
+  }
+  if (!statuses.length) {
+    addStatus('PROSPECT');
+  }
+  return statuses;
+}
+
+function tenantToListItem(tenant: TenantRecord): TenantListItem {
+  const statuses = deriveStatuses(tenant);
+  return {
+    id: tenant.id,
+    name: tenant.fullName,
+    email: tenant.email,
+    phone: tenant.phone,
+    status: statuses[0] ?? 'PROSPECT',
+    hasOverdue: tenant.riskFlags?.includes('arrears') ?? false,
+    avatarUrl: null,
+  };
+}
+
+function tenantDetailFromResponse(payload: TenantDetailResponse): TenantDetail {
+  const { tenant, lastContact } = payload;
+  const statuses = deriveStatuses(tenant);
+  return {
+    id: tenant.id,
+    name: tenant.fullName,
+    email: tenant.email,
+    phone: tenant.phone,
+    statuses,
+    address: undefined,
+    lastInteractionAt: lastContact?.when ?? undefined,
+    bestContactTime: null,
+  };
+}
+
+function toNoteModel(note: TenantNoteRecord): Note {
+  return {
+    id: note.id,
+    tenantId: note.tenantId,
+    body: note.body,
+    tags: (note.tags as Note['tags']) ?? [],
+    followUpAt: null,
+    createdAt: note.createdAt,
+    updatedAt: note.updatedAt ?? note.createdAt,
+    author: note.createdByUserId ?? 'System',
+  };
+}
+
 export type TenantListQuery = {
   search?: string;
   filters: TenantListFilters;
 };
 
 async function requestTenants(query: TenantListQuery): Promise<TenantListItem[]> {
-  if (!MOCK_MODE) {
-    const searchParams = new URLSearchParams();
-    if (query.search) searchParams.set('search', query.search);
-    if (query.filters.statuses.length) {
-      searchParams.set('status', query.filters.statuses.join(','));
-    }
-    if (query.filters.arrearsOnly) searchParams.set('arrearsOnly', 'true');
-    if (query.filters.nextInspectionInDays) {
-      searchParams.set('nextInspectionInDays', String(query.filters.nextInspectionInDays));
-    }
-    return api<TenantListItem[]>(`/tenants?${searchParams.toString()}`);
-  }
-
   const { search, filters } = query;
   const normalized = search?.trim().toLowerCase();
-  const matchesSearch = (tenant: TenantDetail) => {
+
+  const matchesSearch = (tenant: { name?: string; email?: string; phone?: string }) => {
     if (!normalized) return true;
     return [tenant.name, tenant.email, tenant.phone]
       .filter(Boolean)
       .some((field) => field!.toLowerCase().includes(normalized));
   };
 
-  const matchesStatus = (tenant: TenantDetail) => {
+  const matchesStatus = (statuses: Array<TenantListItem['status']>) => {
     if (!filters.statuses.length) return true;
-    return filters.statuses.every((status) => tenant.statuses.includes(status));
+    return filters.statuses.every((status) => statuses.includes(status));
   };
+
+  if (!MOCK_MODE) {
+    const searchParams = new URLSearchParams();
+    if (search) searchParams.set('search', search);
+    if (filters.arrearsOnly) searchParams.set('riskFlag', 'arrears');
+    const response = await api<TenantDirectoryResponse>(
+      `/tenants${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+    );
+    const mapped = response.items.map((tenant) => ({
+      item: tenantToListItem(tenant),
+      statuses: deriveStatuses(tenant),
+    }));
+    const filtered = mapped
+      .filter(({ item }) => matchesSearch(item))
+      .filter(({ statuses }) => matchesStatus(statuses));
+    const result = filtered.map(({ item }) => item);
+    if (filters.arrearsOnly) {
+      return result.filter((tenant) => tenant.hasOverdue);
+    }
+    return result;
+  }
 
   const results = mockStore.tenants
     .filter(matchesSearch)
-    .filter(matchesStatus)
-    .map<TenantListItem>((tenant) => ({
-      id: tenant.id,
-      name: tenant.name,
-      email: tenant.email,
-      phone: tenant.phone,
-      status: tenant.statuses[0] ?? 'PROSPECT',
-      hasOverdue: tenant.statuses.includes('WATCHLIST'),
-      avatarUrl: null,
-    }));
+    .filter((tenant) => matchesStatus(tenant.statuses));
+
+  const mapped = results.map<TenantListItem>((tenant) => ({
+    id: tenant.id,
+    name: tenant.name,
+    email: tenant.email,
+    phone: tenant.phone,
+    status: tenant.statuses[0] ?? 'PROSPECT',
+    hasOverdue: tenant.statuses.includes('WATCHLIST'),
+    avatarUrl: null,
+  }));
 
   if (filters.arrearsOnly) {
-    return results.filter((tenant) => tenant.status === 'WATCHLIST');
+    return mapped.filter((tenant) => tenant.status === 'WATCHLIST');
   }
 
-  return results;
+  return mapped;
 }
 
 async function requestTenant(id: string): Promise<TenantDetail | undefined> {
   if (!MOCK_MODE) {
-    return api<TenantDetail>(`/tenants/${id}`);
+    const payload = await api<TenantDetailResponse>(`/tenants/${id}`);
+    const detail = tenantDetailFromResponse(payload);
+    const propertyId = payload.tenant.currentPropertyId;
+    if (propertyId) {
+      try {
+        const property = await api<PropertySummary>(`/properties/${propertyId}`);
+        detail.address = property.address;
+      } catch (error) {
+        console.warn('Failed to load property for tenant', propertyId, error);
+      }
+    }
+    return detail;
   }
   return mockStore.tenants.find((tenant) => tenant.id === id);
 }
 
 async function requestNotes(tenantId: string): Promise<Note[]> {
   if (!MOCK_MODE) {
-    return api<Note[]>(`/tenants/${tenantId}/notes`);
+    const searchParams = new URLSearchParams({ tenantId, pageSize: '100' });
+    const response = await api<TenantNoteListResponse>(`/tenant-notes?${searchParams.toString()}`);
+    return response.items.map(toNoteModel);
   }
   return mockStore.notes
     .filter((note) => note.tenantId === tenantId)
@@ -290,11 +393,28 @@ async function requestNotes(tenantId: string): Promise<Note[]> {
 
 async function requestTimeline(tenantId: string, cursor?: string) {
   if (!MOCK_MODE) {
-    const searchParams = new URLSearchParams();
-    if (cursor) searchParams.set('cursor', cursor);
-    return api<{ items: TimelineEvent[]; nextCursor?: string }>(
-      `/tenants/${tenantId}/timeline?${searchParams.toString()}`
-    );
+    const page = cursor ? Number(cursor) : 0;
+    const searchParams = new URLSearchParams({ tenantId, page: String(page), pageSize: '20' });
+    const response = await api<CommLogListResponse>(`/comm-log?${searchParams.toString()}`);
+    const items: TimelineEvent[] = response.items.map((entry) => {
+      const channel: TimelineEvent['channel'] =
+        entry.type === 'CALL'
+          ? 'call'
+          : entry.type === 'SMS'
+            ? 'sms'
+            : entry.type === 'EMAIL'
+              ? 'email'
+              : 'call';
+      return {
+        type: 'message',
+        id: entry.id,
+        at: entry.when,
+        channel,
+        direction: entry.direction === 'IN' ? 'in' : 'out',
+      };
+    });
+    const nextPage = (page + 1) * response.pageInfo.pageSize < response.pageInfo.total ? String(page + 1) : undefined;
+    return { items, nextCursor: nextPage };
   }
 
   const events = [...(mockStore.timeline[tenantId] ?? [])].sort((a, b) =>
@@ -312,7 +432,22 @@ async function requestTimeline(tenantId: string, cursor?: string) {
 
 async function requestPreferences(tenantId: string) {
   if (!MOCK_MODE) {
-    return api<TenantPreferences>(`/tenants/${tenantId}/preferences`);
+    const prefs = await api<NotificationPreferenceRecord | null>(
+      `/notification-preferences/${tenantId}`
+    );
+    if (!prefs) {
+      const fallback: TenantPreferences = { email: true, sms: true, push: false };
+      return fallback;
+    }
+    const mapped: TenantPreferences = {
+      email: prefs.channels.email,
+      sms: prefs.channels.sms,
+      push: prefs.channels.push,
+      quietHoursStart: prefs.quietHours?.start ?? null,
+      quietHoursEnd: prefs.quietHours?.end ?? null,
+      bestContactTime: null,
+    };
+    return mapped;
   }
   return mockStore.preferences[tenantId] ?? {
     email: true,
@@ -323,10 +458,31 @@ async function requestPreferences(tenantId: string) {
 
 async function savePreferences(tenantId: string, prefs: TenantPreferences) {
   if (!MOCK_MODE) {
-    return api<TenantPreferences>(`/tenants/${tenantId}/preferences`, {
-      method: 'PUT',
-      body: JSON.stringify(prefs),
-    });
+    const payload: NotificationPreferenceRecord = {
+      id: `pref_${tenantId}`,
+      tenantId,
+      channels: { email: prefs.email, sms: prefs.sms, push: prefs.push },
+      quietHours:
+        prefs.quietHoursStart && prefs.quietHoursEnd
+          ? { start: prefs.quietHoursStart, end: prefs.quietHoursEnd }
+          : undefined,
+    };
+    const response = await api<NotificationPreferenceRecord>(
+      `/notification-preferences/${tenantId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      }
+    );
+    const updated: TenantPreferences = {
+      email: response.channels.email,
+      sms: response.channels.sms,
+      push: response.channels.push,
+      quietHoursStart: response.quietHours?.start ?? null,
+      quietHoursEnd: response.quietHours?.end ?? null,
+      bestContactTime: prefs.bestContactTime ?? null,
+    };
+    return updated;
   }
   mockStore.preferences[tenantId] = { ...prefs };
   return mockStore.preferences[tenantId];
@@ -364,10 +520,16 @@ async function uploadFile(tenantId: string, file: File, type: string) {
 
 async function createNote(input: NoteInput): Promise<Note> {
   if (!MOCK_MODE) {
-    return api<Note>(`/tenants/${input.tenantId}/notes`, {
+    const response = await api<TenantNoteRecord>('/tenant-notes', {
       method: 'POST',
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        tenantId: input.tenantId,
+        createdByUserId: 'demo-user',
+        body: input.body,
+        tags: input.tags,
+      }),
     });
+    return toNoteModel(response);
   }
   const note: Note = {
     ...input,
@@ -399,10 +561,14 @@ async function createNote(input: NoteInput): Promise<Note> {
 
 async function updateNote(noteId: string, input: Partial<NoteInput>): Promise<Note> {
   if (!MOCK_MODE) {
-    return api<Note>(`/notes/${noteId}`, {
+    const payload: Record<string, unknown> = {};
+    if (typeof input.body === 'string') payload.body = input.body;
+    if (input.tags !== undefined) payload.tags = input.tags;
+    const response = await api<TenantNoteRecord>(`/tenant-notes/${noteId}`, {
       method: 'PATCH',
-      body: JSON.stringify(input),
+      body: JSON.stringify(payload),
     });
+    return toNoteModel(response);
   }
   const note = mockStore.notes.find((n) => n.id === noteId);
   if (!note) {
@@ -422,7 +588,7 @@ async function updateNote(noteId: string, input: Partial<NoteInput>): Promise<No
 
 async function deleteNote(noteId: string) {
   if (!MOCK_MODE) {
-    await api<void>(`/notes/${noteId}`, { method: 'DELETE' });
+    await api<void>(`/tenant-notes/${noteId}`, { method: 'DELETE' });
     return;
   }
   const index = mockStore.notes.findIndex((note) => note.id === noteId);
