@@ -1,0 +1,21 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+
+import PageTransition from "../../components/PageTransition";
+
+export default function TenantsLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const pathname = usePathname();
+  const routeKey = pathname ?? "/";
+
+  return (
+    <PageTransition routeKey={routeKey} className="h-full">
+      {children}
+    </PageTransition>
+  );
+}
