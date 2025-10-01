@@ -31,11 +31,40 @@ const getAustralianFinancialYearStart = (isoDate: string) => {
   return `${fyStartYear.toString().padStart(4, '0')}-07-01`;
 };
 
+const parseCalendarDate = (isoDate: string) => {
+  const [yearStr, monthStr, dayStr] = isoDate.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr) - 1;
+  const day = Number(dayStr);
+  return new Date(Date.UTC(year, month, day));
+};
+
+const formatCalendarDate = (date: Date) => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const addDays = (date: Date, amount: number) => {
+  const result = new Date(date.getTime());
+  result.setUTCDate(result.getUTCDate() + amount);
+  return result;
+};
+
+const formatToday = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export async function GET(req: Request) {
   seedIfEmpty();
 
   const url = new URL(req.url);
-  const to = url.searchParams.get('to') ?? new Date().toISOString().split('T')[0];
+  const to = url.searchParams.get('to') ?? formatToday();
   const defaultFrom = `${to.slice(0, 7)}-01`;
   const from = url.searchParams.get('from') ?? defaultFrom;
 
@@ -93,12 +122,10 @@ export async function GET(req: Request) {
   const fyExpense = sumExpense(fyStart, to);
 
   const points: TimeSeriesPoint[] = [];
-  for (
-    let day = new Date(from + 'T00:00:00');
-    day <= new Date(to + 'T00:00:00');
-    day.setDate(day.getDate() + 1)
-  ) {
-    const date = day.toISOString().split('T')[0];
+  const startDate = parseCalendarDate(from);
+  const endDate = parseCalendarDate(to);
+  for (let day = startDate; day.getTime() <= endDate.getTime(); day = addDays(day, 1)) {
+    const date = formatCalendarDate(day);
     const cashInCents = incomeEntries
       .filter((entry) => entry.date === date)
       .reduce((sum, entry) => sum + toCents(entry.amount), 0);
