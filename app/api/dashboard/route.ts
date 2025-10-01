@@ -35,8 +35,9 @@ export async function GET(req: Request) {
   seedIfEmpty();
 
   const url = new URL(req.url);
-  const from = url.searchParams.get('from') ?? '1970-01-01';
   const to = url.searchParams.get('to') ?? new Date().toISOString().split('T')[0];
+  const defaultFrom = `${to.slice(0, 7)}-01`;
+  const from = url.searchParams.get('from') ?? defaultFrom;
 
   const activeProperties = properties.filter(isActiveProperty);
   const activePropertyIds = new Set(activeProperties.map((property) => property.id));
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
     }));
 
   const yearStart = to.slice(0, 4) + '-01-01';
-  const monthStart = to.slice(0, 7) + '-01';
+  const monthStart = defaultFrom;
   const fyStart = getAustralianFinancialYearStart(to);
 
   const sumIncome = (start: string, end: string) =>
