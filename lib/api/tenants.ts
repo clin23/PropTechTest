@@ -397,18 +397,22 @@ async function requestTenants(query: TenantListQuery): Promise<TenantListItem[]>
 
 async function requestTenant(id: string): Promise<TenantDetail | undefined> {
   if (!MOCK_MODE) {
-    const payload = await api<TenantDetailResponse>(`/tenants/${id}`);
-    const detail = tenantDetailFromResponse(payload);
-    const propertyId = payload.tenant.currentPropertyId;
-    if (propertyId) {
-      try {
-        const property = await api<PropertySummary>(`/properties/${propertyId}`);
-        detail.address = property.address;
-      } catch (error) {
-        console.warn('Failed to load property for tenant', propertyId, error);
+    try {
+      const payload = await api<TenantDetailResponse>(`/tenants/${id}`);
+      const detail = tenantDetailFromResponse(payload);
+      const propertyId = payload.tenant.currentPropertyId;
+      if (propertyId) {
+        try {
+          const property = await api<PropertySummary>(`/properties/${propertyId}`);
+          detail.address = property.address;
+        } catch (error) {
+          console.warn('Failed to load property for tenant', propertyId, error);
+        }
       }
+      return detail;
+    } catch (error) {
+      console.warn('Falling back to tenant mock store after failed API request', error);
     }
-    return detail;
   }
   return mockStore.tenants.find((tenant) => tenant.id === id);
 }
