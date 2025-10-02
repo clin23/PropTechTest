@@ -141,7 +141,7 @@ export default function ExpensesTable({
       <div className="flex flex-wrap gap-2">
         {!propertyId && (
           <select
-            className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             value={property}
             onChange={(e) => setProperty(e.target.value)}
           >
@@ -155,14 +155,14 @@ export default function ExpensesTable({
         )}
         <input
           type="date"
-          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
           placeholder="From"
         />
         <input
           type="date"
-          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           value={to}
           onChange={(e) => setTo(e.target.value)}
           placeholder="To"
@@ -185,7 +185,7 @@ export default function ExpensesTable({
           </span>
           <input
             type="search"
-            className="w-full min-w-[18rem] rounded border border-gray-300 bg-white py-1 pl-8 pr-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className="h-10 w-full min-w-[18rem] rounded-md border border-gray-300 bg-white pl-9 pr-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             placeholder="Search for an expense"
             value={search}
             onChange={(e) => setSearch(e.target.value)}

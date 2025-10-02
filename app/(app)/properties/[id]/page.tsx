@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
@@ -25,6 +25,7 @@ import Inspections from "./sections/Inspections";
 import CreateListing from "./sections/CreateListing";
 import Vendors from "./sections/Vendors";
 import PropertyPageSkeleton from "../../../../components/skeletons/PropertyPageSkeleton";
+import { recordRecentProperty } from "../../../../lib/recentItems";
 import {
   DEFAULT_PROPERTY_TAB,
   PROPERTY_TABS,
@@ -72,6 +73,12 @@ export default function PropertyPage() {
     queryKey: ["property", id],
     queryFn: () => getProperty(id),
   });
+
+  useEffect(() => {
+    if (property?.id) {
+      recordRecentProperty(property.id);
+    }
+  }, [property?.id]);
 
   const resolvedTab = useMemo<PropertyTabId>(() => {
     return PROPERTY_TABS.some((tab) => tab.id === activeTab)
