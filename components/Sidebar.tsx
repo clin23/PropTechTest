@@ -22,7 +22,7 @@ export default function Sidebar() {
     queryFn: () => fetchTenants({ pageSize: 25 }),
   });
 
-  const tenantLinks = tenantDirectory?.items ?? [];
+  const tenantLinks = (tenantDirectory?.items ?? []).filter((tenant) => tenant.currentPropertyId);
 
   const links = [
     {
