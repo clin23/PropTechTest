@@ -1,14 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listProperties, getProperty, fetchTenants, getTenant } from "../lib/api";
 import type { PropertySummary } from "../types/property";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  getRecentPropertyIds,
+  getRecentTenantIds,
+  RECENT_ITEMS_EVENT,
+  RECENT_PROPERTY_STORAGE_KEY,
+  RECENT_TENANT_STORAGE_KEY,
+  type RecentItemsEventDetail,
+} from "../lib/recentItems";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
+  const [recentPropertyIds, setRecentPropertyIds] = useState<string[]>([]);
+  const [recentTenantIds, setRecentTenantIds] = useState<string[]>([]);
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -22,7 +32,61 @@ export default function Sidebar() {
     queryFn: () => fetchTenants({ pageSize: 25 }),
   });
 
-  const tenantLinks = (tenantDirectory?.items ?? []).filter((tenant) => tenant.currentPropertyId);
+  useEffect(() => {
+    const updateProperties = () => setRecentPropertyIds(getRecentPropertyIds());
+    const updateTenants = () => setRecentTenantIds(getRecentTenantIds());
+
+    updateProperties();
+    updateTenants();
+
+    const handleRecentUpdate = (event: CustomEvent<RecentItemsEventDetail>) => {
+      const detail = event.detail;
+      if (detail.type === "property") {
+        setRecentPropertyIds(detail.ids);
+      }
+      if (detail.type === "tenant") {
+        setRecentTenantIds(detail.ids);
+      }
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === RECENT_PROPERTY_STORAGE_KEY) {
+        updateProperties();
+      }
+      if (event.key === RECENT_TENANT_STORAGE_KEY) {
+        updateTenants();
+      }
+    };
+
+    window.addEventListener(RECENT_ITEMS_EVENT, handleRecentUpdate);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(RECENT_ITEMS_EVENT, handleRecentUpdate);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  const tenantList = useMemo(
+    () => (tenantDirectory?.items ?? []).filter((tenant) => tenant.currentPropertyId),
+    [tenantDirectory]
+  );
+
+  const visibleProperties = useMemo(() => {
+    const recentMatches = recentPropertyIds
+      .map((id) => propertyList.find((property) => property.id === id))
+      .filter((property): property is PropertySummary => Boolean(property));
+    const remaining = propertyList.filter((property) => !recentPropertyIds.includes(property.id));
+    return [...recentMatches, ...remaining].slice(0, 4);
+  }, [propertyList, recentPropertyIds]);
+
+  const visibleTenants = useMemo(() => {
+    const recentMatches = recentTenantIds
+      .map((id) => tenantList.find((tenant) => tenant.id === id))
+      .filter((tenant): tenant is (typeof tenantList)[number] => Boolean(tenant));
+    const remaining = tenantList.filter((tenant) => !recentTenantIds.includes(tenant.id));
+    return [...recentMatches, ...remaining].slice(0, 4);
+  }, [tenantList, recentTenantIds]);
 
   const links = [
     {
@@ -113,7 +177,7 @@ export default function Sidebar() {
           />
         </svg>
       ),
-      children: propertyList.map((p) => ({
+      children: visibleProperties.map((p) => ({
         href: `/properties/${p.id}`,
         label: p.address,
         prefetch: () =>
@@ -157,7 +221,7 @@ export default function Sidebar() {
           />
         </svg>
       ),
-      children: tenantLinks.map((tenant) => ({
+      children: visibleTenants.map((tenant) => ({
         href: `/tenants/${tenant.id}`,
         label: tenant.fullName,
         prefetch: () =>
