@@ -53,44 +53,46 @@ export default function RentLedgerTable({
 
   return (
     <>
-      <table className="min-w-full border rounded card">
-        <thead>
-          <tr>
-            <th className="p-2 text-left">Date</th>
-            <th className="p-2 text-left">Status</th>
-            <th className="p-2 text-left">Amount</th>
-            <th className="p-2 text-center">Evidence</th>
-            <th className="p-2 text-left">Balance</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((e) => (
-            <tr
-              key={e.id}
-              className="cursor-pointer border-t border-[var(--border)] hover:bg-[var(--hover)]"
-              onClick={() => setSelected(e)}
-            >
-              <td className="p-2">{e.date}</td>
-              <td className="p-2">
-                <StatusDot status={e.status} />
-              </td>
-              <td className="p-2">{e.amount}</td>
-              <td className="p-2 text-center">
-                {e.evidenceUrl ? (
-                  <EvidenceLink
-                    href={e.evidenceUrl}
-                    fileName={e.evidenceName}
-                    className="mx-auto"
-                  />
-                ) : (
-                  <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
-                )}
-              </td>
-              <td className="p-2">{e.balance}</td>
+      <div className="card mx-4 overflow-hidden rounded-xl">
+        <table className="min-w-full">
+          <thead>
+            <tr>
+              <th className="p-2 text-left">Date</th>
+              <th className="p-2 text-left">Status</th>
+              <th className="p-2 text-left">Amount</th>
+              <th className="p-2 text-center">Evidence</th>
+              <th className="p-2 text-left">Balance</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {entries.map((e) => (
+              <tr
+                key={e.id}
+                className="cursor-pointer border-t border-[var(--border)] hover:bg-[var(--hover)]"
+                onClick={() => setSelected(e)}
+              >
+                <td className="p-2">{e.date}</td>
+                <td className="p-2">
+                  <StatusDot status={e.status} />
+                </td>
+                <td className="p-2">{e.amount}</td>
+                <td className="p-2 text-center">
+                  {e.evidenceUrl ? (
+                    <EvidenceLink
+                      href={e.evidenceUrl}
+                      fileName={e.evidenceName}
+                      className="mx-auto"
+                    />
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                  )}
+                </td>
+                <td className="p-2">{e.balance}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {selected && (
         <EditLedgerEntryModal
           entry={selected}
