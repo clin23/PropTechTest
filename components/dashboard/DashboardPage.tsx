@@ -147,7 +147,7 @@ function DashboardContent({
   return (
     <div className="space-y-6">
       <div>
-        <Header from={from} to={to} />
+        <Header date={to} />
       </div>
       <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
         <div className="space-y-6 lg:col-span-8 lg:sticky lg:top-6 lg:self-start">
