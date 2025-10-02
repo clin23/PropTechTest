@@ -18,7 +18,7 @@ export default function PropertyDocumentsTable({
   });
 
   return (
-    <table className="min-w-full border rounded card">
+    <table className="min-w-full overflow-hidden rounded-xl card">
       <thead>
         <tr>
           <th className="p-2 text-left">Name</th>
