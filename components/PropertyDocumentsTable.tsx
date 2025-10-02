@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { listPropertyDocuments } from "../lib/api";
+import { formatShortDate } from "../lib/format";
 import type { PropertyDocument } from "../types/property";
 
 export default function PropertyDocumentsTable({
@@ -31,7 +32,7 @@ export default function PropertyDocumentsTable({
           {data.map((d) => (
             <tr key={d.id} className="border-t border-[var(--border)]">
               <td className="p-2">{d.name}</td>
-              <td className="p-2">{d.uploaded}</td>
+              <td className="p-2">{formatShortDate(d.uploaded)}</td>
               <td className="p-2">
                 <a
                   href={d.url}
