@@ -25,6 +25,7 @@ import Inspections from "./sections/Inspections";
 import CreateListing from "./sections/CreateListing";
 import Vendors from "./sections/Vendors";
 import PropertyPageSkeleton from "../../../../components/skeletons/PropertyPageSkeleton";
+import { recordRecentProperty } from "../../../../lib/recentItems";
 import {
   DEFAULT_PROPERTY_TAB,
   PROPERTY_TABS,

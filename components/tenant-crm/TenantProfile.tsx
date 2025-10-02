@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getNotificationPreferences,
@@ -7,6 +8,7 @@ import {
   listCommLog,
   listTenantNotes,
 } from "../../lib/api";
+import { recordRecentTenant } from "../../lib/recentItems";
 
 interface TenantProfileProps {
   tenantId: string;
@@ -17,6 +19,14 @@ export default function TenantProfile({ tenantId }: TenantProfileProps) {
     queryKey: ["tenant", tenantId],
     queryFn: () => getTenant(tenantId),
   });
+
+  const recentTenantId = tenantResponse?.tenant?.id;
+
+  useEffect(() => {
+    if (recentTenantId) {
+      recordRecentTenant(recentTenantId);
+    }
+  }, [recentTenantId]);
 
   const { data: notesResponse } = useQuery({
     enabled: Boolean(tenantId),
