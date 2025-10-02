@@ -136,12 +136,15 @@ export default function ExpensesTable({
     });
   }, [data, propertyId, propertyMap, search]);
 
+  const filterControlClass =
+    "h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
+
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="mx-4 flex flex-wrap items-center gap-2">
         {!propertyId && (
           <select
-            className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            className={`${filterControlClass} pr-10`}
             value={property}
             onChange={(e) => setProperty(e.target.value)}
           >
@@ -155,20 +158,20 @@ export default function ExpensesTable({
         )}
         <input
           type="date"
-          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          className={filterControlClass}
           value={from}
           onChange={(e) => setFrom(e.target.value)}
           placeholder="From"
         />
         <input
           type="date"
-          className="border p-1 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          className={filterControlClass}
           value={to}
           onChange={(e) => setTo(e.target.value)}
           placeholder="To"
         />
         <div className="relative">
-          <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-gray-400">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
@@ -185,7 +188,7 @@ export default function ExpensesTable({
           </span>
           <input
             type="search"
-            className="w-full min-w-[18rem] rounded border border-gray-300 bg-white py-1 pl-8 pr-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className={`${filterControlClass} w-full min-w-[18rem] pl-10`}
             placeholder="Search for an expense"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -198,79 +201,81 @@ export default function ExpensesTable({
       ) : filteredData.length === 0 ? (
         <EmptyState message="No expenses match your search." />
       ) : (
-        <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-gray-700">
-              {!propertyId && <th className="p-2 text-left">Property</th>}
-              <th className="p-2 text-left">Date</th>
-              <th className="p-2 text-left">Category</th>
-              <th className="p-2 text-left">Vendor</th>
-              <th className="p-2 text-left">Amount</th>
-              <th className="p-2 text-left">GST</th>
-              <th className="p-2 text-left">Notes</th>
-              <th className="p-2 text-left">Receipt</th>
-              <th className="p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredData.map((r) => (
-              <tr key={r.id} className="border-t dark:border-gray-700">
-                {!propertyId && (
-                  <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
-                )}
-                <td className="p-2">{r.date}</td>
-                <td className="p-2">{r.category}</td>
-                <td className="p-2">{r.vendor}</td>
-                <td className="p-2">{r.amount}</td>
-                <td className="p-2">{r.gst}</td>
-                <td className="p-2">{r.notes}</td>
-                <td className="p-2">
-                  <ReceiptLink url={r.receiptUrl} />
-                </td>
-                <td className="p-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className={iconButtonClass}
-                      onClick={() => handleEdit(r)}
-                      aria-label="Edit expense"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="h-5 w-5"
-                      >
-                        <path d="M17.414 2.586a2 2 0 0 0-2.828 0l-1.086 1.086 2.828 2.828 1.086-1.086a2 2 0 0 0 0-2.828ZM14.57 7.5 11.672 4.672 4 12.343V15.5h3.157L14.5 7.5Z" />
-                        <path d="M2 6a2 2 0 0 1 2-2h4a1 1 0 1 1 0 2H4v10h10v-4a1 1 0 1 1 2 0v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      className={`${iconButtonClass} text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300`}
-                      onClick={() => setDeleteTarget(r)}
-                      aria-label="Delete expense"
-                      disabled={deleteMutation.isPending}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="h-5 w-5"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M8.75 3a1.75 1.75 0 0 0-1.744 1.602l-.035.348H4a.75.75 0 0 0 0 1.5h.532l.634 9.182A2.25 2.25 0 0 0 7.41 17.75h5.18a2.25 2.25 0 0 0 2.244-2.118L15.468 6.45H16a.75.75 0 0 0 0-1.5h-2.97l-.035-.348A1.75 1.75 0 0 0 11.25 3h-2.5ZM9.75 7a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0V7Zm2.75-.75a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V7a.75.75 0 0 1 .75-.75Z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
+        <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700">
+                {!propertyId && <th className="p-2 text-left">Property</th>}
+                <th className="p-2 text-left">Date</th>
+                <th className="p-2 text-left">Category</th>
+                <th className="p-2 text-left">Vendor</th>
+                <th className="p-2 text-left">Amount</th>
+                <th className="p-2 text-left">GST</th>
+                <th className="p-2 text-left">Notes</th>
+                <th className="p-2 text-left">Receipt</th>
+                <th className="p-2 text-left">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredData.map((r) => (
+                <tr key={r.id} className="border-t dark:border-gray-700">
+                  {!propertyId && (
+                    <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
+                  )}
+                  <td className="p-2">{r.date}</td>
+                  <td className="p-2">{r.category}</td>
+                  <td className="p-2">{r.vendor}</td>
+                  <td className="p-2">{r.amount}</td>
+                  <td className="p-2">{r.gst}</td>
+                  <td className="p-2">{r.notes}</td>
+                  <td className="p-2">
+                    <ReceiptLink url={r.receiptUrl} />
+                  </td>
+                  <td className="p-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className={iconButtonClass}
+                        onClick={() => handleEdit(r)}
+                        aria-label="Edit expense"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="h-5 w-5"
+                        >
+                          <path d="M17.414 2.586a2 2 0 0 0-2.828 0l-1.086 1.086 2.828 2.828 1.086-1.086a2 2 0 0 0 0-2.828ZM14.57 7.5 11.672 4.672 4 12.343V15.5h3.157L14.5 7.5Z" />
+                          <path d="M2 6a2 2 0 0 1 2-2h4a1 1 0 1 1 0 2H4v10h10v-4a1 1 0 1 1 2 0v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className={`${iconButtonClass} text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300`}
+                        onClick={() => setDeleteTarget(r)}
+                        aria-label="Delete expense"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="h-5 w-5"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8.75 3a1.75 1.75 0 0 0-1.744 1.602l-.035.348H4a.75.75 0 0 0 0 1.5h.532l.634 9.182A2.25 2.25 0 0 0 7.41 17.75h5.18a2.25 2.25 0 0 0 2.244-2.118L15.468 6.45H16a.75.75 0 0 0 0-1.5h-2.97l-.035-.348A1.75 1.75 0 0 0 11.25 3h-2.5ZM9.75 7a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0V7Zm2.75-.75a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V7a.75.75 0 0 1 .75-.75Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <ExpenseForm
         propertyId={propertyId}
