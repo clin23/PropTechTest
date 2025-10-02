@@ -142,7 +142,7 @@ export default function ExpensesTable({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="mx-4 flex flex-wrap items-center gap-2">
         {!propertyId && (
           <select
             className={`${filterControlClass} pr-10`}
@@ -223,7 +223,7 @@ export default function ExpensesTable({
                   {!propertyId && (
                     <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
                   )}
-                  <td className="p-2">{formatShortDate(r.date)}</td>
+                  <td className="p-2">{r.date}</td>
                   <td className="p-2">{r.category}</td>
                   <td className="p-2">{r.vendor}</td>
                   <td className="p-2">{r.amount}</td>

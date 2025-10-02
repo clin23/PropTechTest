@@ -72,7 +72,7 @@ export default function RentLedgerTable({
                 className="cursor-pointer border-t border-[var(--border)] hover:bg-[var(--hover)]"
                 onClick={() => setSelected(e)}
               >
-                <td className="p-2">{formatShortDate(e.date)}</td>
+                <td className="p-2">{e.date}</td>
                 <td className="p-2">
                   <StatusDot status={e.status} />
                 </td>
