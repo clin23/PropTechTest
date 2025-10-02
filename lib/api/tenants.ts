@@ -21,6 +21,8 @@ export type TenantListItem = {
   status: 'A_GRADE' | 'WATCHLIST' | 'PROSPECT';
   hasOverdue?: boolean;
   avatarUrl?: string | null;
+  currentPropertyId?: string | null;
+  isArchived: boolean;
 };
 
 export type TenantListFilters = {
@@ -59,6 +61,7 @@ export type TenantDetail = {
   address?: string;
   lastInteractionAt?: string;
   bestContactTime?: string | null;
+  currentPropertyId?: string | null;
 };
 
 export type TenantPreferences = {
@@ -114,6 +117,7 @@ function createInitialMockStore(): MockStore {
       address: '12 Sunset Way, Carlton',
       lastInteractionAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       bestContactTime: '09:00',
+      currentPropertyId: 'prop_alice',
     },
     {
       id: 'tnt_bob',
@@ -123,6 +127,7 @@ function createInitialMockStore(): MockStore {
       statuses: ['WATCHLIST'],
       address: '88 Harbour Street, Southbank',
       lastInteractionAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+      currentPropertyId: 'prop_bob',
     },
     {
       id: 'tnt_charlie',
@@ -132,6 +137,7 @@ function createInitialMockStore(): MockStore {
       statuses: ['PROSPECT'],
       address: 'Prospect - 17 Green Lane',
       lastInteractionAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+      currentPropertyId: null,
     },
   ];
 
@@ -268,6 +274,8 @@ function tenantToListItem(tenant: TenantRecord): TenantListItem {
     status: statuses[0] ?? 'PROSPECT',
     hasOverdue: tenant.riskFlags?.includes('arrears') ?? false,
     avatarUrl: null,
+    currentPropertyId: tenant.currentPropertyId ?? null,
+    isArchived: !tenant.currentPropertyId,
   };
 }
 
@@ -283,6 +291,7 @@ function tenantDetailFromResponse(payload: TenantDetailResponse): TenantDetail {
     address: undefined,
     lastInteractionAt: lastContact?.when ?? undefined,
     bestContactTime: null,
+    currentPropertyId: tenant.currentPropertyId ?? null,
   };
 }
 
@@ -303,6 +312,14 @@ export type TenantListQuery = {
   search?: string;
   filters: TenantListFilters;
 };
+
+function sortTenants(items: TenantListItem[]) {
+  return [...items].sort((a, b) => {
+    const byProperty = Number(Boolean(b.currentPropertyId)) - Number(Boolean(a.currentPropertyId));
+    if (byProperty !== 0) return byProperty;
+    return a.name.localeCompare(b.name);
+  });
+}
 
 async function requestTenants(query: TenantListQuery): Promise<TenantListItem[]> {
   const { search, filters } = query;
@@ -334,7 +351,7 @@ async function requestTenants(query: TenantListQuery): Promise<TenantListItem[]>
     const filtered = mapped
       .filter(({ item }) => matchesSearch(item))
       .filter(({ statuses }) => matchesStatus(statuses));
-    const result = filtered.map(({ item }) => item);
+    const result = sortTenants(filtered.map(({ item }) => item));
     if (filters.arrearsOnly) {
       return result.filter((tenant) => tenant.hasOverdue);
     }
@@ -353,13 +370,17 @@ async function requestTenants(query: TenantListQuery): Promise<TenantListItem[]>
     status: tenant.statuses[0] ?? 'PROSPECT',
     hasOverdue: tenant.statuses.includes('WATCHLIST'),
     avatarUrl: null,
+    currentPropertyId: tenant.currentPropertyId ?? null,
+    isArchived: !tenant.currentPropertyId,
   }));
 
+  const sorted = sortTenants(mapped);
+
   if (filters.arrearsOnly) {
-    return mapped.filter((tenant) => tenant.status === 'WATCHLIST');
+    return sorted.filter((tenant) => tenant.status === 'WATCHLIST');
   }
 
-  return mapped;
+  return sorted;
 }
 
 async function requestTenant(id: string): Promise<TenantDetail | undefined> {

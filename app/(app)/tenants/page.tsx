@@ -33,8 +33,24 @@ export default function TenantDirectoryPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedTenant && tenantsQuery.data?.length) {
-      setSelectedTenant(tenantsQuery.data[0].id);
+    const tenants = tenantsQuery.data ?? [];
+    if (tenants.length === 0) {
+      if (selectedTenant !== undefined) {
+        setSelectedTenant(undefined);
+      }
+      return;
+    }
+
+    const selectedExists = selectedTenant
+      ? tenants.some((tenant) => tenant.id === selectedTenant)
+      : false;
+
+    if (!selectedTenant || !selectedExists) {
+      const activeTenant = tenants.find((tenant) => tenant.currentPropertyId);
+      const fallback = activeTenant ?? tenants[0];
+      if (fallback) {
+        setSelectedTenant(fallback.id);
+      }
     }
   }, [selectedTenant, tenantsQuery.data]);
 

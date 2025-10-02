@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import type { TenantListFilters, TenantListItem } from '../../lib/api/tenants';
 
@@ -39,53 +39,34 @@ export function TenantListPanel({
   const listRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const activeTenants = useMemo(
+    () => tenants.filter((tenant) => tenant.currentPropertyId),
+    [tenants]
+  );
+  const archivedTenants = useMemo(
+    () => tenants.filter((tenant) => !tenant.currentPropertyId),
+    [tenants]
+  );
+  const orderedTenants = useMemo(
+    () => [...activeTenants, ...archivedTenants],
+    [activeTenants, archivedTenants]
+  );
+
   useEffect(() => {
-    if (!tenants.length) return;
-    const index = tenants.findIndex((item) => item.id === selectedTenantId);
+    if (!orderedTenants.length) {
+      setActiveIndex(0);
+      return;
+    }
+    const index = selectedTenantId
+      ? orderedTenants.findIndex((item) => item.id === selectedTenantId)
+      : 0;
     setActiveIndex(index === -1 ? 0 : index);
-  }, [selectedTenantId, tenants]);
+  }, [orderedTenants, selectedTenantId]);
 
-  const itemHeight = 84;
-  const overscan = 6;
-  const [scrollTop, setScrollTop] = useState(0);
-  const [containerHeight, setContainerHeight] = useState(400);
-
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      setContainerHeight(entry.contentRect.height);
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
+  const ensureVisible = useCallback((tenantId: string) => {
+    const option = document.getElementById(`tenant-option-${tenantId}`);
+    option?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, []);
-
-  const visibleItems = useMemo(() => {
-    if (!tenants.length) return [] as Array<{ index: number; offset: number }>;
-    const start = Math.max(Math.floor(scrollTop / itemHeight) - overscan, 0);
-    const end = Math.min(
-      tenants.length,
-      Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
-    );
-    const rows = [] as Array<{ index: number; offset: number }>;
-    for (let index = start; index < end; index += 1) {
-      rows.push({ index, offset: index * itemHeight });
-    }
-    return rows;
-  }, [containerHeight, overscan, scrollTop, tenants.length]);
-
-  const ensureVisible = (index: number) => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const top = index * itemHeight;
-    const bottom = top + itemHeight;
-    if (top < container.scrollTop) {
-      container.scrollTo({ top: top - itemHeight, behavior: 'smooth' });
-    } else if (bottom > container.scrollTop + container.clientHeight) {
-      container.scrollTo({ top: bottom - container.clientHeight + itemHeight, behavior: 'smooth' });
-    }
-  };
 
   useEffect(() => {
     if (!listRef.current) return;
@@ -98,30 +79,35 @@ export function TenantListPanel({
         }
         return;
       }
-      if (!tenants.length) return;
+      if (!orderedTenants.length) return;
       if (event.key === 'ArrowDown') {
         event.preventDefault();
         setActiveIndex((prev) => {
-          const next = Math.min(prev + 1, tenants.length - 1);
-          ensureVisible(next);
-          const tenant = tenants[next];
-          onSelect(tenant);
+          const next = Math.min(prev + 1, orderedTenants.length - 1);
+          const tenant = orderedTenants[next];
+          if (tenant) {
+            onSelect(tenant);
+            ensureVisible(tenant.id);
+          }
           return next;
         });
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
         setActiveIndex((prev) => {
           const next = Math.max(prev - 1, 0);
-          ensureVisible(next);
-          const tenant = tenants[next];
-          onSelect(tenant);
+          const tenant = orderedTenants[next];
+          if (tenant) {
+            onSelect(tenant);
+            ensureVisible(tenant.id);
+          }
           return next;
         });
       } else if (event.key === 'Enter') {
         event.preventDefault();
-        const tenant = tenants[activeIndex];
+        const tenant = orderedTenants[activeIndex];
         if (tenant) {
           onSelect(tenant);
+          ensureVisible(tenant.id);
         }
       } else if (event.key.length === 1 && !event.altKey) {
         const searchInput = listRef.current?.querySelector<HTMLInputElement>('input[data-tenant-search="true"]');
@@ -135,7 +121,7 @@ export function TenantListPanel({
     const node = listRef.current;
     node?.addEventListener('keydown', handleKeyDown);
     return () => node?.removeEventListener('keydown', handleKeyDown);
-  }, [activeIndex, onSelect, tenants, ensureVisible]);
+  }, [activeIndex, ensureVisible, onSelect, orderedTenants]);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -144,6 +130,12 @@ export function TenantListPanel({
       scrollElement.focus();
     }
   }, []);
+
+  useEffect(() => {
+    if (selectedTenantId) {
+      ensureVisible(selectedTenantId);
+    }
+  }, [ensureVisible, selectedTenantId]);
 
   const statusFilters = useMemo(
     () =>
@@ -204,9 +196,10 @@ export function TenantListPanel({
         ref={scrollRef}
         role="listbox"
         tabIndex={0}
-        aria-activedescendant={selectedTenantId}
+        aria-activedescendant={
+          selectedTenantId ? `tenant-option-${selectedTenantId}` : undefined
+        }
         className="relative flex-1 overflow-y-auto focus:outline-none"
-        onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
       >
         {isLoading ? (
           <ListSkeleton />
@@ -228,27 +221,21 @@ export function TenantListPanel({
             <p>Clear filters or add a tenant.</p>
           </div>
         ) : (
-          <div style={{ height: tenants.length * itemHeight }} className="relative">
-            {visibleItems.map((row) => {
-              const tenant = tenants[row.index];
-              const isActive = tenant.id === selectedTenantId;
-              return (
-                <div
-                  key={tenant.id}
-                  role="option"
-                  aria-selected={isActive}
-                  id={tenant.id}
-                  className="absolute left-0 right-0"
-                  style={{ transform: `translateY(${row.offset}px)` }}
-                >
-                  <TenantListRow
-                    tenant={tenant}
-                    active={isActive}
-                    onClick={() => onSelect(tenant)}
-                  />
-                </div>
-              );
-            })}
+          <div className="space-y-4 pb-4">
+            <TenantSection
+              label="Current tenants"
+              tenants={activeTenants}
+              selectedTenantId={selectedTenantId}
+              onSelect={onSelect}
+              emptyMessage="No tenants are currently linked to a property."
+            />
+            <TenantSection
+              label="Archived tenants"
+              tenants={archivedTenants}
+              selectedTenantId={selectedTenantId}
+              onSelect={onSelect}
+              emptyMessage="No archived tenants."
+            />
           </div>
         )}
       </div>
@@ -256,14 +243,62 @@ export function TenantListPanel({
   );
 }
 
-function TenantListRow({ tenant, active, onClick }: { tenant: TenantListItem; active: boolean; onClick: () => void }) {
+function TenantSection({
+  label,
+  tenants,
+  selectedTenantId,
+  onSelect,
+  emptyMessage,
+}: {
+  label: string;
+  tenants: TenantListItem[];
+  selectedTenantId?: string;
+  onSelect: (tenant: TenantListItem) => void;
+  emptyMessage?: string;
+}) {
+  return (
+    <div role="group" aria-label={label} className="px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      {tenants.length ? (
+        <div className="mt-2 overflow-hidden rounded-lg border border-border/40 bg-surface/50">
+          {tenants.map((tenant, index) => (
+            <TenantListRow
+              key={tenant.id}
+              tenant={tenant}
+              active={tenant.id === selectedTenantId}
+              onClick={() => onSelect(tenant)}
+              className={index === tenants.length - 1 ? 'border-b-0' : ''}
+            />
+          ))}
+        </div>
+      ) : emptyMessage ? (
+        <p className="mt-2 text-xs text-muted-foreground">{emptyMessage}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function TenantListRow({
+  tenant,
+  active,
+  onClick,
+  className,
+}: {
+  tenant: TenantListItem;
+  active: boolean;
+  onClick: () => void;
+  className?: string;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
+      id={`tenant-option-${tenant.id}`}
+      role="option"
+      aria-selected={active}
       className={`group flex w-full items-center gap-3 border-b border-border/40 px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
         active ? 'bg-primary/10' : 'hover:bg-surface/60'
-      }`}
+      } ${className ?? ''}`}
     >
       <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
         {tenant.avatarUrl ? (
@@ -288,6 +323,11 @@ function TenantListRow({ tenant, active, onClick }: { tenant: TenantListItem; ac
           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${statusClass(tenant.status)}`}>
             {STATUS_LABELS[tenant.status]}
           </span>
+          {!tenant.currentPropertyId ? (
+            <span className="inline-flex items-center rounded-full border border-border/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+              Archived
+            </span>
+          ) : null}
         </div>
       </div>
     </button>
