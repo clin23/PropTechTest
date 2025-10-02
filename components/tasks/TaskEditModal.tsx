@@ -28,6 +28,10 @@ const COLOR_TOKEN_FALLBACKS: Record<string, string> = {
 const resolveColorInputValue = (color: string) =>
   COLOR_TOKEN_FALLBACKS[color] ?? color;
 
+const PRESET_COLOR_LABELS = new Map(
+  STATUS_INDICATOR_PRESETS.map((preset) => [preset.color, preset.label] as const)
+);
+
 export default function TaskEditModal({
   task,
   properties,
@@ -59,6 +63,12 @@ export default function TaskEditModal({
   >(task.attachments ?? []);
 
   const resolvedColorValue = resolveColorInputValue(statusIndicator.color);
+  const presetLabel = PRESET_COLOR_LABELS.get(statusIndicator.color);
+  const displayedColorValue = presetLabel
+    ? `Preset: ${presetLabel.replace(/\s+/g, "-")}`
+    : statusIndicator.color.startsWith("#")
+      ? statusIndicator.color.toUpperCase()
+      : statusIndicator.color;
 
   const updateStatusIndicator = useCallback(
     (value: Partial<StatusIndicatorValue>) => {
@@ -371,7 +381,7 @@ export default function TaskEditModal({
                 aria-label="Choose status colour"
               />
               <span className="rounded border border-gray-200 px-2 py-1 font-mono text-xs uppercase tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
-                {statusIndicator.color}
+                {displayedColorValue}
               </span>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
