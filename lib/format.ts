@@ -1,15 +1,34 @@
 export const formatCurrency = (n: number) =>
   new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(n);
 
+const getOrdinalDay = (day: number) => {
+  if (day >= 11 && day <= 13) {
+    return `${day}th`;
+  }
+
+  switch (day % 10) {
+    case 1:
+      return `${day}st`;
+    case 2:
+      return `${day}nd`;
+    case 3:
+      return `${day}rd`;
+    default:
+      return `${day}th`;
+  }
+};
+
 export const formatDate = (d?: string | Date) => {
   if (!d) return '';
   const date = new Date(d);
   if (isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en-AU', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
+
+  const weekday = new Intl.DateTimeFormat('en-AU', { weekday: 'long' }).format(date);
+  const month = new Intl.DateTimeFormat('en-AU', { month: 'long' }).format(date);
+  const year = date.getFullYear();
+  const day = getOrdinalDay(date.getDate());
+
+  return `${weekday} | ${day} ${month} ${year}`;
 };
 
 export const formatChartDate = (d?: string | Date) => {
