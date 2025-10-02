@@ -198,7 +198,7 @@ export default function ExpensesTable({
       ) : filteredData.length === 0 ? (
         <EmptyState message="No expenses match your search." />
       ) : (
-        <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+        <table className="min-w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-700">
               {!propertyId && <th className="p-2 text-left">Property</th>}

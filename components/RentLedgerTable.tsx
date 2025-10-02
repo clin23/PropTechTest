@@ -53,7 +53,7 @@ export default function RentLedgerTable({
 
   return (
     <>
-      <table className="min-w-full border rounded card">
+      <table className="min-w-full overflow-hidden rounded-xl card">
         <thead>
           <tr>
             <th className="p-2 text-left">Date</th>
