@@ -46,7 +46,11 @@ export default function TenantDirectoryPage() {
       : false;
 
     if (!selectedTenant || !selectedExists) {
-      setSelectedTenant(tenants[0].id);
+      const activeTenant = tenants.find((tenant) => tenant.currentPropertyId);
+      const fallback = activeTenant ?? tenants[0];
+      if (fallback) {
+        setSelectedTenant(fallback.id);
+      }
     }
   }, [selectedTenant, tenantsQuery.data]);
 

@@ -54,6 +54,7 @@ export default function PropertyForm({ property, onSaved }: Props) {
     onSuccess: (p: any) => {
       toast({ title: "Property saved" });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
       if (isEdit) {
         queryClient.invalidateQueries({ queryKey: ["property", property!.id] });
         onSaved?.(p);
