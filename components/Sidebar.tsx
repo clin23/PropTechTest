@@ -15,6 +15,97 @@ import {
   type RecentItemsEventDetail,
 } from "../lib/recentItems";
 
+const iconProps = {
+  className: "h-6 w-6",
+  xmlns: "http://www.w3.org/2000/svg",
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.6,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
+function DashboardIcon() {
+  return (
+    <svg {...iconProps}>
+      <rect x={3.75} y={4.25} width={16.5} height={15.5} rx={2.5} />
+      <path d="M10 4.25v15.5" />
+      <path d="M3.75 10.5h16.5" />
+      <path d="M13.75 13.5l1.75 1.75L19 12.25" />
+      <path d="M13.25 16.75h5" />
+    </svg>
+  );
+}
+
+function AnalyticsIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M4 19.25h16" />
+      <path d="M6.25 15.5l4.25-5.5 3.5 3.75 4.75-6.5" />
+      <circle cx={6.25} cy={15.5} r={0.9} />
+      <circle cx={10.5} cy={10} r={0.9} />
+      <circle cx={14} cy={13.5} r={0.9} />
+      <circle cx={18.75} cy={7.75} r={0.9} />
+    </svg>
+  );
+}
+
+function TasksIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M8.5 4.25h7" />
+      <path d="M9.25 3.5h5.5" />
+      <rect x={5.25} y={5.5} width={13.5} height={14} rx={2.5} />
+      <path d="M9 11.75l2.25 2.25 3.75-4.75" />
+      <path d="M9 16.75h6.5" />
+    </svg>
+  );
+}
+
+function PropertiesIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M4.75 18.75V10.5L12 4.25l7.25 6.25v8.25" />
+      <path d="M7.5 18.75h9" />
+      <path d="M9.75 18.75v-4.5h4.5v4.5" />
+      <path d="M8.25 12.5h1.5" />
+      <path d="M14.25 12.5h1.5" />
+    </svg>
+  );
+}
+
+function TenantsIcon() {
+  return (
+    <svg {...iconProps}>
+      <circle cx={12} cy={9} r={3} />
+      <path d="M6.75 9.75a2.25 2.25 0 114.5 0" />
+      <path d="M12 13.5c3.25 0 5.75 2.25 5.75 5" />
+      <path d="M6.25 18.5c0-2.3 1.6-4.2 3.9-4.8" />
+      <path d="M5.5 9.5a2 2 0 113.5-1.5" />
+      <path d="M18.5 9.5a2 2 0 10-3.5-1.5" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M12 15.25a3.25 3.25 0 100-6.5 3.25 3.25 0 000 6.5z" />
+      <path d="M5.75 9.25l-1 .75" />
+      <path d="M5 14l-1 .5" />
+      <path d="M9.25 18.25L8.75 19.5" />
+      <path d="M14.75 18.25l.5 1.25" />
+      <path d="M19 14l1 .5" />
+      <path d="M18.25 9.25l1-.75" />
+      <path d="M14.75 5.75l.5-1.25" />
+      <path d="M9.25 5.75L8.75 4.5" />
+      <path d="M12 4.25v-1.5" />
+      <path d="M12 21.25v-1.5" />
+    </svg>
+  );
+}
+
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const [recentPropertyIds, setRecentPropertyIds] = useState<string[]>([]);
@@ -92,91 +183,22 @@ export default function Sidebar() {
     {
       href: "/dashboard",
       label: "Dashboard",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M4.75 5.5A1.75 1.75 0 016.5 3.75h6.086a1.75 1.75 0 011.238.512l3.914 3.914a1.75 1.75 0 01.512 1.238V18.5A1.75 1.75 0 0116.5 20.25h-10A1.75 1.75 0 014.75 18.5V5.5z" />
-          <path d="M13.25 3.75v2.5a2 2 0 002 2h2.5" />
-          <circle cx={16.25} cy={8} r={2.25} />
-          <path d="M15 8h2.5" />
-          <path d="M7.25 15.75l2.5-3 2.25 2.5 3.25-4.25 1.5 1.5" />
-          <path d="M7.25 12.75v3M10 11v4.75M12.75 12.75v3M16.25 10v5.75" />
-        </svg>
-      ),
+      icon: <DashboardIcon />,
     },
     {
       href: "/analytics",
       label: "Analytics",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3v18M6 8v13M16 13v8" />
-        </svg>
-      ),
+      icon: <AnalyticsIcon />,
     },
     {
       href: "/tasks",
       label: "Tasks",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12l2 2 4-4m-7 8h8a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
-      ),
+      icon: <TasksIcon />,
     },
     {
       href: "/properties",
       label: "Properties",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.6}
-        >
-          <rect x={6} y={4.5} width={12} height={14.5} rx={2} />
-          <rect x={9.25} y={2} width={5.5} height={2.5} rx={1.25} />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.5 11.5l1.5 1.5L14 10"
-          />
-          <path
-            strokeLinecap="round"
-            d="M13.5 11.5H16m-2.5 2.5H16"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.5 18.5V16l2.5-2 2.5 2v2.5M9.5 18.5h5M11.75 20v-1.5h1.5V20"
-          />
-        </svg>
-      ),
+      icon: <PropertiesIcon />,
       children: visibleProperties.map((p) => ({
         href: `/properties/${p.id}`,
         label: p.address,
@@ -190,37 +212,7 @@ export default function Sidebar() {
     {
       href: "/tenants",
       label: "Tenants",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.8}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M7.5 7.5a3 3 0 116 0 3 3 0 01-6 0z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4 19.5c0-2.485 2.239-4.5 5-4.5h3c2.761 0 5 2.015 5 4.5"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M17.75 10.5a2.25 2.25 0 11-4.5 0"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M16 14c1.79 0 3.25 1.232 3.25 2.75"
-          />
-        </svg>
-      ),
+      icon: <TenantsIcon />,
       children: visibleTenants.map((tenant) => ({
         href: `/tenants/${tenant.id}`,
         label: tenant.fullName,
@@ -310,26 +302,7 @@ export default function Sidebar() {
             className="p-2 rounded hover:bg-[var(--hover)]"
             aria-label="Settings"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.591 1.003 1.724 1.724 0 012.356.63 1.724 1.724 0 001.845 1.845 1.724 1.724 0 01.63 2.356 1.724 1.724 0 001.003 2.591c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.003 2.591 1.724 1.724 0 01-.63 2.356 1.724 1.724 0 00-2.356.63 1.724 1.724 0 01-2.591 1.003c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.591-1.003 1.724 1.724 0 01-2.356-.63 1.724 1.724 0 00-2.356-.63 1.724 1.724 0 01-1.003-2.591c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.003-2.591 1.724 1.724 0 01.63-2.356 1.724 1.724 0 00.63-2.356 1.724 1.724 0 011.003-2.591 1.724 1.724 0 012.591-1.003z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+            <SettingsIcon />
           </Link>
         </div>
       </div>
