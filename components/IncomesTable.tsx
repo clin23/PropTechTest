@@ -125,7 +125,7 @@ export default function IncomesTable({
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-t dark:border-gray-700">
-                <td className="p-2">{r.date}</td>
+                <td className="p-2">{formatShortDate(r.date)}</td>
                 <td className="p-2">{r.category || r.label || "—"}</td>
                 <td className="p-2 text-center">
                   {r.evidenceUrl ? (

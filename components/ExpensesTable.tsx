@@ -223,7 +223,7 @@ export default function ExpensesTable({
                   {!propertyId && (
                     <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
                   )}
-                  <td className="p-2">{r.date}</td>
+                  <td className="p-2">{formatShortDate(r.date)}</td>
                   <td className="p-2">{r.category}</td>
                   <td className="p-2">{r.vendor}</td>
                   <td className="p-2">{r.amount}</td>

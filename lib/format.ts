@@ -45,16 +45,40 @@ export const formatChartDate = (d?: string | Date) => {
 
 export const formatMoney = (cents: number) => formatCurrency(cents / 100);
 
-export const formatShortDate = (d?: string | Date) => {
-  if (!d) return '—';
-  const date = new Date(d);
+const shortDateFromParts = (year: number, month: number, day: number) => {
+  const pad = (value: number) => value.toString().padStart(2, '0');
+  return `${pad(day)}/${pad(month)}/${year.toString().slice(-2)}`;
+};
+
+const ISO_LIKE_DATE = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/;
+
+export const formatShortDate = (input?: string | Date | null) => {
+  if (!input) return '—';
+
+  const formatDate = (date: Date) =>
+    shortDateFromParts(date.getFullYear(), date.getMonth() + 1, date.getDate());
+
+  if (input instanceof Date) {
+    return Number.isNaN(input.getTime()) ? '—' : formatDate(input);
+  }
+
+  const value = String(input).trim();
+  if (!value) return '—';
+
+  const isoMatch = value.match(ISO_LIKE_DATE);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return shortDateFromParts(
+      Number.parseInt(year, 10),
+      Number.parseInt(month, 10),
+      Number.parseInt(day, 10)
+    );
+  }
+
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
 
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  }).format(date);
+  return formatDate(date);
 };
 
 export const statusToBadgeColor = (status: string) => {
