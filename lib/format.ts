@@ -45,6 +45,18 @@ export const formatChartDate = (d?: string | Date) => {
 
 export const formatMoney = (cents: number) => formatCurrency(cents / 100);
 
+export const formatShortDate = (d?: string | Date) => {
+  if (!d) return '—';
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+  }).format(date);
+};
+
 export const statusToBadgeColor = (status: string) => {
   switch (status) {
     case 'Overdue':

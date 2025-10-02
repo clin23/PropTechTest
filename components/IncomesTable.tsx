@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listIncome, deleteIncome } from "../lib/api";
+import { formatShortDate } from "../lib/format";
 import type { IncomeRow } from "../types/income";
 import EmptyState from "./EmptyState";
 import EvidenceLink from "./EvidenceLink";

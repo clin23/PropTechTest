@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { listLedger, updateLedgerEntry } from "../lib/api";
+import { formatShortDate } from "../lib/format";
 import type { LedgerEntry, LedgerStatus } from "../types/property";
 import EditLedgerEntryModal from "./EditLedgerEntryModal";
 import EvidenceLink from "./EvidenceLink";

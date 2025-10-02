@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { listPropertyDocuments } from "../lib/api";
+import { formatShortDate } from "../lib/format";
 import type { PropertyDocument } from "../types/property";
 
 export default function PropertyDocumentsTable({

@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { SharedTile } from "../../../../components/SharedTile";
 import IncomeForm from "../../../../components/IncomeForm";
 import ExpenseForm from "../../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../../components/DocumentUploadModal";
 import PropertyEditModal from "../../../../components/PropertyEditModal";
-import { getProperty } from "../../../../lib/api";
+import { getProperty, listProperties } from "../../../../lib/api";
 import type { PropertySummary } from "../../../../types/property";
 import { useURLState } from "../../../../lib/useURLState";
 import PropertyHero from "./components/PropertyHero";
@@ -25,6 +25,7 @@ import Inspections from "./sections/Inspections";
 import CreateListing from "./sections/CreateListing";
 import Vendors from "./sections/Vendors";
 import PropertyPageSkeleton from "../../../../components/skeletons/PropertyPageSkeleton";
+import { recordRecentProperty } from "../../../../lib/recentItems";
 import {
   DEFAULT_PROPERTY_TAB,
   PROPERTY_TABS,
@@ -59,6 +60,8 @@ function formatDateValue(value?: string) {
 
 export default function PropertyPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useURLState<PropertyTabId>({
     key: "tab",
     defaultValue: DEFAULT_PROPERTY_TAB,
@@ -67,11 +70,48 @@ export default function PropertyPage() {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [documentOpen, setDocumentOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const hasValidId = typeof id === "string" && id.length > 0;
 
   const { data: property, isPending, isError } = useQuery<PropertySummary>({
     queryKey: ["property", id],
     queryFn: () => getProperty(id),
+    enabled: hasValidId,
   });
+
+  useEffect(() => {
+    setIsRedirecting(false);
+  }, [id]);
+
+  const cachedProperties = queryClient.getQueryData<PropertySummary[]>(["properties"]);
+  const { data: fetchedProperties } = useQuery<PropertySummary[]>({
+    queryKey: ["properties"],
+    queryFn: listProperties,
+    enabled: isError && !cachedProperties,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const availableProperties = useMemo(
+    () => cachedProperties ?? fetchedProperties ?? [],
+    [cachedProperties, fetchedProperties],
+  );
+
+  useEffect(() => {
+    if (!isError || !availableProperties.length || !hasValidId) {
+      return;
+    }
+
+    const fallback =
+      availableProperties.find((item) => item.id !== id) ?? availableProperties[0];
+
+    if (!fallback || fallback.id === id) {
+      return;
+    }
+
+    setIsRedirecting(true);
+    router.replace(`/properties/${fallback.id}`);
+  }, [availableProperties, hasValidId, id, isError, router]);
 
   const resolvedTab = useMemo<PropertyTabId>(() => {
     return PROPERTY_TABS.some((tab) => tab.id === activeTab)
@@ -79,11 +119,11 @@ export default function PropertyPage() {
       : DEFAULT_PROPERTY_TAB;
   }, [activeTab]);
 
-  if (isError) {
+  if (isError && !isRedirecting) {
     return <div className="p-6">Failed to load property</div>;
   }
 
-  if (!property && !isPending) {
+  if (!property && !isPending && !isRedirecting) {
     return <div className="p-6">Failed to load property</div>;
   }
 
