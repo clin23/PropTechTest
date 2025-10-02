@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { listLedger, updateLedgerEntry } from "../lib/api";
+import { formatShortDate } from "../lib/format";
 import type { LedgerEntry, LedgerStatus } from "../types/property";
 import EditLedgerEntryModal from "./EditLedgerEntryModal";
 import EvidenceLink from "./EvidenceLink";
@@ -71,7 +72,7 @@ export default function RentLedgerTable({
                 className="cursor-pointer border-t border-[var(--border)] hover:bg-[var(--hover)]"
                 onClick={() => setSelected(e)}
               >
-                <td className="p-2">{e.date}</td>
+                <td className="p-2">{formatShortDate(e.date)}</td>
                 <td className="p-2">
                   <StatusDot status={e.status} />
                 </td>

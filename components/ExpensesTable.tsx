@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listExpenses, deleteExpense, listProperties } from "../lib/api";
+import { formatShortDate } from "../lib/format";
 import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
@@ -219,7 +220,7 @@ export default function ExpensesTable({
                   {!propertyId && (
                     <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
                   )}
-                  <td className="p-2">{r.date}</td>
+                  <td className="p-2">{formatShortDate(r.date)}</td>
                   <td className="p-2">{r.category}</td>
                   <td className="p-2">{r.vendor}</td>
                   <td className="p-2">{r.amount}</td>
