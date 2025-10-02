@@ -337,7 +337,20 @@ async function requestTenants(query: TenantListQuery): Promise<TenantListItem[]>
     return filters.statuses.every((status) => statuses.includes(status));
   };
 
-  if (!MOCK_MODE) {
+  const applyFilters = (
+    items: Array<{ item: TenantListItem; statuses: Array<TenantListItem['status']> }>
+  ) => {
+    const filtered = items
+      .filter(({ item }) => matchesSearch(item))
+      .filter(({ statuses }) => matchesStatus(statuses));
+    const result = sortTenants(filtered.map(({ item }) => item));
+    if (filters.arrearsOnly) {
+      return result.filter((tenant) => tenant.hasOverdue);
+    }
+    return result;
+  };
+
+  const fetchFromApi = async () => {
     const searchParams = new URLSearchParams();
     if (search) searchParams.set('search', search);
     if (filters.arrearsOnly) searchParams.set('riskFlag', 'arrears');
@@ -348,39 +361,38 @@ async function requestTenants(query: TenantListQuery): Promise<TenantListItem[]>
       item: tenantToListItem(tenant),
       statuses: deriveStatuses(tenant),
     }));
-    const filtered = mapped
-      .filter(({ item }) => matchesSearch(item))
-      .filter(({ statuses }) => matchesStatus(statuses));
-    const result = sortTenants(filtered.map(({ item }) => item));
-    if (filters.arrearsOnly) {
-      return result.filter((tenant) => tenant.hasOverdue);
-    }
-    return result;
+    return applyFilters(mapped);
+  };
+
+  if (!MOCK_MODE) {
+    return fetchFromApi();
   }
 
-  const results = mockStore.tenants
-    .filter(matchesSearch)
-    .filter((tenant) => matchesStatus(tenant.statuses));
-
-  const mapped = results.map<TenantListItem>((tenant) => ({
-    id: tenant.id,
-    name: tenant.name,
-    email: tenant.email,
-    phone: tenant.phone,
-    status: tenant.statuses[0] ?? 'PROSPECT',
-    hasOverdue: tenant.statuses.includes('WATCHLIST'),
-    avatarUrl: null,
-    currentPropertyId: tenant.currentPropertyId ?? null,
-    isArchived: !tenant.currentPropertyId,
-  }));
-
-  const sorted = sortTenants(mapped);
-
-  if (filters.arrearsOnly) {
-    return sorted.filter((tenant) => tenant.status === 'WATCHLIST');
+  try {
+    return await fetchFromApi();
+  } catch (error) {
+    console.warn('Falling back to tenant mock store after failed API request', error);
   }
 
-  return sorted;
+  const mapped = mockStore.tenants
+    .filter((tenant) => matchesSearch({ name: tenant.name, email: tenant.email, phone: tenant.phone }))
+    .filter((tenant) => matchesStatus(tenant.statuses))
+    .map((tenant) => ({
+      item: {
+        id: tenant.id,
+        name: tenant.name,
+        email: tenant.email,
+        phone: tenant.phone,
+        status: tenant.statuses[0] ?? 'PROSPECT',
+        hasOverdue: tenant.statuses.includes('WATCHLIST'),
+        avatarUrl: null,
+        currentPropertyId: tenant.currentPropertyId ?? null,
+        isArchived: !tenant.currentPropertyId,
+      },
+      statuses: tenant.statuses,
+    }));
+
+  return applyFilters(mapped);
 }
 
 async function requestTenant(id: string): Promise<TenantDetail | undefined> {
