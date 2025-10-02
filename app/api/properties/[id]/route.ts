@@ -9,6 +9,7 @@ import {
   notifications,
   tenantNotes,
 } from '../../store';
+import { syncTenantForProperty, unlinkTenantFromProperty } from '../tenant-sync';
 
 export async function GET(
   _req: Request,
@@ -39,6 +40,9 @@ export async function PATCH(
   if (body.rent !== undefined)
     property.rent = typeof body.rent === 'number' ? body.rent : Number(body.rent) || 0;
   if (body.archived !== undefined) property.archived = body.archived;
+  if (body.tenant !== undefined) {
+    syncTenantForProperty(property.id, property.tenant);
+  }
   const events = reminders
     .filter((r) => r.propertyId === params.id)
     .map((r) => ({ date: r.dueDate, title: r.title, severity: r.severity }));
@@ -51,6 +55,8 @@ export async function DELETE(
 ) {
   const idx = properties.findIndex((p) => p.id === params.id);
   if (idx === -1) return new Response('Not found', { status: 404 });
+  const propertyId = properties[idx].id;
+  unlinkTenantFromProperty(propertyId);
   properties.splice(idx, 1);
   for (const arr of [tenants, expenses, incomes, documents, rentLedger, notifications, tenantNotes, reminders]) {
     let i = arr.length;
