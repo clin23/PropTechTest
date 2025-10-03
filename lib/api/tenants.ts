@@ -424,10 +424,8 @@ async function requestTenant(id: string): Promise<TenantDetail | undefined> {
         const property = await api<PropertySummary>(`/properties/${propertyId}`);
         detail.address = property.address;
       } catch (error) {
-        console.warn(
-          `Failed to load property for tenant ${propertyId ?? '(unknown)'}`,
-          error
-        );
+        const identifier = propertyId ?? '(unknown)';
+        console.warn(`Failed to load property for tenant ${identifier}`, error);
       }
       return detail;
     } catch (error) {
