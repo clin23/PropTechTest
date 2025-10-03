@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 import { uploadFile, createDocument } from "../lib/api";
 import { DocumentTag } from "../types/document";
 
@@ -14,7 +15,14 @@ interface Props {
 
 export default function DocumentUploadModal({ open, onClose, propertyId }: Props) {
   const [file, setFile] = useState<File | null>(null);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -33,7 +41,9 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
     setFile(null);
   };
 
-  return (
+  if (!portalTarget) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -83,6 +93,7 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    portalTarget,
   );
 }

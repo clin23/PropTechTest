@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +11,7 @@ import {
 } from "../lib/api";
 import type { PropertySummary } from "../types/property";
 import { useToast } from "./ui/use-toast";
+import { createPortal } from "react-dom";
 import { downloadJson } from "../lib/download";
 
 interface Props {
@@ -32,9 +33,16 @@ export default function PropertyForm({ property, onSaved }: Props) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAddressInput, setDeleteAddressInput] = useState("");
   const [isDownloadingData, setIsDownloadingData] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   const openDeleteModal = () => {
     setDeleteModalOpen(true);
@@ -264,68 +272,72 @@ export default function PropertyForm({ property, onSaved }: Props) {
           )}
         </div>
       </form>
-      {isEdit && deleteModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-          onClick={closeDeleteModal}
-        >
+      {isEdit && deleteModalOpen &&
+        portalTarget &&
+        createPortal(
           <div
-            className="w-full max-w-lg rounded-md bg-white p-4 shadow-lg dark:bg-gray-800 dark:text-white"
-            onClick={(e) => e.stopPropagation()}
+            key="property-delete-modal"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+            onClick={closeDeleteModal}
           >
-            <h2 className="text-lg font-semibold">Delete property</h2>
-            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-              Deleting this property will permanently remove all existing information
-              including income, expenses, records, tasks, and related notes. Are you
-              sure?
-            </p>
-            <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-100">
-              <p className="mb-2">
-                We recommend downloading a copy of this property's data before
-                deleting it.
+            <div
+              className="w-full max-w-lg rounded-md bg-white p-4 shadow-lg dark:bg-gray-800 dark:text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold">Delete property</h2>
+              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                Deleting this property will permanently remove all existing information
+                including income, expenses, records, tasks, and related notes. Are you
+                sure?
               </p>
-              <button
-                type="button"
-                className="inline-flex items-center rounded border border-amber-400 px-3 py-1 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-400/60 dark:text-amber-50 dark:hover:bg-amber-500/20"
-                onClick={handleDownloadData}
-                disabled={isDownloadingData}
-              >
-                {isDownloadingData ? "Preparing download..." : "Download all data"}
-              </button>
+              <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-100">
+                <p className="mb-2">
+                  We recommend downloading a copy of this property's data before
+                  deleting it.
+                </p>
+                <button
+                  type="button"
+                  className="inline-flex items-center rounded border border-amber-400 px-3 py-1 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-400/60 dark:text-amber-50 dark:hover:bg-amber-500/20"
+                  onClick={handleDownloadData}
+                  disabled={isDownloadingData}
+                >
+                  {isDownloadingData ? "Preparing download..." : "Download all data"}
+                </button>
+              </div>
+              <label className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Type the property address to confirm
+                <input
+                  className="mt-1 w-full rounded border border-gray-300 p-2 text-base dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  value={deleteAddressInput}
+                  onChange={(e) => setDeleteAddressInput(e.target.value)}
+                  placeholder={confirmationTarget}
+                />
+              </label>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Enter <span className="font-semibold text-gray-700 dark:text-gray-200">{confirmationTarget}</span> to proceed.
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded border border-gray-300 px-3 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  onClick={closeDeleteModal}
+                  disabled={deleteMutation.isPending}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="rounded bg-red-600 px-3 py-1 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-700"
+                  onClick={() => deleteMutation.mutate()}
+                  disabled={deleteDisabled}
+                >
+                  {deleteButtonLabel}
+                </button>
+              </div>
             </div>
-            <label className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Type the property address to confirm
-              <input
-                className="mt-1 w-full rounded border border-gray-300 p-2 text-base dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                value={deleteAddressInput}
-                onChange={(e) => setDeleteAddressInput(e.target.value)}
-                placeholder={confirmationTarget}
-              />
-            </label>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Enter <span className="font-semibold text-gray-700 dark:text-gray-200">{confirmationTarget}</span> to proceed.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded border border-gray-300 px-3 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                onClick={closeDeleteModal}
-                disabled={deleteMutation.isPending}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded bg-red-600 px-3 py-1 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-700"
-                onClick={() => deleteMutation.mutate()}
-                disabled={deleteDisabled}
-              >
-                {deleteButtonLabel}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          portalTarget,
+        )}
     </>
   );
 }

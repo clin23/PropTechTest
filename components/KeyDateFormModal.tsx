@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type {
   Reminder,
@@ -80,6 +81,7 @@ export default function KeyDateFormModal({
   );
   const [addToTasks, setAddToTasks] = useState(Boolean(initialData?.taskId));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -95,6 +97,12 @@ export default function KeyDateFormModal({
     setChecklist(initialData?.checklist ?? []);
     setAddToTasks(Boolean(initialData?.taskId));
   }, [initialData, open]);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   const canSave = title.trim().length > 0 && dueDate.trim().length > 0;
 
@@ -226,9 +234,9 @@ export default function KeyDateFormModal({
     ));
   };
 
-  if (!open) return null;
+  if (!open || !portalTarget) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4 py-6 transition"
       role="dialog"
@@ -378,45 +386,46 @@ export default function KeyDateFormModal({
               {error}
             </div>
           )}
+          <footer className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            {initialData && onDelete && (
+              <button
+                type="button"
+                className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isDeleting}
+              >
+                Delete key date
+              </button>
+            )}
+            <div className="ml-auto flex gap-2">
+              <button
+                type="button"
+                className="rounded border px-4 py-2 text-sm"
+                onClick={onClose}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                onClick={handleSubmit}
+                disabled={!canSave || isSaving}
+              >
+                {isSaving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </footer>
         </div>
-        <footer className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          {initialData && onDelete && (
-            <button
-              type="button"
-              className="text-sm text-red-600 hover:underline disabled:opacity-50"
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={isDeleting}
-            >
-              Delete key date
-            </button>
-          )}
-          <div className="ml-auto flex gap-2">
-            <button
-              type="button"
-              className="rounded border px-4 py-2 text-sm"
-              onClick={onClose}
-              disabled={isSaving}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              onClick={handleSubmit}
-              disabled={!canSave || isSaving}
-            >
-              {isSaving ? "Saving…" : "Save"}
-            </button>
-          </div>
-        </footer>
+        {showDeleteConfirm && onDelete && (
+          <ConfirmDeleteModal
+            onClose={() => setShowDeleteConfirm(false)}
+            onConfirm={onDelete}
+            word="delete"
+          />
+        )}
       </div>
-      {showDeleteConfirm && onDelete && (
-        <ConfirmDeleteModal
-          onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={onDelete}
-          word="delete"
-        />
-      )}
-    </div>
+    </div>,
+    portalTarget,
   );
 }

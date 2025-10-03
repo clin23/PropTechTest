@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 import {
   createIncome,
   listProperties,
@@ -95,12 +96,19 @@ export default function IncomeForm({
   const [form, setForm] = useState<FormState>(getInitialForm());
   const [error, setError] = useState<string | null>(null);
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     setForm(getInitialForm());
     setEvidenceFile(null);
   }, [getInitialForm]);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -160,102 +168,104 @@ export default function IncomeForm({
         </button>
       )}
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="income-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            onClick={handleClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <motion.form
-              className="w-full max-w-md max-h-[90vh] space-y-2 overflow-y-auto rounded-lg bg-white p-4 text-gray-900 shadow-lg dark:bg-gray-900 dark:text-gray-100"
-              onClick={(e) => e.stopPropagation()}
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setError(null);
-                const targetPropertyId = propertyId ?? form.propertyId;
-                if (!targetPropertyId || !form.date || !form.group || !form.amount) {
-                  setError("Please fill in all required fields");
-                  return;
-                }
-                if (!form.category && !form.label) {
-                  setError("Please select an income or enter a custom label");
-                  return;
-                }
-                if (form.category && form.label) {
-                  setError("Please choose either an income or a custom label");
-                  return;
-                }
-                if (isNaN(parseFloat(form.amount))) {
-                  setError("Amount must be a number");
-                  return;
-                }
+      {portalTarget &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                key="income-modal"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                onClick={handleClose}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <motion.form
+                  className="w-full max-w-md max-h-[90vh] space-y-2 overflow-y-auto rounded-lg bg-white p-4 text-gray-900 shadow-lg dark:bg-gray-900 dark:text-gray-100"
+                  onClick={(e) => e.stopPropagation()}
+                  onSubmit={async (e) => {
+                      e.preventDefault();
+                      setError(null);
+                      const targetPropertyId = propertyId ?? form.propertyId;
+                      if (!targetPropertyId || !form.date || !form.group || !form.amount) {
+                        setError("Please fill in all required fields");
+                        return;
+                      }
+                      if (!form.category && !form.label) {
+                        setError("Please select an income or enter a custom label");
+                        return;
+                      }
+                      if (form.category && form.label) {
+                        setError("Please choose either an income or a custom label");
+                        return;
+                      }
+                      if (isNaN(parseFloat(form.amount))) {
+                        setError("Amount must be a number");
+                        return;
+                      }
 
-                let evidenceUrl = form.evidenceUrl;
-                let evidenceName = form.evidenceName;
-                if (evidenceFile) {
-                  try {
-                    const upload = await uploadFile(evidenceFile);
-                    evidenceUrl = upload.url;
-                    evidenceName = evidenceFile.name;
-                  } catch (err: any) {
-                    const message =
-                      err instanceof Error ? err.message : "Failed to upload evidence";
-                    setError(message);
-                    toast({ title: "Failed to upload evidence", description: message });
-                    return;
-                  }
-                }
+                      let evidenceUrl = form.evidenceUrl;
+                      let evidenceName = form.evidenceName;
+                      if (evidenceFile) {
+                        try {
+                          const upload = await uploadFile(evidenceFile);
+                          evidenceUrl = upload.url;
+                          evidenceName = evidenceFile.name;
+                        } catch (err: any) {
+                          const message =
+                            err instanceof Error ? err.message : "Failed to upload evidence";
+                          setError(message);
+                          toast({ title: "Failed to upload evidence", description: message });
+                          return;
+                        }
+                      }
 
-                const shouldRemoveExistingEvidence =
-                  !evidenceFile && !evidenceUrl && !!initialIncome?.evidenceUrl;
+                      const shouldRemoveExistingEvidence =
+                        !evidenceFile && !evidenceUrl && !!initialIncome?.evidenceUrl;
 
-                mutation.mutate({
-                  propertyId: targetPropertyId,
-                  data: {
-                    date: form.date,
-                    category: form.category,
-                    amount: parseFloat(form.amount),
-                    notes: form.notes,
-                    label: form.label,
-                    evidenceUrl: shouldRemoveExistingEvidence
-                      ? null
-                      : evidenceUrl || undefined,
-                    evidenceName: shouldRemoveExistingEvidence
-                      ? null
-                      : evidenceName || undefined,
-                  },
-                });
-              }}
-              initial={{ opacity: 0, y: 16, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 16, scale: 0.96 }}
-              transition={{ duration: 0.2 }}
-            >
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Log Income
-              </h2>
-              {!propertyId && (
-                <label className="block text-gray-700 dark:text-gray-300">
-                  Property
-                  <select
-                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                    value={form.propertyId}
-                    onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
-                  >
-                    <option value="">Select property</option>
-                    {properties.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.address}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
+                      mutation.mutate({
+                        propertyId: targetPropertyId,
+                        data: {
+                          date: form.date,
+                          category: form.category,
+                          amount: parseFloat(form.amount),
+                          notes: form.notes,
+                          label: form.label,
+                          evidenceUrl: shouldRemoveExistingEvidence
+                            ? null
+                            : evidenceUrl || undefined,
+                          evidenceName: shouldRemoveExistingEvidence
+                            ? null
+                            : evidenceName || undefined,
+                        },
+                      });
+                    }}
+                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 16, scale: 0.96 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Log Income
+                  </h2>
+                  {!propertyId && (
+                    <label className="block text-gray-700 dark:text-gray-300">
+                      Property
+                      <select
+                        className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                        value={form.propertyId}
+                        onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
+                      >
+                        <option value="">Select property</option>
+                        {properties.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.address}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
               <label className="block text-gray-700 dark:text-gray-300">
                 Date
                 <input
@@ -438,10 +448,12 @@ export default function IncomeForm({
                   Save
                 </button>
               </div>
-            </motion.form>
-          </motion.div>
+                </motion.form>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          portalTarget,
         )}
-      </AnimatePresence>
     </div>
   );
 }
