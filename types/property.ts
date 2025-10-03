@@ -33,5 +33,8 @@ export interface PropertyDocument {
   name: string;
   url: string;
   uploaded: string;
+  notes?: string;
+  links?: string[];
+  uploadedAt?: string;
 }
 
