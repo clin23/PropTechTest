@@ -8,6 +8,7 @@ import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
 import ExpenseForm from "./ExpenseForm";
+import ModalPortal from "./ModalPortal";
 
 function ReceiptLink({ url }: { url?: string | null }) {
   if (!url) {
@@ -296,53 +297,55 @@ export default function ExpensesTable({
         }}
       />
       {deleteTarget && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => {
-            if (!deleteMutation.isPending) {
-              setDeleteTarget(null);
-            }
-          }}
-        >
+        <ModalPortal key="expense-delete-modal">
           <div
-            className="w-full max-w-sm rounded-lg bg-white p-5 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
-            onClick={(event) => event.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={() => {
+              if (!deleteMutation.isPending) {
+                setDeleteTarget(null);
+              }
+            }}
           >
-            <h2 className="text-lg font-semibold">Delete expense</h2>
-            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-              are you sure?
-            </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              This will permanently remove the entry for {deleteTarget.vendor || "this expense"} dated {deleteTarget.date}.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleteMutation.isPending}
+              <div
+                className="w-full max-w-sm rounded-lg bg-white p-5 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
+                onClick={(event) => event.stopPropagation()}
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => {
-                  if (!deleteTarget) return;
-                  deleteMutation.mutate(deleteTarget.id, {
-                    onSettled: () => {
-                      setDeleteTarget(null);
-                    },
-                  });
-                }}
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? "Deleting..." : "Delete"}
-              </button>
+                <h2 className="text-lg font-semibold">Delete expense</h2>
+                <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                  are you sure?
+                </p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  This will permanently remove the entry for {deleteTarget.vendor || "this expense"} dated {deleteTarget.date}.
+                </p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                    onClick={() => setDeleteTarget(null)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => {
+                      if (!deleteTarget) return;
+                      deleteMutation.mutate(deleteTarget.id, {
+                        onSettled: () => {
+                          setDeleteTarget(null);
+                        },
+                      });
+                    }}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </ModalPortal>
+        )}
     </div>
   );
 }
