@@ -43,6 +43,18 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
     onClose();
   }, [onClose, resetState]);
 
+  const resetState = useCallback(() => {
+    setFile(null);
+    setFileName("");
+    setNotes("");
+    setLinks("");
+  }, []);
+
+  const handleClose = useCallback(() => {
+    resetState();
+    onClose();
+  }, [onClose, resetState]);
+
   useEffect(() => {
     if (typeof document !== "undefined") {
       setPortalTarget(document.body);
