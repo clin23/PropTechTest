@@ -34,15 +34,13 @@ export type Income = {
   evidenceUrl?: string;
   evidenceName?: string;
 };
-import { DocumentTag } from '../../types/document';
-
 export type Document = {
   id: string;
   propertyId?: string;
   tenantId?: string;
   title: string;
   url: string;
-  tag: DocumentTag;
+  tag: string;
   notes?: string;
   links?: string[];
   uploadedAt?: string;
@@ -1452,7 +1450,7 @@ const initialDocuments: Document[] = [
     propertyId: '1',
     title: 'lease.pdf',
     url: '/docs/lease-prop1.pdf',
-    tag: DocumentTag.Lease,
+    tag: 'Lease',
     uploadedAt: '2023-02-01T09:30:00.000Z',
   },
   {
@@ -1460,7 +1458,7 @@ const initialDocuments: Document[] = [
     propertyId: '2',
     title: 'inspection.pdf',
     url: '/docs/inspection-prop2.pdf',
-    tag: DocumentTag.Compliance,
+    tag: 'Compliance',
     uploadedAt: '2023-05-18T14:10:00.000Z',
   },
   {
@@ -1468,7 +1466,7 @@ const initialDocuments: Document[] = [
     propertyId: '1',
     title: 'invoice.pdf',
     url: '/docs/invoice-prop1.pdf',
-    tag: DocumentTag.Other,
+    tag: 'Other',
     uploadedAt: '2023-03-22T11:45:00.000Z',
   },
   {
@@ -1476,7 +1474,7 @@ const initialDocuments: Document[] = [
     propertyId: '3',
     title: 'insurance.pdf',
     url: '/docs/insurance-prop3.pdf',
-    tag: DocumentTag.Insurance,
+    tag: 'Insurance',
     uploadedAt: '2022-12-15T16:20:00.000Z',
   },
 ];

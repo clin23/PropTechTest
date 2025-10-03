@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listProperties, uploadFile, createDocument } from "../lib/api";
 import { logEvent } from "../lib/log";
-import { DocumentTag } from "../types/document";
+import { useDocumentTags } from "../hooks/useDocumentTags";
 import type { PropertySummary } from "../types/summary";
 
 interface Props {
@@ -12,15 +12,34 @@ interface Props {
 
 export default function DocumentUpload({ onUploaded }: Props) {
   const [propertyId, setPropertyId] = useState("");
-  const [tag, setTag] = useState<DocumentTag>(DocumentTag.Other);
+  const [tag, setTag] = useState("");
+  const [newTagName, setNewTagName] = useState("");
   const [properties, setProperties] = useState<PropertySummary[]>([]);
+  const { tags, addTag } = useDocumentTags();
+
+  const fallbackTag = useMemo(() => {
+    if (tags.length === 0) return "";
+    const otherTag = tags.find((value) => value.toLowerCase() === "other");
+    return otherTag ?? tags[0];
+  }, [tags]);
 
   useEffect(() => {
     listProperties().then(setProperties);
   }, []);
 
+  useEffect(() => {
+    if (!tag && fallbackTag) {
+      setTag(fallbackTag);
+      return;
+    }
+
+    if (tag && !tags.some((value) => value.toLowerCase() === tag.toLowerCase())) {
+      setTag(fallbackTag);
+    }
+  }, [fallbackTag, tag, tags]);
+
   const handleFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !tag) return;
     const file = files[0];
     const { url } = await uploadFile(file);
     await createDocument({
@@ -39,12 +58,15 @@ export default function DocumentUpload({ onUploaded }: Props) {
     handleFiles(e.dataTransfer.files);
   };
 
+  const controlStyles =
+    "rounded border border-slate-300 bg-white p-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <select
           aria-label="Property"
-          className="border p-1"
+          className={`${controlStyles} min-w-[160px]`}
           value={propertyId}
           onChange={(e) => setPropertyId(e.target.value)}
         >
@@ -57,27 +79,63 @@ export default function DocumentUpload({ onUploaded }: Props) {
         </select>
         <select
           aria-label="Tag"
-          className="border p-1"
+          className={`${controlStyles} min-w-[140px]`}
           value={tag}
-          onChange={(e) => setTag(e.target.value as DocumentTag)}
+          onChange={(e) => setTag(e.target.value)}
         >
-          {Object.values(DocumentTag).map((t) => (
-            <option key={t} value={t}>
-              {t}
+          <option value="" disabled>
+            Select a tag
+          </option>
+          {tags.map((value) => (
+            <option key={value} value={value}>
+              {value}
             </option>
           ))}
         </select>
+        <div className="flex flex-1 min-w-[200px] gap-2">
+          <input
+            type="text"
+            className={`${controlStyles} flex-1`}
+            placeholder="Create a new tag"
+            value={newTagName}
+            onChange={(e) => setNewTagName(e.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                const created = addTag(newTagName);
+                if (created) {
+                  setTag(created);
+                  setNewTagName("");
+                }
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="rounded border border-slate-300 bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+            onClick={() => {
+              const created = addTag(newTagName);
+              if (created) {
+                setTag(created);
+                setNewTagName("");
+              }
+            }}
+            disabled={!newTagName.trim()}
+          >
+            Add tag
+          </button>
+        </div>
       </div>
       <div
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
-        className="border-2 border-dashed p-4 text-center"
+        className="rounded border-2 border-dashed border-slate-300 p-4 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300"
       >
-        Drag & drop to upload
+        Drag &amp; drop to upload
         <input
           type="file"
           data-testid="doc-upload"
-          className="block mx-auto mt-2"
+          className="mx-auto mt-2 block text-slate-900 dark:text-slate-100"
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
