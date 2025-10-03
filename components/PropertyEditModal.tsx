@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { createPortal } from "react-dom";
 import PropertyForm from "./PropertyForm";
 import type { PropertySummary } from "../types/property";
-import { AnimatePresence, motion } from "framer-motion";
-import ModalPortal from "./ModalPortal";
 
 interface Props {
   open: boolean;
@@ -12,11 +13,21 @@ interface Props {
 }
 
 export default function PropertyEditModal({ open, property, onClose }: Props) {
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
+
   return (
     <AnimatePresence>
-      {open && (
-        <ModalPortal key="property-edit-modal">
+      {open &&
+        portalTarget &&
+        createPortal(
           <motion.div
+            key="property-edit-modal"
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             onClick={onClose}
             initial={{ opacity: 0 }}
@@ -35,9 +46,9 @@ export default function PropertyEditModal({ open, property, onClose }: Props) {
               <h2 className="mb-2 text-lg font-medium">Edit Property</h2>
               <PropertyForm property={property} onSaved={onClose} />
             </motion.div>
-          </motion.div>
-        </ModalPortal>
-      )}
+          </motion.div>,
+          portalTarget,
+        )}
     </AnimatePresence>
   );
 }

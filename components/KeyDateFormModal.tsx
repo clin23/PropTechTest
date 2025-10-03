@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type {
   Reminder,
@@ -81,6 +82,7 @@ export default function KeyDateFormModal({
   );
   const [addToTasks, setAddToTasks] = useState(Boolean(initialData?.taskId));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -96,6 +98,12 @@ export default function KeyDateFormModal({
     setChecklist(initialData?.checklist ?? []);
     setAddToTasks(Boolean(initialData?.taskId));
   }, [initialData, open]);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   const canSave = title.trim().length > 0 && dueDate.trim().length > 0;
 
@@ -227,19 +235,18 @@ export default function KeyDateFormModal({
     ));
   };
 
-  if (!open) return null;
+  if (!open || !portalTarget) return null;
 
-  return (
-    <ModalPortal>
-      <div
-        className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4 py-6 transition"
-        role="dialog"
-        aria-modal="true"
-        data-testid="key-date-modal"
-      >
-        <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-xl bg-white p-6 shadow-xl transition-all duration-200 ease-out dark:bg-gray-900 dark:text-white">
-          <header className="mb-4 space-y-1">
-            <h2 className="text-xl font-semibold">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4 py-6 transition"
+      role="dialog"
+      aria-modal="true"
+      data-testid="key-date-modal"
+    >
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-xl bg-white p-6 shadow-xl transition-all duration-200 ease-out dark:bg-gray-900 dark:text-white">
+        <header className="mb-4 space-y-1">
+          <h2 className="text-xl font-semibold">
             {initialData ? "Edit key date" : "Add key date"}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -419,6 +426,7 @@ export default function KeyDateFormModal({
           />
         )}
       </div>
-    </ModalPortal>
+    </div>,
+    portalTarget,
   );
 }

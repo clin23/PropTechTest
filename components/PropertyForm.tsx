@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,7 +11,7 @@ import {
 } from "../lib/api";
 import type { PropertySummary } from "../types/property";
 import { useToast } from "./ui/use-toast";
-import ModalPortal from "./ModalPortal";
+import { createPortal } from "react-dom";
 import { downloadJson } from "../lib/download";
 
 interface Props {
@@ -33,9 +33,16 @@ export default function PropertyForm({ property, onSaved }: Props) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAddressInput, setDeleteAddressInput] = useState("");
   const [isDownloadingData, setIsDownloadingData] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   const openDeleteModal = () => {
     setDeleteModalOpen(true);
@@ -265,9 +272,11 @@ export default function PropertyForm({ property, onSaved }: Props) {
           )}
         </div>
       </form>
-      {isEdit && deleteModalOpen && (
-        <ModalPortal key="property-delete-modal">
+      {isEdit && deleteModalOpen &&
+        portalTarget &&
+        createPortal(
           <div
+            key="property-delete-modal"
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
             onClick={closeDeleteModal}
           >
@@ -326,9 +335,9 @@ export default function PropertyForm({ property, onSaved }: Props) {
                 </button>
               </div>
             </div>
-          </div>
-        </ModalPortal>
-      )}
+          </div>,
+          portalTarget,
+        )}
     </>
   );
 }

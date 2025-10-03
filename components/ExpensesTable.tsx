@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { listExpenses, deleteExpense, listProperties } from "../lib/api";
 import { formatShortDate } from "../lib/format";
 import type { ExpenseRow } from "../types/expense";
@@ -44,7 +45,14 @@ export default function ExpensesTable({
   const [editOpen, setEditOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ExpenseRow | null>(null);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   const params = {
     propertyId: propertyId ?? (property || undefined),
@@ -296,9 +304,11 @@ export default function ExpensesTable({
           queryClient.invalidateQueries({ queryKey });
         }}
       />
-      {deleteTarget && (
-        <ModalPortal key="expense-delete-modal">
+      {deleteTarget &&
+        portalTarget &&
+        createPortal(
           <div
+            key="expense-delete-modal"
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
             onClick={() => {
               if (!deleteMutation.isPending) {
@@ -306,45 +316,45 @@ export default function ExpensesTable({
               }
             }}
           >
-              <div
-                className="w-full max-w-sm rounded-lg bg-white p-5 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <h2 className="text-lg font-semibold">Delete expense</h2>
-                <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                  are you sure?
-                </p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  This will permanently remove the entry for {deleteTarget.vendor || "this expense"} dated {deleteTarget.date}.
-                </p>
-                <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-                    onClick={() => setDeleteTarget(null)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={() => {
-                      if (!deleteTarget) return;
-                      deleteMutation.mutate(deleteTarget.id, {
-                        onSettled: () => {
-                          setDeleteTarget(null);
-                        },
-                      });
-                    }}
-                    disabled={deleteMutation.isPending}
-                  >
-                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
+            <div
+              className="w-full max-w-sm rounded-lg bg-white p-5 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold">Delete expense</h2>
+              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                are you sure?
+              </p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                This will permanently remove the entry for {deleteTarget.vendor || "this expense"} dated {deleteTarget.date}.
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={deleteMutation.isPending}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    if (!deleteTarget) return;
+                    deleteMutation.mutate(deleteTarget.id, {
+                      onSettled: () => {
+                        setDeleteTarget(null);
+                      },
+                    });
+                  }}
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                </button>
               </div>
             </div>
-          </ModalPortal>
+          </div>,
+          portalTarget,
         )}
     </div>
   );

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 import { createExpense, listProperties, uploadExpenseReceipt } from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
@@ -117,6 +118,7 @@ export default function ExpenseForm({
   const { toast } = useToast();
   const [recent, setRecent] = useState<string[]>([]);
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("recentExpenseCategories");
@@ -140,6 +142,12 @@ export default function ExpenseForm({
     setError(null);
     setFileInputKey((key) => key + 1);
   }, [open, computeInitialForm]);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
@@ -211,104 +219,106 @@ export default function ExpenseForm({
         </button>
       )}
 
-      <AnimatePresence>
-        {open && (
-          <ModalPortal key="expense-modal">
-            <motion.div
-              className="fixed inset-0 z-50 flex h-full w-full items-start justify-center bg-black/50 p-4 sm:p-6 md:items-center"
-              onClick={handleClose}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <motion.form
-                className="h-full w-full max-w-2xl max-h-full space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
-                onClick={(e) => e.stopPropagation()}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setError(null);
-                  if (
-                    !form.propertyId ||
-                    !form.date ||
-                    !form.group ||
-                    !form.vendor ||
-                    !form.amount ||
-                    (!form.category && !form.label)
-                  ) {
-                    setError("Please fill in all required fields");
-                    return;
-                  }
-                  if (form.category && form.label) {
-                    setError("Please choose either an expense or a custom label");
-                    return;
-                  }
-                  if (isNaN(parseFloat(form.amount))) {
-                    setError("Amount must be a number");
-                    return;
-                  }
-                  mutation.mutate({
-                    expense: {
-                      propertyId: form.propertyId,
-                      date: form.date,
-                      category: form.category,
-                      vendor: form.vendor,
-                      amount: parseFloat(form.amount),
-                      gst: form.gst ? parseFloat(form.gst) : 0,
-                      notes: form.notes,
-                      label: form.label,
-                    },
-                    receipt: form.receipt,
-                  });
-                  if (form.group) {
-                    addRecent(form.group);
-                  }
-                }}
-              initial={{ opacity: 0, y: 24, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 24, scale: 0.97 }}
-              transition={{ duration: 0.2 }}
-            >
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Log an Expense
-              </h2>
-              {!propertyId && (
-                <label className="block text-gray-700 dark:text-gray-300">
-                  Property
-                  <select
-                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                    value={form.propertyId}
-                    onChange={(e) =>
-                      setForm({ ...form, propertyId: e.target.value })
+      {portalTarget &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                key="expense-modal"
+                className="fixed inset-0 z-50 flex h-full w-full items-start justify-center bg-black/50 p-4 sm:p-6 md:items-center"
+                onClick={handleClose}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <motion.form
+                  className="h-full w-full max-w-2xl max-h-full space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
+                  onClick={(e) => e.stopPropagation()}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setError(null);
+                    if (
+                      !form.propertyId ||
+                      !form.date ||
+                      !form.group ||
+                      !form.vendor ||
+                      !form.amount ||
+                      (!form.category && !form.label)
+                    ) {
+                      setError("Please fill in all required fields");
+                      return;
                     }
-                  >
-                    <option value="">Select property</option>
-                    {properties.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.address}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              <label className="block text-gray-700 dark:text-gray-300">
-                Date
-                <input
-                  type="date"
-                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                />
-              </label>
-              <label className="block text-gray-700 dark:text-gray-300">
-                Category
-                <select
-                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.group}
-                  onChange={(e) =>
-                    setForm({ ...form, group: e.target.value, category: "" })
-                  }
+                    if (form.category && form.label) {
+                      setError("Please choose either an expense or a custom label");
+                      return;
+                    }
+                    if (isNaN(parseFloat(form.amount))) {
+                      setError("Amount must be a number");
+                      return;
+                    }
+                    mutation.mutate({
+                      expense: {
+                        propertyId: form.propertyId,
+                        date: form.date,
+                        category: form.category,
+                        vendor: form.vendor,
+                        amount: parseFloat(form.amount),
+                        gst: form.gst ? parseFloat(form.gst) : 0,
+                        notes: form.notes,
+                        label: form.label,
+                      },
+                      receipt: form.receipt,
+                    });
+                    if (form.group) {
+                      addRecent(form.group);
+                    }
+                  }}
+                  initial={{ opacity: 0, y: 24, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 24, scale: 0.97 }}
+                  transition={{ duration: 0.2 }}
                 >
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    Log an Expense
+                  </h2>
+                  {!propertyId && (
+                    <label className="block text-gray-700 dark:text-gray-300">
+                      Property
+                      <select
+                        className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                        value={form.propertyId}
+                        onChange={(e) =>
+                          setForm({ ...form, propertyId: e.target.value })
+                        }
+                      >
+                        <option value="">Select property</option>
+                        {properties.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.address}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <label className="block text-gray-700 dark:text-gray-300">
+                    Date
+                    <input
+                      type="date"
+                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                    />
+                  </label>
+                  <label className="block text-gray-700 dark:text-gray-300">
+                    Category
+                    <select
+                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                      value={form.group}
+                      onChange={(e) =>
+                        setForm({ ...form, group: e.target.value, category: "" })
+                      }
+                    >
                   <option value="">Select category</option>
                   {recent.length > 0 && (
                     <optgroup label="Recent">
@@ -473,9 +483,10 @@ export default function ExpenseForm({
               </div>
             </motion.form>
           </motion.div>
-        </ModalPortal>
-      )}
-      </AnimatePresence>
-    </div>
+        )}
+      </AnimatePresence>,
+      portalTarget,
+    )}
+  </div>
   );
 }
