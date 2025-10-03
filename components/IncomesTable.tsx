@@ -142,7 +142,7 @@ export default function IncomesTable({
                 <td className="p-2">
                   {r.notes ? (
                     <span
-                      className="block max-w-[16rem] truncate"
+                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
                       title={r.notes}
                     >
                       {r.notes}
