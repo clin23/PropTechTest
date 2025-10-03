@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import type { KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
+import PropertyEditModal from "../../../../../components/PropertyEditModal";
 import type { PropertySummary } from "../../../../../types/property";
 import { Button } from "../../../../../components/ui/button";
 import { type PropertyTabId } from "../tabs";
@@ -11,7 +12,6 @@ import NextKeyDates from "./NextKeyDates";
 
 interface PropertyHeroProps {
   property: PropertySummary;
-  onEdit: () => void;
   onAddIncome: () => void;
   onAddExpense: () => void;
   onUploadDocument: () => void;
@@ -49,7 +49,6 @@ function formatDate(value?: string) {
 
 export default function PropertyHero({
   property,
-  onEdit,
   onAddIncome,
   onAddExpense,
   onUploadDocument,
@@ -57,6 +56,12 @@ export default function PropertyHero({
 }: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
   const sortedEvents = sortPropertyEvents(property.events);
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  useEffect(() => {
+    setIsEditOpen(false);
+  }, [property.id]);
 
   const rentDisplay = formatRent(property.rent);
 
@@ -101,11 +106,12 @@ export default function PropertyHero({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/5 to-black/0"
         />
-        <div className="absolute right-4 top-4 z-20">
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-end p-4">
           <Button
             type="button"
             variant="secondary"
-            onClick={onEdit}
+            onClick={() => setIsEditOpen(true)}
+            aria-haspopup="dialog"
             className="pointer-events-auto bg-white/90 text-sm font-semibold text-gray-900 shadow-sm hover:bg-white"
           >
             Edit Property
@@ -153,6 +159,11 @@ export default function PropertyHero({
           onUploadDocument={onUploadDocument}
         />
       </div>
+      <PropertyEditModal
+        property={property}
+        open={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+      />
     </section>
   );
 }

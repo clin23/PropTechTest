@@ -8,7 +8,6 @@ import { SharedTile } from "../../../../components/SharedTile";
 import IncomeForm from "../../../../components/IncomeForm";
 import ExpenseForm from "../../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../../components/DocumentUploadModal";
-import PropertyEditModal from "../../../../components/PropertyEditModal";
 import { getProperty, listProperties } from "../../../../lib/api";
 import type { PropertySummary } from "../../../../types/property";
 import { useURLState } from "../../../../lib/useURLState";
@@ -69,7 +68,6 @@ export default function PropertyPage() {
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [documentOpen, setDocumentOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const hasValidId = typeof id === "string" && id.length > 0;
@@ -185,7 +183,6 @@ export default function PropertyPage() {
               <div>
                 <PropertyHero
                   property={property}
-                  onEdit={() => setEditOpen(true)}
                   onAddIncome={() => setIncomeOpen(true)}
                   onAddExpense={() => setExpenseOpen(true)}
                   onUploadDocument={() => setDocumentOpen(true)}
@@ -218,7 +215,6 @@ export default function PropertyPage() {
             <IncomeForm propertyId={id} open={incomeOpen} onOpenChange={setIncomeOpen} showTrigger={false} />
             <ExpenseForm propertyId={id} open={expenseOpen} onOpenChange={setExpenseOpen} showTrigger={false} />
             <DocumentUploadModal propertyId={id} open={documentOpen} onClose={() => setDocumentOpen(false)} />
-            <PropertyEditModal property={property} open={editOpen} onClose={() => setEditOpen(false)} />
           </div>
         </div>
       )}
