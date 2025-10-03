@@ -139,7 +139,18 @@ export default function IncomesTable({
                   )}
                 </td>
                 <td className="p-2">{r.amount}</td>
-                <td className="p-2">{r.notes}</td>
+                <td className="p-2">
+                  {r.notes ? (
+                    <span
+                      className="block max-w-[16rem] truncate"
+                      title={r.notes}
+                    >
+                      {r.notes}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                  )}
+                </td>
                 <td className="p-2">
                   <div className="flex items-center gap-2">
                     <button

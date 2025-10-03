@@ -28,6 +28,7 @@ export default function DocumentUpload({ onUploaded }: Props) {
       title: file.name,
       propertyId,
       tag,
+      uploadedAt: new Date().toISOString(),
     });
     onUploaded();
     logEvent("document_upload", { propertyId, tag, title: file.name });

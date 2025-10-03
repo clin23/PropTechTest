@@ -447,6 +447,9 @@ export interface DocumentRecord {
   propertyId?: string;
   tag: string;
   url: string;
+  notes?: string;
+  links?: string[];
+  uploadedAt?: string;
 }
 
 export const listDocuments = (params?: {
@@ -468,6 +471,9 @@ export const createDocument = (payload: {
   title: string;
   tag: string;
   propertyId?: string;
+  notes?: string;
+  links?: string[];
+  uploadedAt?: string;
 }) =>
   api<DocumentRecord>('/documents', {
     method: 'POST',
