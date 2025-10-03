@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { SharedTile } from "../../../../components/SharedTile";
 import IncomeForm from "../../../../components/IncomeForm";
 import ExpenseForm from "../../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../../components/DocumentUploadModal";
@@ -30,33 +29,6 @@ import {
   PROPERTY_TABS,
   type PropertyTabId,
 } from "./tabs";
-import { sortPropertyEvents } from "./lib/sortEvents";
-
-const rentFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
-function formatRent(value?: number) {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return "—";
-  }
-  return `$${rentFormatter.format(value)}`;
-}
-
-function formatDateValue(value?: string) {
-  if (!value) {
-    return "—";
-  }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "—";
-  }
-  return dateFormatter.format(parsed);
-}
-
 export default function PropertyPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -177,9 +149,6 @@ export default function PropertyPage() {
         <div className="p-6">
           <div className="space-y-6">
             <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
-              <div className="lg:col-span-2">
-                <PropertySummaryTile property={property} />
-              </div>
               <div>
                 <PropertyHero
                   property={property}
@@ -219,46 +188,5 @@ export default function PropertyPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function PropertySummaryTile({ property }: { property: PropertySummary }) {
-  const rentDisplay = formatRent(property.rent);
-  const sortedEvents = sortPropertyEvents(property.events);
-  const nextEvent = sortedEvents[0];
-  let nextEventDisplay = "—";
-  if (nextEvent) {
-    const nextDate = formatDateValue(nextEvent.date);
-    nextEventDisplay = nextDate === "—" ? nextEvent.title : `${nextDate} · ${nextEvent.title}`;
-  } else {
-    const leaseEnd = formatDateValue(property.leaseEnd);
-    if (leaseEnd !== "—") {
-      nextEventDisplay = `${leaseEnd} · Lease end`;
-    }
-  }
-
-  const summaryItems = [
-    { label: "Tenant", value: property.tenant || "—" },
-    { label: "Rent / week", value: rentDisplay === "—" ? rentDisplay : `${rentDisplay}/week` },
-    { label: "Next key date", value: nextEventDisplay },
-  ] as const;
-
-  return (
-    <SharedTile>
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active property</p>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{property.address}</h2>
-        </div>
-        <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
-          {summaryItems.map((item) => (
-            <div key={item.label} className="space-y-1">
-              <dt className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{item.label}</dt>
-              <dd className="text-base font-semibold text-gray-900 dark:text-gray-100">{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </SharedTile>
   );
 }
