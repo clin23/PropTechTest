@@ -240,10 +240,21 @@ export default function ExpensesTable({
                   <td className="p-2">
                     {r.notes ? (
                       <span
-                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
+                        className="inline-flex items-center text-gray-600 dark:text-gray-300"
                         title={r.notes}
+                        aria-label="View note"
                       >
-                        {r.notes}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="h-5 w-5"
+                          aria-hidden="true"
+                        >
+                          <path d="M4 4a2 2 0 0 1 2-2h4.586A2 2 0 0 1 12 2.586L15.414 6A2 2 0 0 1 16 7.414V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
+                          <path d="M8 7a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H8Zm0 4a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H8Z" />
+                        </svg>
+                        <span className="sr-only">Note available</span>
                       </span>
                     ) : (
                       <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
