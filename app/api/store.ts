@@ -43,6 +43,9 @@ export type Document = {
   title: string;
   url: string;
   tag: DocumentTag;
+  notes?: string;
+  links?: string[];
+  uploadedAt?: string;
 };
 export type ReminderType =
   | 'lease_expiry'
@@ -1450,6 +1453,7 @@ const initialDocuments: Document[] = [
     title: 'lease.pdf',
     url: '/docs/lease-prop1.pdf',
     tag: DocumentTag.Lease,
+    uploadedAt: '2023-02-01T09:30:00.000Z',
   },
   {
     id: 'doc2',
@@ -1457,6 +1461,7 @@ const initialDocuments: Document[] = [
     title: 'inspection.pdf',
     url: '/docs/inspection-prop2.pdf',
     tag: DocumentTag.Compliance,
+    uploadedAt: '2023-05-18T14:10:00.000Z',
   },
   {
     id: 'doc3',
@@ -1464,6 +1469,7 @@ const initialDocuments: Document[] = [
     title: 'invoice.pdf',
     url: '/docs/invoice-prop1.pdf',
     tag: DocumentTag.Other,
+    uploadedAt: '2023-03-22T11:45:00.000Z',
   },
   {
     id: 'doc4',
@@ -1471,6 +1477,7 @@ const initialDocuments: Document[] = [
     title: 'insurance.pdf',
     url: '/docs/insurance-prop3.pdf',
     tag: DocumentTag.Insurance,
+    uploadedAt: '2022-12-15T16:20:00.000Z',
   },
 ];
 
