@@ -7,11 +7,10 @@ import DateRangeFilter from '../components/DateRangeFilter';
 import AppliedFiltersPanel from '../components/AppliedFiltersPanel';
 import SearchIncomePanel from '../components/SearchIncomePanel';
 import SearchExpensesPanel from '../components/SearchExpensesPanel';
-import VizLine from '../components/VizLine';
-import VizPie from '../components/VizPie';
 import CustomGraphBuilder from '../components/CustomGraphBuilder';
 import ExportButtons from '../components/ExportButtons';
 import VizSpreadsheet from '../components/VizSpreadsheet';
+import ChartRenderer, { ChartKey } from '../components/ChartRenderer';
 import { AnalyticsState, AnalyticsStateType } from '../../../../lib/schemas';
 import { useUrlState } from '../../../../lib/urlState';
 import { useSeries } from '../../../../hooks/useAnalytics';
@@ -48,8 +47,7 @@ export default function AnalyticsBuilderPage() {
   const hasIncomeFilters = (state.filters.incomeTypes || []).length > 0;
   const hasExpenseFilters = (state.filters.expenseTypes || []).length > 0;
 
-  const lineData = filtersApplied ? data?.buckets || [] : [];
-  const pieData = (filtersApplied ? data?.buckets || [] : []).map(b => ({ label: b.label, value: b[state.metric] }));
+  const dataset = filtersApplied ? data?.buckets || [] : [];
 
   let showIncome = filtersApplied;
   let showExpenses = filtersApplied;
@@ -62,6 +60,55 @@ export default function AnalyticsBuilderPage() {
     showIncome = false;
     showNet = false;
   }
+
+  const baseSeries: ChartKey[] = [
+    { key: 'income', label: 'Income', color: 'var(--chart-2)' },
+    { key: 'expenses', label: 'Expenses', color: 'var(--chart-5)' },
+    { key: 'net', label: 'Net', color: 'var(--chart-1)' },
+  ];
+
+  const metricSeries =
+    baseSeries.find(series => series.key === state.metric) || baseSeries[2];
+
+  const activeSeries = baseSeries.filter(series => {
+    if (series.key === 'income') return showIncome;
+    if (series.key === 'expenses') return showExpenses;
+    if (series.key === 'net') return showNet;
+    return true;
+  });
+
+  const vizTypes = [
+    { value: 'line', label: 'Line Graph' },
+    { value: 'bar', label: 'Bar Chart' },
+    { value: 'area', label: 'Area Chart' },
+    { value: 'pie', label: 'Pie Chart' },
+    { value: 'donut', label: 'Donut Chart' },
+    { value: 'histogram', label: 'Histogram' },
+    { value: 'scatter', label: 'Scatter Plot' },
+  ] as const;
+
+  type StandardVizType = (typeof vizTypes)[number]['value'];
+  const isCustomViz = state.viz === 'custom';
+  const isStandardViz = vizTypes.some(option => option.value === state.viz);
+  const chartType = (isStandardViz ? state.viz : 'line') as StandardVizType;
+
+  const chartSeries =
+    chartType === 'pie' || chartType === 'donut' || chartType === 'histogram'
+      ? [metricSeries]
+      : activeSeries.length
+        ? activeSeries
+        : [metricSeries];
+
+  const fromDate = new Date(state.from);
+  const toDate = new Date(state.to);
+  const hasValidFrom = !Number.isNaN(fromDate.getTime());
+  const hasValidTo = !Number.isNaN(toDate.getTime());
+  const rangeInverted = hasValidFrom && hasValidTo && fromDate > toDate;
+  const invalidDateMessage = !hasValidFrom || !hasValidTo
+    ? 'We couldn\'t process the selected date range. Please review your filters.'
+    : rangeInverted
+      ? 'The start date occurs after the end date. Try adjusting the range.'
+      : undefined;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -96,35 +143,62 @@ export default function AnalyticsBuilderPage() {
             <span className="sr-only">Save project</span>
           </button>
         </div>
-        <div ref={exportRef} className="space-y-2">
-          <div data-testid="viz-section">
-            {state.viz === 'line' && (
-              <div className="space-y-4">
-                <div className="border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
-                  <VizLine
-                    data={lineData}
-                    showIncome={showIncome}
-                    showExpenses={showExpenses}
-                    showNet={showNet}
-                  />
+        <div ref={exportRef} className="space-y-4">
+          <div data-testid="viz-section" className="space-y-4">
+            <div className="border rounded-xl bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">Visualisation</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Explore your data with flexible chart types
+                  </p>
                 </div>
-                <div className="border rounded-lg bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
-                  <VizSpreadsheet
-                    data={lineData}
-                    showIncome={showIncome}
-                    showExpenses={showExpenses}
-                    showNet={showNet}
-                  />
+                <div className="ml-auto">
+                  <select
+                    value={state.viz}
+                    onChange={(event) =>
+                      setState(prev => ({ ...prev, viz: event.target.value as AnalyticsStateType['viz'] }))
+                    }
+                    className="w-44 rounded-lg border border-white/20 bg-white/20 px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-100 dark:hover:bg-gray-900/60"
+                  >
+                    {vizTypes.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                    <option value="custom">Custom Builder</option>
+                  </select>
                 </div>
               </div>
-            )}
-            {state.viz === 'pie' && <VizPie data={pieData} />}
-            {state.viz === 'custom' && <CustomGraphBuilder onRun={() => {}} />}
+              {isCustomViz ? (
+                <CustomGraphBuilder onRun={() => {}} />
+              ) : (
+                <ChartRenderer
+                  type={chartType}
+                  data={dataset}
+                  xKey="label"
+                  yKeys={chartSeries}
+                  errorMessage={invalidDateMessage}
+                />
+              )}
+            </div>
+            <div className="border rounded-xl bg-white/10 dark:bg-gray-900/20 backdrop-blur shadow-lg p-4">
+              <VizSpreadsheet
+                data={dataset}
+                showIncome={showIncome}
+                showExpenses={showExpenses}
+                showNet={showNet}
+              />
+            </div>
           </div>
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            <div>
-              Date range: {new Date(state.from).toLocaleDateString()} - {new Date(state.to).toLocaleDateString()}
-            </div>
+            {invalidDateMessage ? (
+              <div className="text-red-500 dark:text-red-300">{invalidDateMessage}</div>
+            ) : (
+              <div>
+                Date range: {fromDate.toLocaleDateString()} - {toDate.toLocaleDateString()}
+              </div>
+            )}
             {filtersApplied && (
               <div className="flex flex-wrap items-center gap-2">
                 <span>Filters:</span>
@@ -150,7 +224,7 @@ export default function AnalyticsBuilderPage() {
             )}
           </div>
         </div>
-        <ExportButtons csvData={JSON.stringify(lineData)} targetRef={exportRef} />
+        <ExportButtons csvData={JSON.stringify(dataset)} targetRef={exportRef} />
       </div>
       <div className="w-80 p-4 space-y-4 hidden lg:block">
         <DateRangeFilter state={state} onChange={(s) => setState(prev => ({ ...prev, ...s }))} />
