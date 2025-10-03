@@ -62,11 +62,11 @@ export default function DocumentUpload({ onUploaded }: Props) {
     "rounded border border-slate-300 bg-white p-1 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 text-slate-900 dark:text-slate-100">
       <div className="flex flex-wrap gap-2">
         <select
           aria-label="Property"
-          className={`${controlStyles} min-w-[160px]`}
+          className={`${controlStyles} min-w-[160px] h-10`}
           value={propertyId}
           onChange={(e) => setPropertyId(e.target.value)}
         >
@@ -79,7 +79,7 @@ export default function DocumentUpload({ onUploaded }: Props) {
         </select>
         <select
           aria-label="Tag"
-          className={`${controlStyles} min-w-[140px]`}
+          className={`${controlStyles} min-w-[140px] h-10`}
           value={tag}
           onChange={(e) => setTag(e.target.value)}
         >
@@ -95,7 +95,7 @@ export default function DocumentUpload({ onUploaded }: Props) {
         <div className="flex flex-1 min-w-[200px] gap-2">
           <input
             type="text"
-            className={`${controlStyles} flex-1`}
+            className={`${controlStyles} flex-1 h-10`}
             placeholder="Create a new tag"
             value={newTagName}
             onChange={(e) => setNewTagName(e.target.value)}
@@ -112,7 +112,7 @@ export default function DocumentUpload({ onUploaded }: Props) {
           />
           <button
             type="button"
-            className="rounded border border-slate-300 bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+            className="inline-flex h-10 items-center justify-center rounded border border-slate-300 bg-slate-100 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
             onClick={() => {
               const created = addTag(newTagName);
               if (created) {
