@@ -75,7 +75,6 @@ export default function PropertyHero({
       value: rentDisplay === "—" ? rentDisplay : `${rentDisplay}/week`,
       tabId: "rent-ledger",
     },
-    { label: "Lease start", value: formatDate(property.leaseStart), tabId: "documents" },
     { label: "Lease end", value: formatDate(property.leaseEnd), tabId: "documents" },
   ];
 
