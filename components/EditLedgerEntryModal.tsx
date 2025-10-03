@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { uploadFile } from "../lib/api";
 import type { LedgerEntry, LedgerStatus } from "../types/property";
 
@@ -14,6 +15,7 @@ interface Props {
 const TRANSITION_MS = 200;
 
 export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) {
+  const [isMounted, setIsMounted] = useState(false);
   const [datePaid, setDatePaid] = useState(entry.date);
   const [amount, setAmount] = useState(entry.amount.toString());
   const [status, setStatus] = useState<LedgerStatus>(entry.status);
@@ -25,6 +27,7 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const frame = requestAnimationFrame(() => setIsVisible(true));
     return () => cancelAnimationFrame(frame);
   }, []);
@@ -126,7 +129,11 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
     }
   };
 
-  return (
+  if (!isMounted) {
+    return null;
+  }
+
+  return createPortal(
     <div
       onClick={handleOverlayClick}
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
@@ -255,6 +262,8 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
         </div>
       </div>
     </div>
+  ,
+    document.body,
   );
 }
 

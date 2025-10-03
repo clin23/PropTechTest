@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 export const AnalyticsState = z.object({
-  viz: z.enum(['line', 'pie', 'custom']).default('line'),
+  viz: z
+    .enum(['line', 'bar', 'pie', 'histogram', 'area', 'donut', 'scatter', 'custom'])
+    .default('line'),
   metric: z.enum(['net', 'income', 'expenses']).default('net'),
   groupBy: z.enum(['time', 'property', 'category', 'tenant']).default('time'),
   granularity: z.enum(['week', 'month', 'quarter', 'year']).default('month'),
