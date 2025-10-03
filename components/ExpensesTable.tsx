@@ -237,7 +237,18 @@ export default function ExpensesTable({
                   <td className="p-2">{r.vendor}</td>
                   <td className="p-2">{r.amount}</td>
                   <td className="p-2">{r.gst}</td>
-                  <td className="p-2">{r.notes}</td>
+                  <td className="p-2">
+                    {r.notes ? (
+                      <span
+                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
+                        title={r.notes}
+                      >
+                        {r.notes}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                    )}
+                  </td>
                   <td className="p-2">
                     <ReceiptLink url={r.receiptUrl} />
                   </td>
