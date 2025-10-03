@@ -414,6 +414,9 @@ async function requestTenant(id: string): Promise<TenantDetail | undefined> {
       } catch (error) {
         console.warn('Failed to load property for tenant', propertyId, error);
       }
+      return detail;
+    } catch (error) {
+      console.warn('Falling back to tenant mock store after failed API request', error);
     }
     return detail;
   } catch (error) {
