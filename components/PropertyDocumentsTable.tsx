@@ -30,44 +30,49 @@ export default function PropertyDocumentsTable({
           </tr>
         </thead>
         <tbody>
-          {data.map((d) => (
-            <tr key={d.id} className="border-t border-[var(--border)]">
-              <td className="p-2 align-top font-medium">{d.name}</td>
-              <td className="p-2 align-top text-sm text-gray-600 whitespace-pre-line">
-                {d.notes ? d.notes : "—"}
-              </td>
-              <td className="p-2 align-top text-sm">
-                <div className="flex flex-col gap-1">
-                  {d.url ? (
-                    <a
-                      href={d.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[var(--primary)] underline"
-                    >
-                      Open document
-                    </a>
-                  ) : (
-                    <span className="text-gray-500">—</span>
-                  )}
-                  {(d.links ?? []).map((link) => (
-                    <a
-                      key={link}
-                      href={link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[var(--primary)] underline"
-                    >
-                      {link}
-                    </a>
-                  ))}
-                </div>
-              </td>
-              <td className="p-2 align-top text-sm text-gray-600">
-                {formatShortDate(d.uploadedAt ?? d.uploaded)}
-              </td>
-            </tr>
-          ))}
+          {data.map((d) => {
+            const displayName = d.name?.trim() || d.title?.trim();
+            return (
+              <tr key={d.id} className="border-t border-[var(--border)]">
+                <td className="p-2 align-top font-medium">
+                  {displayName ?? "Untitled document"}
+                </td>
+                <td className="p-2 align-top text-sm text-gray-600 whitespace-pre-line">
+                  {d.notes ? d.notes : "—"}
+                </td>
+                <td className="p-2 align-top text-sm">
+                  <div className="flex flex-col gap-1">
+                    {d.url ? (
+                      <a
+                        href={d.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[var(--primary)] underline"
+                      >
+                        Open document
+                      </a>
+                    ) : (
+                      <span className="text-gray-500">—</span>
+                    )}
+                    {(d.links ?? []).map((link) => (
+                      <a
+                        key={link}
+                        href={link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[var(--primary)] underline"
+                      >
+                        {link}
+                      </a>
+                    ))}
+                  </div>
+                </td>
+                <td className="p-2 align-top text-sm text-gray-600">
+                  {formatShortDate(d.uploadedAt ?? d.uploaded)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
