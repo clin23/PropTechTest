@@ -94,19 +94,19 @@ export default function PropertyHero({
         <img
           src={imageSrc}
           alt={`Photo of ${property.address}`}
-          className="h-full w-full select-none object-cover"
+          className="h-full w-full select-none object-cover pointer-events-none"
           draggable={false}
         />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/5 to-black/0"
         />
-        <div className="absolute right-4 top-4 z-10">
+        <div className="absolute right-4 top-4 z-20">
           <Button
             type="button"
             variant="secondary"
             onClick={onEdit}
-            className="bg-white/90 text-sm font-semibold text-gray-900 shadow-sm hover:bg-white"
+            className="pointer-events-auto bg-white/90 text-sm font-semibold text-gray-900 shadow-sm hover:bg-white"
           >
             Edit Property
           </Button>
