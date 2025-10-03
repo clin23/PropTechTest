@@ -94,16 +94,18 @@ export default function PropertyHero({
         <img
           src={imageSrc}
           alt={`Photo of ${property.address}`}
-          className="h-full w-full object-cover"
+          className="pointer-events-none h-full w-full object-cover"
         />
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onEdit}
-          className="absolute right-4 top-4 bg-white/90 text-sm font-semibold text-gray-900 hover:bg-white"
-        >
-          Edit Property
-        </Button>
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end p-4">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onEdit}
+            className="pointer-events-auto bg-white/90 text-sm font-semibold text-gray-900 hover:bg-white"
+          >
+            Edit Property
+          </Button>
+        </div>
       </div>
       <div className="space-y-6 p-6">
         <div>
