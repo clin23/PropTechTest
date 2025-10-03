@@ -25,7 +25,7 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
   const queryClient = useQueryClient();
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const resetState = useCallback(() => {
+  const resetUploadState = useCallback(() => {
     setFile(null);
     setFileName("");
     setNotes("");
@@ -39,21 +39,9 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
       clearTimeout(closeTimer.current);
       closeTimer.current = null;
     }
-    resetState();
+    resetUploadState();
     onClose();
-  }, [onClose, resetState]);
-
-  const resetState = useCallback(() => {
-    setFile(null);
-    setFileName("");
-    setNotes("");
-    setLinks("");
-  }, []);
-
-  const handleClose = useCallback(() => {
-    resetState();
-    onClose();
-  }, [onClose, resetState]);
+  }, [onClose, resetUploadState]);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -63,7 +51,7 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
 
   useEffect(() => {
     if (!open) {
-      resetState();
+      resetUploadState();
       return;
     }
 
@@ -78,7 +66,7 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleClose, open, resetState]);
+  }, [handleClose, open, resetUploadState]);
 
   const scheduleClose = useCallback(() => {
     if (closeTimer.current) {
