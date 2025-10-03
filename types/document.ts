@@ -1,10 +1,12 @@
-export enum DocumentTag {
-  Lease = 'Lease',
-  Expense = 'Expense',
-  Compliance = 'Compliance',
-  Insurance = 'Insurance',
-  Other = 'Other',
-}
+export const DEFAULT_DOCUMENT_TAGS = [
+  'Lease',
+  'Expense',
+  'Compliance',
+  'Insurance',
+  'Other',
+] as const;
+
+export type DocumentTag = string;
 
 export interface DocumentItem {
   id: string;
