@@ -171,8 +171,20 @@ function createInitialMockStore(): MockStore {
       { type: 'message', id: 'msg_1', at: toISO(new Date(now.getTime() - 1000 * 60 * 55)), channel: 'sms', direction: 'out' },
     ],
     tnt_bob: [
-      { type: 'payment', id: 'pay_2', at: toISO(new Date(now.getTime() - 1000 * 60 * 60 * 48)), amount: 450, status: 'late' },
-      { type: 'message', id: 'msg_2', at: toISO(new Date(now.getTime() - 1000 * 60 * 60 * 6)), channel: 'email', direction: 'out' },
+      {
+        type: 'payment',
+        id: 'pay_2',
+        at: toISO(new Date(now.getTime() - 1000 * 60 * 60 * 48)),
+        amount: 450,
+        status: 'late',
+      },
+      {
+        type: 'message',
+        id: 'msg_2',
+        at: toISO(new Date(now.getTime() - 1000 * 60 * 60 * 6)),
+        channel: 'email',
+        direction: 'out',
+      },
     ],
     tnt_charlie: [
       { type: 'lease', id: 'lease_1', at: toISO(new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5)), event: 'start' },
