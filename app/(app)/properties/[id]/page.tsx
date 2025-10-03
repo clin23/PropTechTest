@@ -11,6 +11,7 @@ import { getProperty, listProperties } from "../../../../lib/api";
 import type { PropertySummary } from "../../../../types/property";
 import { useURLState } from "../../../../lib/useURLState";
 import PropertyHero from "./components/PropertyHero";
+import PropertyEditModal from "../../../../components/PropertyEditModal";
 import ScrollableSectionBar from "./components/ScrollableSectionBar";
 import RentLedger from "./sections/RentLedger";
 import Expenses from "./sections/Expenses";
@@ -40,6 +41,7 @@ export default function PropertyPage() {
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [documentOpen, setDocumentOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const hasValidId = typeof id === "string" && id.length > 0;
@@ -156,6 +158,7 @@ export default function PropertyPage() {
                   onAddExpense={() => setExpenseOpen(true)}
                   onUploadDocument={() => setDocumentOpen(true)}
                   onNavigateToTab={handleNavigateToTab}
+                  onEditProperty={() => setEditOpen(true)}
                 />
               </div>
               <div>
@@ -184,6 +187,11 @@ export default function PropertyPage() {
             <IncomeForm propertyId={id} open={incomeOpen} onOpenChange={setIncomeOpen} showTrigger={false} />
             <ExpenseForm propertyId={id} open={expenseOpen} onOpenChange={setExpenseOpen} showTrigger={false} />
             <DocumentUploadModal propertyId={id} open={documentOpen} onClose={() => setDocumentOpen(false)} />
+            <PropertyEditModal
+              property={property}
+              open={editOpen}
+              onClose={() => setEditOpen(false)}
+            />
           </div>
         </div>
       )}
