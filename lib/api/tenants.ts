@@ -364,72 +364,117 @@ async function requestTenants(query: TenantListQuery): Promise<TenantListItem[]>
     return applyFilters(mapped);
   };
 
-  if (!MOCK_MODE) {
-    return fetchFromApi();
+  const fetchFromMock = () => {
+    const mapped = mockStore.tenants
+      .filter((tenant) => matchesSearch({ name: tenant.name, email: tenant.email, phone: tenant.phone }))
+      .filter((tenant) => matchesStatus(tenant.statuses))
+      .map((tenant) => ({
+        item: {
+          id: tenant.id,
+          name: tenant.name,
+          email: tenant.email,
+          phone: tenant.phone,
+          status: tenant.statuses[0] ?? 'PROSPECT',
+          hasOverdue: tenant.statuses.includes('WATCHLIST'),
+          avatarUrl: null,
+          currentPropertyId: tenant.currentPropertyId ?? null,
+          isArchived: !tenant.currentPropertyId,
+        },
+        statuses: tenant.statuses,
+      }));
+
+    return applyFilters(mapped);
+  };
+
+  if (MOCK_MODE) {
+    return fetchFromMock();
   }
 
   try {
     return await fetchFromApi();
   } catch (error) {
     console.warn('Falling back to tenant mock store after failed API request', error);
+    return fetchFromMock();
   }
-
-  const mapped = mockStore.tenants
-    .filter((tenant) => matchesSearch({ name: tenant.name, email: tenant.email, phone: tenant.phone }))
-    .filter((tenant) => matchesStatus(tenant.statuses))
-    .map((tenant) => ({
-      item: {
-        id: tenant.id,
-        name: tenant.name,
-        email: tenant.email,
-        phone: tenant.phone,
-        status: tenant.statuses[0] ?? 'PROSPECT',
-        hasOverdue: tenant.statuses.includes('WATCHLIST'),
-        avatarUrl: null,
-        currentPropertyId: tenant.currentPropertyId ?? null,
-        isArchived: !tenant.currentPropertyId,
-      },
-      statuses: tenant.statuses,
-    }));
-
-  return applyFilters(mapped);
 }
 
 async function requestTenant(id: string): Promise<TenantDetail | undefined> {
-  if (!MOCK_MODE) {
-    try {
-      const payload = await api<TenantDetailResponse>(`/tenants/${id}`);
-      const detail = tenantDetailFromResponse(payload);
-      const propertyId = payload.tenant.currentPropertyId;
-      if (propertyId) {
-        try {
-          const property = await api<PropertySummary>(`/properties/${propertyId}`);
-          detail.address = property.address;
-        } catch (error) {
-          console.warn('Failed to load property for tenant', propertyId, error);
-        }
+  if (MOCK_MODE) {
+    return mockStore.tenants.find((tenant) => tenant.id === id);
+  }
+
+  try {
+    const payload = await api<TenantDetailResponse>(`/tenants/${id}`);
+    const detail = tenantDetailFromResponse(payload);
+    const propertyId = payload.tenant.currentPropertyId;
+    if (propertyId) {
+      try {
+        const property = await api<PropertySummary>(`/properties/${propertyId}`);
+        detail.address = property.address;
+      } catch (error) {
+        console.warn('Failed to load property for tenant', propertyId, error);
       }
       return detail;
     } catch (error) {
       console.warn('Falling back to tenant mock store after failed API request', error);
     }
+    return detail;
+  } catch (error) {
+    console.warn('Falling back to tenant mock store after failed API request', error);
+    return mockStore.tenants.find((tenant) => tenant.id === id);
   }
-  return mockStore.tenants.find((tenant) => tenant.id === id);
 }
 
 async function requestNotes(tenantId: string): Promise<Note[]> {
-  if (!MOCK_MODE) {
+  const fetchFromMock = () =>
+    mockStore.notes
+      .filter((note) => note.tenantId === tenantId)
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+
+  if (MOCK_MODE) {
+    return fetchFromMock();
+  }
+
+  try {
     const searchParams = new URLSearchParams({ tenantId, pageSize: '100' });
     const response = await api<TenantNoteListResponse>(`/tenant-notes?${searchParams.toString()}`);
     return response.items.map(toNoteModel);
+  } catch (error) {
+    console.warn('Falling back to tenant mock notes after failed API request', error);
+    return fetchFromMock();
   }
-  return mockStore.notes
-    .filter((note) => note.tenantId === tenantId)
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
 async function requestTimeline(tenantId: string, cursor?: string) {
-  if (!MOCK_MODE) {
+  const fetchFromMock = (pageCursor?: string) => {
+    const events = [...(mockStore.timeline[tenantId] ?? [])].sort((a, b) => (a.at > b.at ? -1 : 1));
+
+    let startIndex = 0;
+    if (pageCursor) {
+      const eventIndex = events.findIndex((ev) => ev.id === pageCursor);
+      if (eventIndex >= 0) {
+        startIndex = eventIndex + 1;
+      } else {
+        const parsed = Number(pageCursor);
+        if (!Number.isNaN(parsed) && parsed >= 0) {
+          startIndex = parsed * 20;
+        }
+      }
+    }
+
+    const pageItems = events.slice(startIndex, startIndex + 20);
+    const next = startIndex + 20 < events.length ? events[startIndex + 19]?.id : undefined;
+    return {
+      items: pageItems,
+      nextCursor: next,
+    };
+  };
+
+  if (MOCK_MODE) {
+    return fetchFromMock(cursor);
+  }
+
+  try {
     const page = cursor ? Number(cursor) : 0;
     const searchParams = new URLSearchParams({ tenantId, page: String(page), pageSize: '20' });
     const response = await api<CommLogListResponse>(`/comm-log?${searchParams.toString()}`);
@@ -452,28 +497,29 @@ async function requestTimeline(tenantId: string, cursor?: string) {
     });
     const nextPage = (page + 1) * response.pageInfo.pageSize < response.pageInfo.total ? String(page + 1) : undefined;
     return { items, nextCursor: nextPage };
+  } catch (error) {
+    console.warn('Falling back to tenant mock timeline after failed API request', error);
+    return fetchFromMock(cursor);
   }
-
-  const events = [...(mockStore.timeline[tenantId] ?? [])].sort((a, b) =>
-    a.at > b.at ? -1 : 1
-  );
-
-  const startIndex = cursor ? events.findIndex((ev) => ev.id === cursor) + 1 : 0;
-  const pageItems = events.slice(startIndex, startIndex + 20);
-  const next = startIndex + 20 < events.length ? events[startIndex + 19]?.id : undefined;
-  return {
-    items: pageItems,
-    nextCursor: next,
-  };
 }
 
 async function requestPreferences(tenantId: string) {
-  if (!MOCK_MODE) {
+  const fallback: TenantPreferences =
+    mockStore.preferences[tenantId] ?? {
+      email: true,
+      sms: true,
+      push: false,
+    };
+
+  if (MOCK_MODE) {
+    return fallback;
+  }
+
+  try {
     const prefs = await api<NotificationPreferenceRecord | null>(
       `/notification-preferences/${tenantId}`
     );
     if (!prefs) {
-      const fallback: TenantPreferences = { email: true, sms: true, push: false };
       return fallback;
     }
     const mapped: TenantPreferences = {
@@ -485,12 +531,10 @@ async function requestPreferences(tenantId: string) {
       bestContactTime: null,
     };
     return mapped;
+  } catch (error) {
+    console.warn('Falling back to tenant mock preferences after failed API request', error);
+    return fallback;
   }
-  return mockStore.preferences[tenantId] ?? {
-    email: true,
-    sms: true,
-    push: false,
-  };
 }
 
 async function savePreferences(tenantId: string, prefs: TenantPreferences) {
@@ -526,12 +570,21 @@ async function savePreferences(tenantId: string, prefs: TenantPreferences) {
 }
 
 async function requestFiles(tenantId: string) {
-  if (!MOCK_MODE) {
-    return api<TenantFile[]>(`/tenants/${tenantId}/files`);
+  const fetchFromMock = () =>
+    mockStore.files
+      .filter((file) => file.tenantId === tenantId)
+      .sort((a, b) => (a.uploadedAt > b.uploadedAt ? -1 : 1));
+
+  if (MOCK_MODE) {
+    return fetchFromMock();
   }
-  return mockStore.files
-    .filter((file) => file.tenantId === tenantId)
-    .sort((a, b) => (a.uploadedAt > b.uploadedAt ? -1 : 1));
+
+  try {
+    return await api<TenantFile[]>(`/tenants/${tenantId}/files`);
+  } catch (error) {
+    console.warn('Falling back to tenant mock files after failed API request', error);
+    return fetchFromMock();
+  }
 }
 
 async function uploadFile(tenantId: string, file: File, type: string) {
