@@ -11,6 +11,7 @@ import {
   uploadFile,
 } from "../lib/api";
 import { useToast } from "./ui/use-toast";
+import ModalPortal from "./ModalPortal";
 import { INCOME_CATEGORIES } from "../lib/categories";
 import type { PropertySummary } from "../types/property";
 import type { IncomeRow } from "../types/income";

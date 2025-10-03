@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { createExpense, listProperties, uploadExpenseReceipt } from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
+import ModalPortal from "./ModalPortal";
 import type { PropertySummary } from "../types/property";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
 

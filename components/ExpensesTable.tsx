@@ -9,6 +9,7 @@ import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
 import ExpenseForm from "./ExpenseForm";
+import ModalPortal from "./ModalPortal";
 
 function ReceiptLink({ url }: { url?: string | null }) {
   if (!url) {
