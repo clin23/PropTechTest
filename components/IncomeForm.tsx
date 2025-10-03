@@ -10,6 +10,7 @@ import {
   uploadFile,
 } from "../lib/api";
 import { useToast } from "./ui/use-toast";
+import ModalPortal from "./ModalPortal";
 import { INCOME_CATEGORIES } from "../lib/categories";
 import type { PropertySummary } from "../types/property";
 import type { IncomeRow } from "../types/income";
@@ -162,61 +163,61 @@ export default function IncomeForm({
 
       <AnimatePresence>
         {open && (
-          <motion.div
-            key="income-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            onClick={handleClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <motion.form
-              className="w-full max-w-md max-h-[90vh] space-y-2 overflow-y-auto rounded-lg bg-white p-4 text-gray-900 shadow-lg dark:bg-gray-900 dark:text-gray-100"
-              onClick={(e) => e.stopPropagation()}
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setError(null);
-                const targetPropertyId = propertyId ?? form.propertyId;
-                if (!targetPropertyId || !form.date || !form.group || !form.amount) {
-                  setError("Please fill in all required fields");
-                  return;
-                }
-                if (!form.category && !form.label) {
-                  setError("Please select an income or enter a custom label");
-                  return;
-                }
-                if (form.category && form.label) {
-                  setError("Please choose either an income or a custom label");
-                  return;
-                }
-                if (isNaN(parseFloat(form.amount))) {
-                  setError("Amount must be a number");
-                  return;
-                }
-
-                let evidenceUrl = form.evidenceUrl;
-                let evidenceName = form.evidenceName;
-                if (evidenceFile) {
-                  try {
-                    const upload = await uploadFile(evidenceFile);
-                    evidenceUrl = upload.url;
-                    evidenceName = evidenceFile.name;
-                  } catch (err: any) {
-                    const message =
-                      err instanceof Error ? err.message : "Failed to upload evidence";
-                    setError(message);
-                    toast({ title: "Failed to upload evidence", description: message });
+          <ModalPortal key="income-modal">
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              onClick={handleClose}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <motion.form
+                className="w-full max-w-md max-h-[90vh] space-y-2 overflow-y-auto rounded-lg bg-white p-4 text-gray-900 shadow-lg dark:bg-gray-900 dark:text-gray-100"
+                onClick={(e) => e.stopPropagation()}
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setError(null);
+                  const targetPropertyId = propertyId ?? form.propertyId;
+                  if (!targetPropertyId || !form.date || !form.group || !form.amount) {
+                    setError("Please fill in all required fields");
                     return;
                   }
-                }
+                  if (!form.category && !form.label) {
+                    setError("Please select an income or enter a custom label");
+                    return;
+                  }
+                  if (form.category && form.label) {
+                    setError("Please choose either an income or a custom label");
+                    return;
+                  }
+                  if (isNaN(parseFloat(form.amount))) {
+                    setError("Amount must be a number");
+                    return;
+                  }
 
-                const shouldRemoveExistingEvidence =
-                  !evidenceFile && !evidenceUrl && !!initialIncome?.evidenceUrl;
+                  let evidenceUrl = form.evidenceUrl;
+                  let evidenceName = form.evidenceName;
+                  if (evidenceFile) {
+                    try {
+                      const upload = await uploadFile(evidenceFile);
+                      evidenceUrl = upload.url;
+                      evidenceName = evidenceFile.name;
+                    } catch (err: any) {
+                      const message =
+                        err instanceof Error ? err.message : "Failed to upload evidence";
+                      setError(message);
+                      toast({ title: "Failed to upload evidence", description: message });
+                      return;
+                    }
+                  }
 
-                mutation.mutate({
-                  propertyId: targetPropertyId,
-                  data: {
+                  const shouldRemoveExistingEvidence =
+                    !evidenceFile && !evidenceUrl && !!initialIncome?.evidenceUrl;
+
+                  mutation.mutate({
+                    propertyId: targetPropertyId,
+                    data: {
                     date: form.date,
                     category: form.category,
                     amount: parseFloat(form.amount),
@@ -440,7 +441,8 @@ export default function IncomeForm({
               </div>
             </motion.form>
           </motion.div>
-        )}
+        </ModalPortal>
+      )}
       </AnimatePresence>
     </div>
   );

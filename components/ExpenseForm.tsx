@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createExpense, listProperties, uploadExpenseReceipt } from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
+import ModalPortal from "./ModalPortal";
 import type { PropertySummary } from "../types/property";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
 
@@ -212,57 +213,57 @@ export default function ExpenseForm({
 
       <AnimatePresence>
         {open && (
-          <motion.div
-            key="expense-modal"
-            className="fixed inset-0 z-50 flex h-full w-full items-start justify-center bg-black/50 p-4 sm:p-6 md:items-center"
-            onClick={handleClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <motion.form
-              className="h-full w-full max-w-2xl max-h-full space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
-              onClick={(e) => e.stopPropagation()}
-              onSubmit={(e) => {
-                e.preventDefault();
-                setError(null);
-                if (
-                  !form.propertyId ||
-                  !form.date ||
-                  !form.group ||
-                  !form.vendor ||
-                  !form.amount ||
-                  (!form.category && !form.label)
-                ) {
-                  setError("Please fill in all required fields");
-                  return;
-                }
-                if (form.category && form.label) {
-                  setError("Please choose either an expense or a custom label");
-                  return;
-                }
-                if (isNaN(parseFloat(form.amount))) {
-                  setError("Amount must be a number");
-                  return;
-                }
-                mutation.mutate({
-                  expense: {
-                    propertyId: form.propertyId,
-                    date: form.date,
-                    category: form.category,
-                    vendor: form.vendor,
-                    amount: parseFloat(form.amount),
-                    gst: form.gst ? parseFloat(form.gst) : 0,
-                    notes: form.notes,
-                    label: form.label,
-                  },
-                  receipt: form.receipt,
-                });
-                if (form.group) {
-                  addRecent(form.group);
-                }
-              }}
+          <ModalPortal key="expense-modal">
+            <motion.div
+              className="fixed inset-0 z-50 flex h-full w-full items-start justify-center bg-black/50 p-4 sm:p-6 md:items-center"
+              onClick={handleClose}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <motion.form
+                className="h-full w-full max-w-2xl max-h-full space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
+                onClick={(e) => e.stopPropagation()}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setError(null);
+                  if (
+                    !form.propertyId ||
+                    !form.date ||
+                    !form.group ||
+                    !form.vendor ||
+                    !form.amount ||
+                    (!form.category && !form.label)
+                  ) {
+                    setError("Please fill in all required fields");
+                    return;
+                  }
+                  if (form.category && form.label) {
+                    setError("Please choose either an expense or a custom label");
+                    return;
+                  }
+                  if (isNaN(parseFloat(form.amount))) {
+                    setError("Amount must be a number");
+                    return;
+                  }
+                  mutation.mutate({
+                    expense: {
+                      propertyId: form.propertyId,
+                      date: form.date,
+                      category: form.category,
+                      vendor: form.vendor,
+                      amount: parseFloat(form.amount),
+                      gst: form.gst ? parseFloat(form.gst) : 0,
+                      notes: form.notes,
+                      label: form.label,
+                    },
+                    receipt: form.receipt,
+                  });
+                  if (form.group) {
+                    addRecent(form.group);
+                  }
+                }}
               initial={{ opacity: 0, y: 24, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 24, scale: 0.97 }}
@@ -472,7 +473,8 @@ export default function ExpenseForm({
               </div>
             </motion.form>
           </motion.div>
-        )}
+        </ModalPortal>
+      )}
       </AnimatePresence>
     </div>
   );
