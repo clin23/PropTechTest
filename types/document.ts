@@ -12,4 +12,7 @@ export interface DocumentItem {
   title: string;
   url: string;
   tag: DocumentTag;
+  notes?: string;
+  links?: string[];
+  uploadedAt?: string;
 }
