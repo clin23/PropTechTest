@@ -418,23 +418,23 @@ async function requestTenant(id: string): Promise<TenantDetail | undefined> {
   try {
     const payload = await api<TenantDetailResponse>(`/tenants/${id}`);
     const detail = tenantDetailFromResponse(payload);
-    const propertyId = payload.tenant.currentPropertyId;
-    if (propertyId) {
-      try {
-        const property = await api<PropertySummary>(`/properties/${propertyId}`);
-        detail.address = property.address;
-      } catch (error) {
-        const identifier = propertyId ? String(propertyId) : '(unknown)';
-        console.warn('Failed to load property for tenant ' + identifier, error);
-      }
-      return detail;
-    } catch (error) {
-      console.warn('Falling back to tenant mock store after failed API request', error);
-    }
+    await attachTenantProperty(detail, payload.tenant.currentPropertyId);
     return detail;
   } catch (error) {
     console.warn('Falling back to tenant mock store after failed API request', error);
     return mockStore.tenants.find((tenant) => tenant.id === id);
+  }
+}
+
+async function attachTenantProperty(detail: TenantDetail, propertyId?: string | null) {
+  if (!propertyId) return;
+
+  try {
+    const property = await api<PropertySummary>(`/properties/${propertyId}`);
+    detail.address = property.address;
+  } catch (error) {
+    const identifier = propertyId ? String(propertyId) : '(unknown)';
+    console.warn('Failed to load property for tenant ' + identifier, error);
   }
 }
 
