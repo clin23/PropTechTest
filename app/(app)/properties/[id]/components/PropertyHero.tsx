@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type KeyboardEvent } from "react";
-import PropertyEditModal from "../../../../../components/PropertyEditModal";
+import { type KeyboardEvent } from "react";
 import type { PropertySummary } from "../../../../../types/property";
 import { Button } from "../../../../../components/ui/button";
 import { type PropertyTabId } from "../tabs";
@@ -16,6 +15,7 @@ interface PropertyHeroProps {
   onAddExpense: () => void;
   onUploadDocument: () => void;
   onNavigateToTab: (tabId: PropertyTabId) => void;
+  onEditProperty: () => void;
 }
 
 const rentFormatter = new Intl.NumberFormat(undefined, {
@@ -53,15 +53,10 @@ export default function PropertyHero({
   onAddExpense,
   onUploadDocument,
   onNavigateToTab,
+  onEditProperty,
 }: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
   const sortedEvents = sortPropertyEvents(property.events);
-
-  const [isEditOpen, setIsEditOpen] = useState(false);
-
-  useEffect(() => {
-    setIsEditOpen(false);
-  }, [property.id]);
 
   const rentDisplay = formatRent(property.rent);
 
@@ -109,7 +104,7 @@ export default function PropertyHero({
           <Button
             type="button"
             variant="secondary"
-            onClick={() => setIsEditOpen(true)}
+            onClick={onEditProperty}
             aria-haspopup="dialog"
             className="pointer-events-auto bg-white/90 text-sm font-semibold text-gray-900 shadow-sm hover:bg-white"
           >
@@ -158,11 +153,6 @@ export default function PropertyHero({
           onUploadDocument={onUploadDocument}
         />
       </div>
-      <PropertyEditModal
-        property={property}
-        open={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-      />
     </section>
   );
 }
