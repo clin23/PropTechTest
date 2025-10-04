@@ -141,7 +141,7 @@ export default function PropertyPage() {
   };
 
   return (
-    <div className="relative flex min-h-full flex-col">
+    <div className="relative flex min-h-screen flex-col">
       {!ready && (
         <div className="p-6">
           <PropertyPageSkeleton />
@@ -151,7 +151,7 @@ export default function PropertyPage() {
         <div className="flex flex-1 min-h-0 flex-col p-6">
           <div className="flex flex-1 min-h-0 flex-col gap-6">
             <section className="grid flex-1 min-h-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
-              <div className="flex min-h-0 flex-col">
+              <div className="flex min-h-0 flex-col lg:sticky lg:top-6 lg:self-start">
                 <PropertyHero
                   property={property}
                   onAddIncome={() => setIncomeOpen(true)}
