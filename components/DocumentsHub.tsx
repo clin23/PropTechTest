@@ -25,11 +25,38 @@ export default function DocumentsHub({ refresh }: Props) {
     listDocuments({ propertyId, tag, query: search }).then(setDocs);
   }, [propertyId, tag, search, refresh]);
 
+  const availableTags = useMemo(() => {
+    const entries = new Map<string, string>();
+
+    tags.forEach((value) => {
+      const normalized = value.trim();
+      if (!normalized) return;
+      const key = normalized.toLowerCase();
+      if (!entries.has(key)) {
+        entries.set(key, normalized);
+      }
+    });
+
+    docs.forEach((doc) => {
+      const normalized = doc.tag?.trim();
+      if (!normalized) return;
+      const key = normalized.toLowerCase();
+      if (!entries.has(key)) {
+        entries.set(key, normalized);
+      }
+    });
+
+    return Array.from(entries.values());
+  }, [docs, tags]);
+
   useEffect(() => {
-    if (tag && !tags.some((value) => value.toLowerCase() === tag.toLowerCase())) {
+    if (
+      tag &&
+      !availableTags.some((value) => value.toLowerCase() === tag.toLowerCase())
+    ) {
       setTag("");
     }
-  }, [tag, tags]);
+  }, [availableTags, tag]);
 
   const propertyMap = useMemo(
     () => Object.fromEntries(properties.map((p) => [p.id, p.address])),
@@ -68,7 +95,7 @@ export default function DocumentsHub({ refresh }: Props) {
           onChange={(e) => setTag(e.target.value)}
         >
           <option value="">All Tags</option>
-          {tags.map((value) => (
+          {availableTags.map((value) => (
             <option key={value} value={value}>
               {value}
             </option>
@@ -91,7 +118,7 @@ export default function DocumentsHub({ refresh }: Props) {
                 {doc.title}
               </a>
               <span className="inline-flex w-fit items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                {doc.tag}
+                {doc.tag?.trim() || "Other"}
               </span>
             </div>
             <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
