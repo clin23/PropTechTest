@@ -150,7 +150,7 @@ export default function ExpensesTable({
     "h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <div
         className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 dark:border-gray-800 dark:bg-gray-900"
       >
@@ -208,110 +208,112 @@ export default function ExpensesTable({
           />
         </div>
       </div>
-      <div className="space-y-2 pt-4">
-        {data.length === 0 ? (
-          <EmptyState message="No expenses found." />
-        ) : filteredData.length === 0 ? (
-          <EmptyState message="No expenses match your search." />
-        ) : (
-          <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gray-100 dark:bg-gray-700">
-                  {!propertyId && <th className="p-2 text-left">Property</th>}
-                  <th className="p-2 text-left">Date</th>
-                  <th className="p-2 text-left">Category</th>
-                  <th className="p-2 text-left">Vendor</th>
-                  <th className="p-2 text-left">Amount</th>
-                  <th className="p-2 text-left">GST</th>
-                  <th className="p-2 text-left">Notes</th>
-                  <th className="p-2 text-left">Receipt</th>
-                  <th className="p-2 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((r) => (
-                  <tr key={r.id} className="border-t dark:border-gray-700">
-                    {!propertyId && (
-                      <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
-                    )}
-                    <td className="p-2">{formatShortDate(r.date)}</td>
-                    <td className="p-2">{r.category}</td>
-                    <td className="p-2">{r.vendor}</td>
-                    <td className="p-2">{r.amount}</td>
-                    <td className="p-2">{r.gst}</td>
-                    <td className="p-2">
-                      {r.notes ? (
-                        <span
-                          className="inline-flex items-center text-gray-600 dark:text-gray-300"
-                          title={r.notes}
-                          aria-label="View note"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            className="h-5 w-5"
-                            aria-hidden="true"
-                          >
-                            <path d="M4 4a2 2 0 0 1 2-2h4.586A2 2 0 0 1 12 2.586L15.414 6A2 2 0 0 1 16 7.414V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
-                            <path d="M8 7a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H8Zm0 4a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H8Z" />
-                          </svg>
-                          <span className="sr-only">Note available</span>
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
-                      )}
-                    </td>
-                    <td className="p-2">
-                      <ReceiptLink url={r.receiptUrl} />
-                    </td>
-                    <td className="p-2">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className={iconButtonClass}
-                          onClick={() => handleEdit(r)}
-                          aria-label="Edit expense"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            className="h-5 w-5"
-                          >
-                            <path d="M17.414 2.586a2 2 0 0 0-2.828 0l-1.086 1.086 2.828 2.828 1.086-1.086a2 2 0 0 0 0-2.828ZM14.57 7.5 11.672 4.672 4 12.343V15.5h3.157L14.5 7.5Z" />
-                            <path d="M2 6a2 2 0 0 1 2-2h4a1 1 0 1 1 0 2H4v10h10v-4a1 1 0 1 1 2 0v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          className={`${iconButtonClass} text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300`}
-                          onClick={() => setDeleteTarget(r)}
-                          aria-label="Delete expense"
-                          disabled={deleteMutation.isPending}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            className="h-5 w-5"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M8.75 3a1.75 1.75 0 0 0-1.744 1.602l-.035.348H4a.75.75 0 0 0 0 1.5h.532l.634 9.182A2.25 2.25 0 0 0 7.41 17.75h5.18a2.25 2.25 0 0 0 2.244-2.118L15.468 6.45H16a.75.75 0 0 0 0-1.5h-2.97l-.035-.348A1.75 1.75 0 0 0 11.25 3h-2.5ZM9.75 7a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0V7Zm2.75-.75a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V7a.75.75 0 0 1 .75-.75Z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-2 pt-4">
+          {data.length === 0 ? (
+            <EmptyState message="No expenses found." />
+          ) : filteredData.length === 0 ? (
+            <EmptyState message="No expenses match your search." />
+          ) : (
+            <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-gray-700">
+                    {!propertyId && <th className="p-2 text-left">Property</th>}
+                    <th className="p-2 text-left">Date</th>
+                    <th className="p-2 text-left">Category</th>
+                    <th className="p-2 text-left">Vendor</th>
+                    <th className="p-2 text-left">Amount</th>
+                    <th className="p-2 text-left">GST</th>
+                    <th className="p-2 text-left">Notes</th>
+                    <th className="p-2 text-left">Receipt</th>
+                    <th className="p-2 text-left">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {filteredData.map((r) => (
+                    <tr key={r.id} className="border-t dark:border-gray-700">
+                      {!propertyId && (
+                        <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
+                      )}
+                      <td className="p-2">{formatShortDate(r.date)}</td>
+                      <td className="p-2">{r.category}</td>
+                      <td className="p-2">{r.vendor}</td>
+                      <td className="p-2">{r.amount}</td>
+                      <td className="p-2">{r.gst}</td>
+                      <td className="p-2">
+                        {r.notes ? (
+                          <span
+                            className="inline-flex items-center text-gray-600 dark:text-gray-300"
+                            title={r.notes}
+                            aria-label="View note"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="h-5 w-5"
+                              aria-hidden="true"
+                            >
+                              <path d="M4 4a2 2 0 0 1 2-2h4.586A2 2 0 0 1 12 2.586L15.414 6A2 2 0 0 1 16 7.414V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
+                              <path d="M8 7a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H8Zm0 4a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H8Z" />
+                            </svg>
+                            <span className="sr-only">Note available</span>
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                        )}
+                      </td>
+                      <td className="p-2">
+                        <ReceiptLink url={r.receiptUrl} />
+                      </td>
+                      <td className="p-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className={iconButtonClass}
+                            onClick={() => handleEdit(r)}
+                            aria-label="Edit expense"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="h-5 w-5"
+                            >
+                              <path d="M17.414 2.586a2 2 0 0 0-2.828 0l-1.086 1.086 2.828 2.828 1.086-1.086a2 2 0 0 0 0-2.828ZM14.57 7.5 11.672 4.672 4 12.343V15.5h3.157L14.5 7.5Z" />
+                              <path d="M2 6a2 2 0 0 1 2-2h4a1 1 0 1 1 0 2H4v10h10v-4a1 1 0 1 1 2 0v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className={`${iconButtonClass} text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300`}
+                            onClick={() => setDeleteTarget(r)}
+                            aria-label="Delete expense"
+                            disabled={deleteMutation.isPending}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="h-5 w-5"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M8.75 3a1.75 1.75 0 0 0-1.744 1.602l-.035.348H4a.75.75 0 0 0 0 1.5h.532l.634 9.182A2.25 2.25 0 0 0 7.41 17.75h5.18a2.25 2.25 0 0 0 2.244-2.118L15.468 6.45H16a.75.75 0 0 0 0-1.5h-2.97l-.035-.348A1.75 1.75 0 0 0 11.25 3h-2.5ZM9.75 7a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0V7Zm2.75-.75a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V7a.75.75 0 0 1 .75-.75Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
       <ExpenseForm
         propertyId={propertyId}

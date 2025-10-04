@@ -8,8 +8,10 @@ interface ExpensesProps {
 
 export default function Expenses({ propertyId }: ExpensesProps) {
   return (
-    <div className="space-y-4">
-      <ExpensesTable propertyId={propertyId} />
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex-1 min-h-0">
+        <ExpensesTable propertyId={propertyId} />
+      </div>
     </div>
   );
 }

@@ -102,9 +102,7 @@ export default function IncomesTable({
   const hasMatches = rows.length > 0;
   const hasRecords = filtered.length > 0;
 
-  let content = (
-    <EmptyState message="No income entries match your filters." />
-  );
+  let content = <EmptyState message="No income entries match your filters." />;
 
   if (!hasRecords) {
     content = <EmptyState message="No income records found." />;
@@ -216,7 +214,7 @@ export default function IncomesTable({
     "h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <div
         className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 dark:border-gray-800 dark:bg-gray-900"
       >
@@ -260,7 +258,7 @@ export default function IncomesTable({
           />
         </div>
       </div>
-      <div className="pt-4">{content}</div>
+      <div className="flex-1 overflow-y-auto pt-4">{content}</div>
       <IncomeForm
         propertyId={propertyId}
         open={Boolean(editingIncome)}
