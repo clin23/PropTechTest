@@ -141,17 +141,17 @@ export default function PropertyPage() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative flex h-full flex-col overflow-hidden">
       {!ready && (
         <div className="p-6">
           <PropertyPageSkeleton />
         </div>
       )}
       {property && (
-        <div className="p-6">
-          <div className="space-y-6">
-            <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
-              <div>
+        <div className="flex flex-1 min-h-0 flex-col p-6">
+          <div className="flex flex-1 min-h-0 flex-col gap-6 overflow-hidden">
+            <section className="grid flex-1 min-h-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
+              <div className="flex min-h-0 flex-col">
                 <PropertyHero
                   property={property}
                   onAddIncome={() => setIncomeOpen(true)}
@@ -161,8 +161,8 @@ export default function PropertyPage() {
                   onEditProperty={() => setEditOpen(true)}
                 />
               </div>
-              <div>
-                <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex min-h-0 flex-col">
+                <section className="flex h-full min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
                   <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
                     <ScrollableSectionBar
                       tabs={PROPERTY_TABS}
@@ -177,9 +177,11 @@ export default function PropertyPage() {
                     id={`panel-${resolvedTab}`}
                     aria-labelledby={`tab-${resolvedTab}`}
                     tabIndex={0}
-                    className="flex-1 overflow-auto px-4 pb-6 pt-4 sm:px-6"
+                    className="flex flex-1 min-h-0 flex-col overflow-hidden"
                   >
-                    {renderSection(resolvedTab)}
+                    <div className="flex flex-1 min-h-0 flex-col overflow-hidden px-4 pb-6 pt-4 sm:px-6">
+                      {renderSection(resolvedTab)}
+                    </div>
                   </div>
                 </section>
               </div>
