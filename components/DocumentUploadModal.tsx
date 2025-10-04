@@ -217,7 +217,7 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <input
                         type="text"
-                        className={inputStyles}
+                        className={`${inputStyles} h-10 sm:flex-1`}
                         placeholder="Create a new tag"
                         value={newTagName}
                         onChange={(e) => setNewTagName(e.target.value)}
@@ -234,7 +234,7 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
                       />
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                        className="inline-flex h-10 items-center justify-center rounded border border-slate-300 bg-slate-100 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
                         onClick={() => {
                           const created = addTag(newTagName);
                           if (created) {
