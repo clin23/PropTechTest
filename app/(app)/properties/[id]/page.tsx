@@ -162,7 +162,7 @@ export default function PropertyPage() {
                 />
               </div>
               <div>
-                <section className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <section className="flex min-h-[32rem] flex-col rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
                   <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
                     <ScrollableSectionBar
                       tabs={PROPERTY_TABS}
@@ -177,9 +177,11 @@ export default function PropertyPage() {
                     id={`panel-${resolvedTab}`}
                     aria-labelledby={`tab-${resolvedTab}`}
                     tabIndex={0}
-                    className="flex-1 overflow-auto px-4 pb-6 pt-4 sm:px-6"
+                    className="flex flex-1 min-h-0 flex-col"
                   >
-                    {renderSection(resolvedTab)}
+                    <div className="flex flex-1 min-h-0 flex-col px-4 pb-6 pt-4 sm:px-6">
+                      {renderSection(resolvedTab)}
+                    </div>
                   </div>
                 </section>
               </div>
