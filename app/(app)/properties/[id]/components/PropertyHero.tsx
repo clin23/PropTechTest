@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { type KeyboardEvent } from "react";
 import type { PropertySummary } from "../../../../../types/property";
-import { Button } from "../../../../../components/ui/button";
 import { type PropertyTabId } from "../tabs";
 import { sortPropertyEvents } from "../lib/sortEvents";
 import ActionButtons from "./ActionButtons";
@@ -53,7 +52,7 @@ export default function PropertyHero({
   onAddExpense,
   onUploadDocument,
   onNavigateToTab,
-  onEditProperty,
+  onEditProperty: _onEditProperty,
 }: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
   const sortedEvents = sortPropertyEvents(property.events);
@@ -100,17 +99,6 @@ export default function PropertyHero({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/5 to-black/0"
         />
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-end p-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onEditProperty}
-            aria-haspopup="dialog"
-            className="pointer-events-auto bg-white/90 text-sm font-semibold text-gray-900 shadow-sm hover:bg-white"
-          >
-            Edit Property
-          </Button>
-        </div>
       </div>
       <div className="space-y-6 p-6">
         <div>
