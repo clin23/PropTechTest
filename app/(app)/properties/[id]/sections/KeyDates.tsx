@@ -44,6 +44,12 @@ function severityStyle(severity: Reminder["severity"]) {
   }
 }
 
+function hasLinkedTasks(reminder: Reminder) {
+  if (reminder.taskId) return true;
+  if (!reminder.checklistTaskIds) return false;
+  return Object.keys(reminder.checklistTaskIds).length > 0;
+}
+
 export default function KeyDates({ propertyId }: KeyDatesProps) {
   const queryClient = useQueryClient();
   const [isModalOpen, setModalOpen] = useState(false);
@@ -126,7 +132,7 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
   const createMutation = useMutation({
     mutationFn: (values: KeyDateFormValues) => createReminder(values),
     onSuccess: (reminder) => {
-      if (reminder.taskId) {
+      if (hasLinkedTasks(reminder)) {
         showTaskNotification(reminder);
       }
       invalidateRelated();
@@ -143,8 +149,8 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
     mutationFn: ({ id, values }: { id: string; values: KeyDateFormValues }) =>
       updateReminder(id, values),
     onSuccess: (reminder) => {
-      const hadLinkedTask = Boolean(editingReminder?.taskId);
-      if (!hadLinkedTask && reminder.taskId) {
+      const hadLinkedTask = editingReminder ? hasLinkedTasks(editingReminder) : false;
+      if (!hadLinkedTask && hasLinkedTasks(reminder)) {
         showTaskNotification(reminder);
       }
       invalidateRelated();
@@ -295,7 +301,7 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
                     {reminder.checklist?.length ? (
                       <span>✔️ {reminder.checklist.length} checklist item{reminder.checklist.length === 1 ? "" : "s"}</span>
                     ) : null}
-                    {reminder.taskId ? <span>🔗 Linked to tasks</span> : null}
+                    {hasLinkedTasks(reminder) ? <span>🔗 Linked to tasks</span> : null}
                   </div>
                 </button>
               </li>

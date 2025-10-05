@@ -68,6 +68,12 @@ export default function KeyDateFormModal({
   isDeleting,
   error,
 }: KeyDateFormModalProps) {
+  const hasLinkedTasks = (reminder?: Reminder | null) => {
+    if (!reminder) return false;
+    if (reminder.taskId) return true;
+    return Boolean(reminder.checklistTaskIds && Object.keys(reminder.checklistTaskIds).length > 0);
+  };
+
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [type, setType] = useState<Reminder["type"]>(initialData?.type ?? "custom");
   const [dueDate, setDueDate] = useState(initialData?.dueDate ?? "");
@@ -80,7 +86,7 @@ export default function KeyDateFormModal({
   const [checklist, setChecklist] = useState<ReminderChecklistItem[]>(
     initialData?.checklist ?? [],
   );
-  const [addToTasks, setAddToTasks] = useState(Boolean(initialData?.taskId));
+  const [addToTasks, setAddToTasks] = useState(hasLinkedTasks(initialData));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
 
@@ -96,7 +102,7 @@ export default function KeyDateFormModal({
     setSeverity(initialData?.severity ?? "low");
     setDocuments(initialData?.documents ?? []);
     setChecklist(initialData?.checklist ?? []);
-    setAddToTasks(Boolean(initialData?.taskId));
+    setAddToTasks(hasLinkedTasks(initialData));
   }, [initialData, open]);
 
   useEffect(() => {
