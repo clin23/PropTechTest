@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import KeyDateFormModal, {
@@ -55,17 +55,80 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
     queryFn: () => listReminders({ propertyId }),
   });
 
+  const taskNoticeTimers = useRef<{ hide: number | null; remove: number | null }>({
+    hide: null,
+    remove: null,
+  });
+  const [taskNotification, setTaskNotification] = useState<
+    | {
+        message: string;
+        isVisible: boolean;
+      }
+    | null
+  >(null);
+
+  const showTaskNotification = (reminder: Reminder) => {
+    if (!reminder.taskId) return;
+    const propertyLabel = reminder.propertyAddress?.trim() || "this property";
+    setTaskNotification({
+      message: `We've whisked the linked tasks for ${propertyLabel} into your board.`,
+      isVisible: true,
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (taskNoticeTimers.current.hide) {
+        window.clearTimeout(taskNoticeTimers.current.hide);
+        taskNoticeTimers.current.hide = null;
+      }
+      if (taskNoticeTimers.current.remove) {
+        window.clearTimeout(taskNoticeTimers.current.remove);
+        taskNoticeTimers.current.remove = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!taskNotification?.isVisible) return;
+
+    if (taskNoticeTimers.current.hide) {
+      window.clearTimeout(taskNoticeTimers.current.hide);
+      taskNoticeTimers.current.hide = null;
+    }
+    if (taskNoticeTimers.current.remove) {
+      window.clearTimeout(taskNoticeTimers.current.remove);
+      taskNoticeTimers.current.remove = null;
+    }
+
+    taskNoticeTimers.current.hide = window.setTimeout(() => {
+      setTaskNotification((prev) => (prev ? { ...prev, isVisible: false } : prev));
+    }, 3200);
+
+    taskNoticeTimers.current.remove = window.setTimeout(() => {
+      setTaskNotification(null);
+    }, 3800);
+  }, [taskNotification]);
+
   const invalidateRelated = () => {
     void queryClient.invalidateQueries({ queryKey: ["reminders", propertyId] });
     void queryClient.invalidateQueries({ queryKey: ["reminders"] });
     void queryClient.invalidateQueries({ queryKey: ["property", propertyId] });
     void queryClient.invalidateQueries({ queryKey: ["properties"] });
-    void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    void queryClient.invalidateQueries({
+      predicate: (query) => {
+        const [firstKey] = query.queryKey;
+        return firstKey === "tasks";
+      },
+    });
   };
 
   const createMutation = useMutation({
     mutationFn: (values: KeyDateFormValues) => createReminder(values),
-    onSuccess: () => {
+    onSuccess: (reminder) => {
+      if (reminder.taskId) {
+        showTaskNotification(reminder);
+      }
       invalidateRelated();
       setModalOpen(false);
       setEditingReminder(null);
@@ -79,7 +142,11 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
   const updateMutation = useMutation({
     mutationFn: ({ id, values }: { id: string; values: KeyDateFormValues }) =>
       updateReminder(id, values),
-    onSuccess: () => {
+    onSuccess: (reminder) => {
+      const hadLinkedTask = Boolean(editingReminder?.taskId);
+      if (!hadLinkedTask && reminder.taskId) {
+        showTaskNotification(reminder);
+      }
       invalidateRelated();
       setModalOpen(false);
       setEditingReminder(null);
@@ -146,6 +213,20 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
 
   return (
     <div className="space-y-4">
+      {taskNotification && (
+        <div
+          className={`pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4 transition-all duration-300 ease-out ${
+            taskNotification.isVisible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"
+          }`}
+        >
+          <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-blue-100 bg-white/90 px-4 py-3 text-sm text-blue-900 shadow-lg backdrop-blur dark:border-blue-500/40 dark:bg-blue-950/80 dark:text-blue-100">
+            <p className="font-semibold">Linked tasks ready</p>
+            <p className="mt-1 text-xs text-blue-800/80 dark:text-blue-200/80">
+              {taskNotification.message}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">Key Dates</h2>
