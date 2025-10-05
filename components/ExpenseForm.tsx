@@ -194,7 +194,10 @@ export default function ExpenseForm({
       return created as ExpenseRow;
     },
     onSuccess: (savedExpense) => {
-      toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
+      toast({
+        title: isEditMode ? "Expense updated" : "Expense saved",
+        variant: "success",
+      });
       setOpen(false);
       setForm(computeInitialForm());
       setError(null);
@@ -212,7 +215,11 @@ export default function ExpenseForm({
     onError: (err: any) => {
       const message = err instanceof Error ? err.message : "Failed to save expense";
       setError(message);
-      toast({ title: "Failed to save expense", description: message });
+      toast({
+        title: "Failed to save expense",
+        description: message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -276,12 +283,12 @@ export default function ExpenseForm({
                       expense: {
                         propertyId: form.propertyId,
                         date: form.date,
-                        category: form.category,
+                        category: form.category || form.group,
                         vendor: form.vendor,
                         amount: parseFloat(form.amount),
                         gst: form.gst ? parseFloat(form.gst) : 0,
-                        notes: form.notes,
-                        label: form.label,
+                        notes: form.notes || undefined,
+                        label: form.label || undefined,
                       },
                       receipt: form.receipt,
                     });
