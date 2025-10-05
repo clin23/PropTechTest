@@ -1,10 +1,8 @@
 import { z } from 'zod';
 
 import { logEvent } from '../../../lib/log';
-import {
-  tenantDirectory,
-  nextId,
-} from '../tenant-crm/store';
+import { tenantDirectory, nextId } from '../tenant-crm/store';
+import { syncTenantForProperty } from '../properties/tenant-sync';
 import {
   zTenant,
   zTenantCreate,
@@ -81,6 +79,10 @@ export async function POST(req: Request) {
 
   tenantDirectory.push(tenant);
   logEvent('tenant_created', { tenantId: id, propertyId: tenant.currentPropertyId });
+
+  if (tenant.currentPropertyId) {
+    syncTenantForProperty(tenant.currentPropertyId, tenant.fullName);
+  }
 
   return new Response(JSON.stringify(tenant), { status: 201 });
 }
