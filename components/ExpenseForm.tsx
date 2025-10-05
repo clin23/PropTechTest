@@ -4,11 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { createExpense, listProperties, uploadExpenseReceipt } from "../lib/api";
+import {
+  createExpense,
+  listProperties,
+  updateExpense,
+  uploadExpenseReceipt,
+} from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import ModalPortal from "./ModalPortal";
 import type { PropertySummary } from "../types/property";
+import type { ExpenseRow } from "../types/expense";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
@@ -29,7 +35,7 @@ type FormState = {
 interface Props {
   propertyId?: string;
   onCreated?: () => void;
-  onSaved?: () => void;
+  onSaved?: (expense: ExpenseRow) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaults?: Partial<FormState>;
@@ -171,14 +177,23 @@ export default function ExpenseForm({
         receipt?: File | null;
       }
     ) => {
+      if (isEditMode && expenseId) {
+        const updated = await updateExpense(expenseId, payload.expense);
+        if (payload.receipt) {
+          const { url } = await uploadExpenseReceipt(expenseId, payload.receipt);
+          return { ...updated, receiptUrl: url } as ExpenseRow;
+        }
+        return updated as ExpenseRow;
+      }
+
       const created = await createExpense(payload.expense);
       if (payload.receipt) {
         const { url } = await uploadExpenseReceipt(created.id, payload.receipt);
-        return { ...created, receiptUrl: url };
+        return { ...created, receiptUrl: url } as ExpenseRow;
       }
-      return created;
+      return created as ExpenseRow;
     },
-    onSuccess: () => {
+    onSuccess: (savedExpense) => {
       toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
       setOpen(false);
       setForm(computeInitialForm());
@@ -186,7 +201,7 @@ export default function ExpenseForm({
       setFileInputKey((key) => key + 1);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
-      onSaved?.();
+      onSaved?.(savedExpense as ExpenseRow);
       if (!isEditMode) {
         logEvent("expense_create", {
           propertyId: form.propertyId,
