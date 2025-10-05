@@ -78,6 +78,7 @@ export interface Reminder {
   documents?: ReminderDocument[];
   checklist?: ReminderChecklistItem[];
   taskId?: string | null;
+  checklistTaskIds?: Record<string, string> | null;
 }
 
 export interface PropertyDataExport {

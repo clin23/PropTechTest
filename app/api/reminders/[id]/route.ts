@@ -47,5 +47,10 @@ export async function DELETE(
   if (removed.taskId) {
     deleteTask(removed.taskId);
   }
+  if (removed.checklistTaskIds) {
+    Object.values(removed.checklistTaskIds).forEach((taskId) => {
+      deleteTask(taskId);
+    });
+  }
   return new Response(null, { status: 204 });
 }
