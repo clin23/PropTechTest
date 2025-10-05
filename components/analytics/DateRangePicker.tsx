@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { formatDate, startOfFinancialYear } from '../lib/urlState';
+import { useEffect, useMemo, useState } from 'react';
+import { formatDate, startOfFinancialYear } from '../../app/(app)/analytics/overview/lib/urlState';
 
 type DateRangeValue = {
   from: string;
@@ -10,17 +10,17 @@ type DateRangeValue = {
 
 type PresetKey = 'this_month' | 'last_3_months' | 'fytd' | 'last_fy' | 'custom';
 
+type DateRangePickerProps = {
+  value: DateRangeValue;
+  onChange: (value: DateRangeValue, preset?: PresetKey) => void;
+};
+
 const PRESETS: { key: PresetKey; label: string }[] = [
   { key: 'this_month', label: 'This Month' },
   { key: 'last_3_months', label: 'Last 3 Months' },
   { key: 'fytd', label: 'FYTD' },
   { key: 'last_fy', label: 'Last FY' },
 ];
-
-type Props = {
-  value: DateRangeValue;
-  onChange: (value: DateRangeValue, preset?: PresetKey) => void;
-};
 
 function computePresetRange(key: PresetKey, today = new Date()): DateRangeValue {
   const end = new Date(today);
@@ -52,14 +52,21 @@ function isSameRange(a: DateRangeValue, b: DateRangeValue) {
   return a.from === b.from && a.to === b.to;
 }
 
-export function DateRangePicker({ value, onChange }: Props) {
-  const [customFrom, setCustomFrom] = useState<string>(value.from);
-  const [customTo, setCustomTo] = useState<string>(value.to);
+export default function DateRangePicker({ value, onChange }: DateRangePickerProps) {
+  const [customFrom, setCustomFrom] = useState(value.from);
+  const [customTo, setCustomTo] = useState(value.to);
+
+  useEffect(() => {
+    setCustomFrom(value.from);
+    setCustomTo(value.to);
+  }, [value.from, value.to]);
 
   const activePreset = useMemo(() => {
     for (const preset of PRESETS) {
       const range = computePresetRange(preset.key);
-      if (isSameRange(range, value)) return preset.key;
+      if (isSameRange(range, value)) {
+        return preset.key;
+      }
     }
     return undefined;
   }, [value]);
@@ -80,7 +87,7 @@ export function DateRangePicker({ value, onChange }: Props) {
   };
 
   return (
-    <div className="w-full space-y-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm" data-testid="date-range-picker">
+    <div className="space-y-3" data-testid="date-range-picker">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Date range presets">
         {PRESETS.map((preset) => {
           const isActive = preset.key === activePreset;
@@ -89,22 +96,21 @@ export function DateRangePicker({ value, onChange }: Props) {
               key={preset.key}
               type="button"
               onClick={() => handlePresetClick(preset.key)}
-              className={`px-3 py-1.5 rounded-full text-sm border transition ${
+              className={[
+                'rounded-full border px-3 py-1.5 text-sm font-medium transition',
                 isActive
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-blue-500'
-              }`}
+                  ? 'border-[#2F81F7] bg-[#2F81F7] text-white shadow-sm'
+                  : 'border-slate-200/80 text-slate-600 hover:border-[#2F81F7] hover:text-[#2F81F7] dark:border-[#1F2937] dark:text-slate-300',
+              ].join(' ')}
             >
               {preset.label}
             </button>
           );
         })}
       </div>
-      <div className="flex flex-col gap-2 text-sm" aria-label="Custom date range">
-        <div className="flex items-center gap-2">
-          <label className="w-16 text-gray-600 dark:text-gray-300" htmlFor="overview-from">
-            From
-          </label>
+      <div className="grid grid-cols-1 gap-2 text-sm">
+        <label className="flex items-center gap-2" htmlFor="overview-from">
+          <span className="w-12 text-slate-500 dark:text-slate-400">From</span>
           <input
             id="overview-from"
             type="date"
@@ -114,13 +120,11 @@ export function DateRangePicker({ value, onChange }: Props) {
               setCustomFrom(next);
               handleCustomChange({ from: next, to: customTo });
             }}
-            className="flex-1 rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 rounded-xl border border-slate-200/70 bg-transparent px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2F81F7] dark:border-[#1F2937]"
           />
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="w-16 text-gray-600 dark:text-gray-300" htmlFor="overview-to">
-            To
-          </label>
+        </label>
+        <label className="flex items-center gap-2" htmlFor="overview-to">
+          <span className="w-12 text-slate-500 dark:text-slate-400">To</span>
           <input
             id="overview-to"
             type="date"
@@ -130,12 +134,10 @@ export function DateRangePicker({ value, onChange }: Props) {
               setCustomTo(next);
               handleCustomChange({ from: customFrom, to: next });
             }}
-            className="flex-1 rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 rounded-xl border border-slate-200/70 bg-transparent px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2F81F7] dark:border-[#1F2937]"
           />
-        </div>
+        </label>
       </div>
     </div>
   );
 }
-
-export default DateRangePicker;
