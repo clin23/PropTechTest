@@ -9,6 +9,7 @@ import type {
   RentDue,
   AlertItem,
 } from '../../../types/dashboard';
+import { mapExpenseCategory } from '../../../lib/expenses/categories';
 import {
   properties,
   expenses,
@@ -160,35 +161,11 @@ export async function GET(req: Request) {
     incomeCents,
   }));
 
-  const mapCategory = (
-    cat: string
-  ): ExpenseByCategorySlice['category'] => {
-    const lower = cat.toLowerCase();
-    if (lower.includes('insurance')) return 'Insurance';
-    if (lower.includes('rate')) return 'Rates';
-    if (lower.includes('utility') || lower.includes('water') || lower.includes('electric'))
-      return 'Utilities';
-    if (
-      lower.includes('maint') ||
-      lower.includes('repair') ||
-      lower.includes('plumb') ||
-      lower.includes('electrical') ||
-      lower.includes('garden') ||
-      lower.includes('landscaping') ||
-      lower.includes('clean')
-    )
-      return 'Maintenance';
-    if (lower.includes('strata')) return 'Strata';
-    if (lower.includes('mortgage')) return 'Mortgage Interest';
-    if (lower.includes('manage')) return 'Property Mgmt';
-    return 'Other';
-  };
-
   const expenseByCategoryTotals: Record<string, number> = {};
   expenseEntries
     .filter((entry) => inRange(entry.date, from, to))
     .forEach((entry) => {
-      const category = mapCategory(entry.category || '');
+      const category = mapExpenseCategory(entry.category);
       expenseByCategoryTotals[category] =
         (expenseByCategoryTotals[category] ?? 0) + toCents(entry.amount);
     });
