@@ -260,28 +260,34 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             Confirm changes
           </label>
-          <div className="relative overflow-hidden rounded-full bg-gray-200 p-2 dark:bg-gray-700">
+          <div className="relative flex h-12 items-center overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-full bg-blue-500 transition-all"
+              style={{
+                width:
+                  confirmationProgress === 0
+                    ? 0
+                    : `${Math.min(100, confirmationProgress + 8)}%`,
+              }}
+            />
             <input
               type="range"
               min={0}
               max={100}
-              step={5}
+              step={1}
               value={confirmationProgress}
               onChange={(e) => {
                 const nextValue = Number(e.target.value);
-                if (nextValue >= 95) {
-                  setConfirmationProgress(100);
-                } else {
-                  setConfirmationProgress(nextValue);
-                }
+                setConfirmationProgress(nextValue >= 96 ? 100 : nextValue);
               }}
-              className="range-thumb w-full appearance-none bg-transparent"
+              className="confirm-slider"
             />
-            <div
-              className="pointer-events-none absolute inset-2 rounded-full bg-blue-500 transition-all"
-              style={{ width: `${Math.min(100, Math.max(16, confirmationProgress))}%` }}
-            />
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-200">
+            <span
+              className={`pointer-events-none absolute inset-0 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
+                isConfirmed ? "text-white" : "text-gray-600 dark:text-gray-200"
+              }`}
+            >
               {isConfirmed ? "Confirmed" : "Slide right to confirm"}
             </span>
           </div>

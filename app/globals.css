@@ -111,14 +111,20 @@
   background-color: var(--scrollbar-thumb-hover);
 }
 
-.range-thumb{
+.confirm-slider{
   position: relative;
-  z-index: 10;
-  height: 32px;
+  z-index: 20;
+  height: 48px;
+  width: 100%;
   cursor: pointer;
+  padding: 0;
+  margin: 0 24px;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.range-thumb::-webkit-slider-thumb{
+.confirm-slider::-webkit-slider-thumb{
   -webkit-appearance: none;
   appearance: none;
   height: 28px;
@@ -129,7 +135,7 @@
   border: 2px solid #ffffff;
 }
 
-.range-thumb::-moz-range-thumb{
+.confirm-slider::-moz-range-thumb{
   height: 28px;
   width: 28px;
   border-radius: 9999px;
@@ -138,7 +144,7 @@
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
 }
 
-.range-thumb::-ms-thumb{
+.confirm-slider::-ms-thumb{
   height: 28px;
   width: 28px;
   border-radius: 9999px;
@@ -147,16 +153,20 @@
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
 }
 
-.range-thumb::-webkit-slider-runnable-track{
-  height: 0;
+.confirm-slider::-webkit-slider-runnable-track{
+  height: 48px;
+  border-radius: 9999px;
+  background: transparent;
 }
 
-.range-thumb::-moz-range-track{
-  height: 0;
+.confirm-slider::-moz-range-track{
+  height: 48px;
+  border-radius: 9999px;
+  background: transparent;
 }
 
-.range-thumb::-ms-track{
-  height: 0;
+.confirm-slider::-ms-track{
+  height: 48px;
   background: transparent;
   border-color: transparent;
   color: transparent;
