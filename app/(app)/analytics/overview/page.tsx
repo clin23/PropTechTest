@@ -1,22 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useRouter, useSearchParams } from 'next/navigation';
-import DateRangePicker from './components/DateRangePicker';
-import PropertyMultiSelect from './components/PropertyMultiSelect';
-import KpiCard from './components/KpiCard';
-import ExportButtons, { type CsvSection } from './components/ExportButtons';
-import UpcomingList from './components/UpcomingList';
-import {
-  buildSearchParams,
-  defaultState,
-  formatDate,
-  isSameState,
-  parseStateFromSearch,
-  type OverviewState,
-} from './lib/urlState';
+import OverviewHeader from '../../../../components/analytics/OverviewHeader';
+import KpiCards from '../../../../components/analytics/KpiCards';
+import FiltersPanel from '../../../../components/analytics/FiltersPanel';
+import ObligationsCard from '../../../../components/analytics/ObligationsCard';
+import { AnalyticsFiltersProvider, useAnalyticsFilters } from '../../../../components/analytics/FiltersProvider';
+import { type ChartRef, type CsvSection } from '../../../../components/analytics/ExportButtons';
 import {
   useCashflowSeries,
   useExpenseBreakdown,
@@ -25,31 +17,57 @@ import {
   usePropertySeries,
   useUpcoming,
 } from './hooks/useAnalytics';
+import { defaultState, formatDate, type OverviewState } from './lib/urlState';
 
-const CashflowChart = dynamic(() => import('./components/ChartCashflow'), {
+const CashflowChart = dynamic(() => import('../../../../components/analytics/CashflowChart'), {
   ssr: false,
-  loading: () => <ChartPlaceholder title="Cashflow Over Time" />,
+  loading: () => <ChartPlaceholder title="Cashflow Over Time" description="Trend loading" />,
 });
 
-const ExpenseDonut = dynamic(() => import('./components/ChartExpenseDonut'), {
+const ExpenseBreakdown = dynamic(() => import('../../../../components/analytics/ExpenseBreakdown'), {
   ssr: false,
-  loading: () => <ChartPlaceholder title="Expense Breakdown" />,
+  loading: () => <ChartPlaceholder title="Expense Breakdown" description="Loading categories" />,
 });
 
-const PropertyCompare = dynamic(() => import('./components/ChartPropertyCompare'), {
+const PropertyComparison = dynamic(() => import('../../../../components/analytics/PropertyComparison'), {
   ssr: false,
-  loading: () => <ChartPlaceholder title="Property Comparison" />,
+  loading: () => <ChartPlaceholder title="Property Comparison" description="Gathering properties" />,
 });
+
 type ChartRange = { from: string; to: string };
 
-type ChartPlaceholderProps = { title: string };
+type ChartPlaceholderProps = { title: string; description: string };
 
-function ChartPlaceholder({ title }: ChartPlaceholderProps) {
+type RentMarketCardProps = {
+  onConnect?: () => void;
+};
+
+function ChartPlaceholder({ title, description }: ChartPlaceholderProps) {
   return (
-    <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm h-72 flex flex-col">
-      <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">{title}</h3>
-      <div className="flex flex-1 items-center justify-center text-sm text-gray-400">Loading…</div>
-    </div>
+    <section className="rounded-3xl border border-dashed border-slate-300/60 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-[#161B22]">
+      <div className="flex h-[320px] flex-col items-center justify-center text-center">
+        <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300">{title}</h3>
+        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">{description}</p>
+      </div>
+    </section>
+  );
+}
+
+function RentMarketCard({ onConnect }: RentMarketCardProps) {
+  return (
+    <section className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm transition hover:border-[#2F81F7]/50 dark:border-[#1F2937] dark:bg-[#161B22]">
+      <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Rent vs Market</h2>
+      <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+        Connect market data to benchmark your rents against the local median.
+      </p>
+      <button
+        type="button"
+        onClick={onConnect}
+        className="mt-5 inline-flex items-center justify-center rounded-full border border-[#2F81F7] bg-[#2F81F7] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1f6cd8]"
+      >
+        Connect data source
+      </button>
+    </section>
   );
 }
 
@@ -72,12 +90,7 @@ function buildCsvSections(params: {
     sections.push({
       label: 'Cashflow Series',
       headers: ['Period', 'Income', 'Expenses', 'Net'],
-      rows: params.cashflow.buckets.map((bucket) => [
-        bucket.label,
-        bucket.income,
-        bucket.expenses,
-        bucket.net,
-      ]),
+      rows: params.cashflow.buckets.map((bucket) => [bucket.label, bucket.income, bucket.expenses, bucket.net]),
     });
   }
   if (params.breakdown && params.breakdown.items.length) {
@@ -97,49 +110,29 @@ function buildCsvSections(params: {
   return sections;
 }
 
-function AnalyticsOverviewPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const searchKey = useMemo(() => searchParams.toString(), [searchParams]);
-  const initialFromUrl = useMemo(() => parseStateFromSearch(new URLSearchParams(searchKey)), [searchKey]);
-  const [filters, setFilters] = useState<OverviewState>(initialFromUrl ?? defaultState());
-  const [debouncedFilters, setDebouncedFilters] = useState<OverviewState>(filters);
+function AnalyticsOverviewContent() {
+  const { filters, activeFilters, setFilters, chartView, setChartView } = useAnalyticsFilters();
+  const propertyQuery = useProperties();
+  const propertyOptions = propertyQuery.data ?? [];
 
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedFilters(filters), 300);
-    return () => clearTimeout(handler);
-  }, [filters]);
-
-  useEffect(() => {
-    if (!initialFromUrl) {
-      return;
-    }
-
-    if (!isSameState(initialFromUrl, filters)) {
-      setFilters(initialFromUrl);
-      setDebouncedFilters(initialFromUrl);
-    }
-  }, [filters, initialFromUrl]);
-
-  useEffect(() => {
-    const params = buildSearchParams(debouncedFilters).toString();
-    if (params === searchKey) return;
-    router.replace(`?${params}`, { scroll: false });
-  }, [debouncedFilters, router, searchKey]);
-
-  const propertiesQuery = useProperties();
-  const propertyOptions = propertiesQuery.data ?? [];
   const baseParams = {
-    from: debouncedFilters.from,
-    to: debouncedFilters.to,
-    propertyIds: debouncedFilters.propertyIds,
-  };
+    from: activeFilters.from,
+    to: activeFilters.to,
+    propertyIds: activeFilters.propertyIds,
+  } satisfies Pick<OverviewState, 'from' | 'to' | 'propertyIds'>;
 
   const kpiQuery = useOverviewKpis(baseParams);
   const cashflowQuery = useCashflowSeries(baseParams);
   const breakdownQuery = useExpenseBreakdown(baseParams);
   const propertySeriesQuery = usePropertySeries(baseParams);
   const upcomingQuery = useUpcoming(baseParams);
+
+  const isLoading =
+    kpiQuery.isLoading ||
+    cashflowQuery.isLoading ||
+    breakdownQuery.isLoading ||
+    propertySeriesQuery.isLoading ||
+    upcomingQuery.isLoading;
 
   const hasData =
     (cashflowQuery.data?.buckets.length ?? 0) > 0 ||
@@ -149,6 +142,18 @@ function AnalyticsOverviewPage() {
   const cashflowRef = useRef<HTMLDivElement>(null);
   const expenseRef = useRef<HTMLDivElement>(null);
   const propertyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const target =
+      chartView === 'cashflow'
+        ? cashflowRef.current
+        : chartView === 'expenses'
+        ? expenseRef.current
+        : propertyRef.current;
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [chartView]);
 
   const csvSections = useMemo(
     () =>
@@ -160,174 +165,136 @@ function AnalyticsOverviewPage() {
     [breakdownQuery.data, cashflowQuery.data, propertySeriesQuery.data],
   );
 
+  const charts: ChartRef[] = useMemo(
+    () => [
+      { id: 'cashflow', label: 'Cashflow Over Time', element: cashflowRef.current },
+      { id: 'expenses', label: 'Expense Breakdown', element: expenseRef.current },
+      { id: 'property', label: 'Property Comparison', element: propertyRef.current },
+    ],
+    [cashflowRef.current, expenseRef.current, propertyRef.current],
+  );
+
   const hiddenPropertyCount = useMemo(() => {
-    if (!propertyOptions.length || debouncedFilters.propertyIds.length === 0) return 0;
+    if (!propertyOptions.length || activeFilters.propertyIds.length === 0) return 0;
     const activeIds = new Set(propertyOptions.map((property) => property.id));
-    return Array.from(activeIds).filter((id) => !debouncedFilters.propertyIds.includes(id)).length;
-  }, [propertyOptions, debouncedFilters.propertyIds]);
+    return Array.from(activeIds).filter((id) => !activeFilters.propertyIds.includes(id)).length;
+  }, [propertyOptions, activeFilters.propertyIds]);
 
-  const charts = [
-    { id: 'cashflow', label: 'Cashflow Over Time', element: cashflowRef.current },
-    { id: 'expenses', label: 'Expense Breakdown', element: expenseRef.current },
-    { id: 'property', label: 'Property Comparison', element: propertyRef.current },
-  ];
+  const handleBrushChange = (range: { from: string; to: string }) => {
+    const monthRangeStart = toMonthRange(range.from);
+    const monthRangeEnd = toMonthRange(range.to);
+    if (monthRangeStart && monthRangeEnd) {
+      setFilters((prev) => ({ ...prev, from: monthRangeStart.from, to: monthRangeEnd.to }));
+    }
+  };
 
-  const isLoading =
-    kpiQuery.isLoading ||
-    cashflowQuery.isLoading ||
-    breakdownQuery.isLoading ||
-    propertySeriesQuery.isLoading ||
-    upcomingQuery.isLoading;
+  const kpiValues = {
+    netCashflow: kpiQuery.data?.netCashflow,
+    grossYield: kpiQuery.data?.grossYield ?? null,
+    occupancyRate: kpiQuery.data?.occupancyRate ?? null,
+    portfolioRoi: kpiQuery.data?.portfolioRoi ?? undefined,
+  };
 
   return (
-    <div className="px-4 py-6 sm:px-6 md:px-8">
-      <Link href="/analytics" className="text-sm text-blue-600 hover:underline">
-        &larr; Back to Analytics
-      </Link>
-      <div className="mx-auto mt-4 max-w-[1200px]">
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+    <div className="px-6 py-6 sm:px-8 lg:px-10">
+      <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href="/analytics"
+            className="text-sm font-medium text-[#2F81F7] transition hover:text-[#1f6cd8]"
+          >
+            &larr; Back to Analytics
+          </Link>
+        </div>
+        <OverviewHeader />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-6">
-            <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-4">
-              <KpiCard title="Net Cashflow" value={kpiQuery.data?.netCashflow} format="currency" precision={0} />
-              <KpiCard
-                title="Gross Yield"
-                value={kpiQuery.data?.grossYield ?? undefined}
-                format="percentage"
-                precision={1}
-                tooltip={kpiQuery.data?.grossYield ? undefined : 'Add property values to see gross yield'}
-              />
-              <KpiCard
-                title="Occupancy Rate"
-                value={kpiQuery.data?.occupancyRate ?? undefined}
-                format="percentage"
-                precision={1}
-              />
-              <KpiCard
-                title="On-Time Collection"
-                value={kpiQuery.data?.onTimeCollection ?? undefined}
-                format="percentage"
-                precision={1}
-              />
-            </div>
+            <KpiCards isLoading={kpiQuery.isLoading} values={kpiValues} />
 
-        {!isLoading && !hasData ? (
-          <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-            <p className="font-medium">No data for this range.</p>
-            <p className="mt-2">Try adjusting your dates or clearing filters to see more activity.</p>
-            <div className="mt-4 flex justify-center gap-3">
-              <button
-                type="button"
-                className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:border-blue-500 hover:text-blue-600"
-                onClick={() => setFilters(defaultState())}
-              >
-                FYTD
-              </button>
-              <button
-                type="button"
-                className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:border-blue-500 hover:text-blue-600"
-                onClick={() => setFilters((prev) => ({ ...prev, propertyIds: [] }))}
-              >
-                Clear filters
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <CashflowChart
-                  ref={cashflowRef}
-                  data={cashflowQuery.data?.buckets ?? []}
-                  onBrushChange={(range) => {
-                    const monthRange = toMonthRange(range.from);
-                    const monthRangeEnd = toMonthRange(range.to);
-                    if (monthRange && monthRangeEnd) {
-                      setFilters((prev) => ({
-                        ...prev,
-                        from: monthRange.from,
-                        to: monthRangeEnd.to,
-                      }));
-                    }
-                  }}
-                />
-              </div>
-              <div>
-                <ExpenseDonut
-                  ref={expenseRef}
-                  data={breakdownQuery.data?.items ?? []}
-                  total={breakdownQuery.data?.total ?? 0}
-                  selectedCategory={filters.expenseCategory}
-                  onSelectCategory={(category) =>
-                    setFilters((prev) => ({ ...prev, expenseCategory: category ?? undefined }))
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:gap-6 lg:grid-cols-4">
-              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100">Rent vs Market</h3>
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  Connect market data to benchmark your rents against the local median.
+            {!isLoading && !hasData ? (
+              <section className="rounded-3xl border border-dashed border-slate-300/70 bg-white px-6 py-12 text-center shadow-sm dark:border-slate-700 dark:bg-[#161B22]">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">No data for this range</h2>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Adjust your dates or clear filters to see more activity.
                 </p>
-                <button
-                  type="button"
-                  className="mt-4 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:border-blue-500 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
-                >
-                  Connect data
-                </button>
-              </div>
-              <div className="lg:col-span-2">
-                <UpcomingList items={upcomingQuery.data?.items ?? []} />
-              </div>
-              <div className="lg:col-span-1">
-                <PropertyCompare
-                  ref={propertyRef}
-                  data={propertySeriesQuery.data?.items ?? []}
-                  hiddenCount={hiddenPropertyCount}
-                />
-              </div>
-            </div>
-          </>
-        )}
-          </div>
-          <aside className="mt-6 space-y-4 lg:sticky lg:top-24 lg:mt-0">
-            <DateRangePicker
-              value={{ from: filters.from, to: filters.to }}
-              onChange={(range) => setFilters((prev) => ({ ...prev, ...range }))}
-            />
-            <PropertyMultiSelect
-              properties={propertyOptions}
-              selected={filters.propertyIds}
-              onChange={(next) => setFilters((prev) => ({ ...prev, propertyIds: next }))}
-            />
-            {filters.expenseCategory && (
-              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm text-sm">
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="font-medium text-gray-700 dark:text-gray-200">Expense category</span>
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <button
                     type="button"
-                    className="text-xs text-blue-600 hover:underline"
-                    onClick={() => setFilters((prev) => ({ ...prev, expenseCategory: undefined }))}
+                    className="rounded-full border border-slate-200/80 px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#2F81F7] hover:text-[#2F81F7] dark:border-[#1F2937] dark:text-slate-300"
+                    onClick={() => setFilters(defaultState())}
                   >
-                    Clear
+                    Reset to FYTD
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full border border-slate-200/80 px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#2F81F7] hover:text-[#2F81F7] dark:border-[#1F2937] dark:text-slate-300"
+                    onClick={() => setFilters((prev) => ({ ...prev, propertyIds: [] }))}
+                  >
+                    Clear property filters
                   </button>
                 </div>
-                <button
-                  type="button"
-                  className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
-                  onClick={() => setFilters((prev) => ({ ...prev, expenseCategory: undefined }))}
-                >
-                  {filters.expenseCategory}
-                  <span aria-hidden>&times;</span>
-                </button>
-              </div>
+              </section>
+            ) : (
+              <>
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+                  <CashflowChart
+                    ref={cashflowRef}
+                    data={cashflowQuery.data?.buckets ?? []}
+                    onBrushChange={handleBrushChange}
+                    isActive={chartView === 'cashflow'}
+                  />
+                  <ExpenseBreakdown
+                    ref={expenseRef}
+                    data={breakdownQuery.data?.items ?? []}
+                    total={breakdownQuery.data?.total ?? 0}
+                    selectedCategory={filters.expenseCategory}
+                    onSelectCategory={(category) =>
+                      setFilters((prev) => ({ ...prev, expenseCategory: category ?? undefined }))
+                    }
+                    isActive={chartView === 'expenses'}
+                  />
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-12">
+                  <div className="xl:col-span-5">
+                    <ObligationsCard items={upcomingQuery.data?.items ?? []} />
+                  </div>
+                  <div className="xl:col-span-4">
+                    <PropertyComparison
+                      ref={propertyRef}
+                      data={propertySeriesQuery.data?.items ?? []}
+                      hiddenCount={hiddenPropertyCount}
+                      isActive={chartView === 'yield'}
+                    />
+                  </div>
+                  <div className="xl:col-span-3">
+                    <RentMarketCard onConnect={() => {}} />
+                  </div>
+                </div>
+              </>
             )}
-            <ExportButtons csvSections={csvSections} charts={charts} />
-          </aside>
+          </div>
+          <FiltersPanel
+            filters={filters}
+            onUpdateFilters={(next) => setFilters((prev) => ({ ...prev, ...next }))}
+            propertyOptions={propertyOptions}
+            onPropertyChange={(ids) => setFilters((prev) => ({ ...prev, propertyIds: ids }))}
+            csvSections={csvSections}
+            charts={charts}
+            chartView={chartView}
+            onChartViewChange={(view) => setChartView(view)}
+          />
         </div>
       </div>
     </div>
+  );
+}
+
+function AnalyticsOverviewPage() {
+  return (
+    <AnalyticsFiltersProvider>
+      <AnalyticsOverviewContent />
+    </AnalyticsFiltersProvider>
   );
 }
 

@@ -99,14 +99,6 @@ export async function GET(req: Request) {
       amount: expense.amount,
     }));
 
-  const latestActivityDate = [...incomeEntries, ...expenseEntries]
-    .map((entry) => entry.date)
-    .reduce((latest, current) => (current > latest ? current : latest), '');
-
-  if (latestActivityDate && to > latestActivityDate) {
-    to = latestActivityDate;
-  }
-
   const defaultFrom = `${to.slice(0, 7)}-01`;
   let from = url.searchParams.get('from') ?? defaultFrom;
   if (from > to) {
