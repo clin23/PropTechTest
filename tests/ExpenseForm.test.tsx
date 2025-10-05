@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ExpenseForm from '../components/ExpenseForm';
+import { ToastProvider } from '../components/ui/use-toast';
 
 vi.mock('../lib/api', () => ({
   createExpense: vi.fn(),
@@ -13,7 +14,9 @@ const renderForm = () => {
   const client = new QueryClient();
   render(
     <QueryClientProvider client={client}>
-      <ExpenseForm open showTrigger={false} />
+      <ToastProvider>
+        <ExpenseForm open showTrigger={false} />
+      </ToastProvider>
     </QueryClientProvider>
   );
 };
