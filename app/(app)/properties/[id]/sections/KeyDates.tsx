@@ -60,7 +60,7 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
     void queryClient.invalidateQueries({ queryKey: ["reminders"] });
     void queryClient.invalidateQueries({ queryKey: ["property", propertyId] });
     void queryClient.invalidateQueries({ queryKey: ["properties"] });
-    void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    void queryClient.invalidateQueries({ queryKey: ["tasks"], exact: false });
   };
 
   const createMutation = useMutation({
