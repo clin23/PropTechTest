@@ -1,5 +1,6 @@
 import { expenses, properties, isActiveProperty } from '../../app/api/store';
 import type { ExpenseBreakdown } from '../../types/analytics';
+import { mapExpenseCategory } from '../expenses/categories';
 
 export function computeExpenseBreakdown(params: {
   from?: Date;
@@ -22,7 +23,8 @@ export function computeExpenseBreakdown(params: {
 
   const map = new Map<string, number>();
   for (const e of filtered) {
-    map.set(e.category, (map.get(e.category) || 0) + e.amount);
+    const category = mapExpenseCategory(e.category);
+    map.set(category, (map.get(category) || 0) + e.amount);
   }
   const slices = Array.from(map.entries()).map(([category, amount]) => ({
     category,

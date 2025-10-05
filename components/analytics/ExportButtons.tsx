@@ -15,7 +15,7 @@ export type ChartRef = {
   element: HTMLElement | null;
 };
 
-type Props = {
+type ExportButtonsProps = {
   csvSections: CsvSection[];
   charts: ChartRef[];
   fileName?: string;
@@ -34,7 +34,7 @@ function buildCsv(sections: CsvSection[]) {
   return lines.join('\n');
 }
 
-export function ExportButtons({ csvSections, charts, fileName = 'analytics-overview' }: Props) {
+export default function ExportButtons({ csvSections, charts, fileName = 'analytics-overview' }: ExportButtonsProps) {
   const [selectedChartId, setSelectedChartId] = useState(charts[0]?.id ?? '');
   const hasCharts = charts.some((chart) => chart.element);
 
@@ -62,17 +62,21 @@ export function ExportButtons({ csvSections, charts, fileName = 'analytics-overv
   };
 
   return (
-    <div className="flex w-full flex-col gap-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <label htmlFor="export-chart" className="text-gray-600 dark:text-gray-300">
-          Chart
+    <section className="space-y-3 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm dark:border-[#1F2937] dark:bg-[#161B22]">
+      <header className="space-y-1">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Exports</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400">Download the current view</p>
+      </header>
+      <div className="space-y-2">
+        <label htmlFor="export-chart" className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Chart selection
         </label>
         <select
           id="export-chart"
           value={selectedChartId}
           onChange={(event) => setSelectedChartId(event.target.value)}
           disabled={!hasCharts}
-          className="w-40 rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl border border-slate-200/70 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F81F7] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#1F2937] dark:text-slate-200"
         >
           {charts.map((chart) => (
             <option key={chart.id} value={chart.id}>
@@ -81,26 +85,24 @@ export function ExportButtons({ csvSections, charts, fileName = 'analytics-overv
           ))}
         </select>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
-          className="flex-1 rounded-full border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:text-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
           onClick={handleExportCsv}
           disabled={!csvSections.length}
+          className="flex-1 rounded-full border border-slate-200/80 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[#2F81F7] hover:text-[#2F81F7] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#1F2937] dark:text-slate-200"
         >
           Export CSV
         </button>
         <button
           type="button"
-          className="flex-1 rounded-full border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:text-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
           onClick={handleExportPng}
           disabled={!hasCharts}
+          className="flex-1 rounded-full border border-slate-200/80 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[#2F81F7] hover:text-[#2F81F7] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#1F2937] dark:text-slate-200"
         >
           Export PNG
         </button>
       </div>
-    </div>
+    </section>
   );
 }
-
-export default ExportButtons;
