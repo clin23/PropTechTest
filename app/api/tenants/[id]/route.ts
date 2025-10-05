@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { logEvent } from '../../../../lib/log';
-import {
-  commLogStore,
-  tenantDirectory,
-  tenancySummaries,
-} from '../../tenant-crm/store';
+import { commLogStore, tenantDirectory, tenancySummaries } from '../../tenant-crm/store';
+import { syncTenantForProperty, unlinkTenantFromProperty } from '../../properties/tenant-sync';
 import {
   zCommLogEntry,
   zTenant,
@@ -58,8 +55,22 @@ export async function PATCH(
     return NextResponse.json({ message: 'Not found' }, { status: 404 });
   }
 
+  const previousPropertyId = tenant.currentPropertyId;
+
   Object.assign(tenant, parsed.data, { updatedAt: new Date().toISOString() });
   const updated = zTenant.parse(tenant);
+
+  const propertyChanged =
+    parsed.data.currentPropertyId !== undefined && parsed.data.currentPropertyId !== previousPropertyId;
+
+  if (propertyChanged && previousPropertyId && previousPropertyId !== updated.currentPropertyId) {
+    unlinkTenantFromProperty(previousPropertyId);
+  }
+
+  if (updated.currentPropertyId) {
+    syncTenantForProperty(updated.currentPropertyId, updated.fullName);
+  }
+
   logEvent('tenant_updated', { tenantId: updated.id });
   return NextResponse.json(updated);
 }
@@ -85,6 +96,9 @@ export async function DELETE(
     );
   }
 
+  if (tenant.currentPropertyId) {
+    unlinkTenantFromProperty(tenant.currentPropertyId);
+  }
   tenantDirectory.splice(tenantIndex, 1);
   logEvent('tenant_deleted', { tenantId: params.id });
   return NextResponse.json({ ok: true });

@@ -1,4 +1,4 @@
-import { tenants } from '../store';
+import { properties, tenants } from '../store';
 import { tenantDirectory, nextId } from '../tenant-crm/store';
 import { zTenant } from '../../../lib/tenant-crm/schemas';
 
@@ -24,6 +24,10 @@ const ensureTag = (tags: NullableString[] | undefined, tag: string, present: boo
 
 export function unlinkTenantFromProperty(propertyId: string) {
   const timestamp = new Date().toISOString();
+  const property = properties.find((item) => item.id === propertyId);
+  if (property) {
+    property.tenant = '';
+  }
   const crmTenant = tenantDirectory.find((tenant) => tenant.currentPropertyId === propertyId);
   if (crmTenant) {
     crmTenant.currentPropertyId = null;
@@ -46,6 +50,11 @@ export function syncTenantForProperty(propertyId: string, tenantName: unknown) {
   }
 
   const timestamp = new Date().toISOString();
+
+  const property = properties.find((item) => item.id === propertyId);
+  if (property) {
+    property.tenant = normalized;
+  }
 
   let crmTenant = tenantDirectory.find((tenant) => tenant.currentPropertyId === propertyId);
   if (!crmTenant) {
