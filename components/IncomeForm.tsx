@@ -45,6 +45,7 @@ interface IncomeFormProps {
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
   initialIncome?: IncomeRow | null;
+  onSaved?: (income: IncomeRow) => void;
 }
 
 export default function IncomeForm({
@@ -54,6 +55,7 @@ export default function IncomeForm({
   onOpenChange,
   showTrigger = true,
   initialIncome = null,
+  onSaved,
 }: IncomeFormProps) {
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -129,7 +131,7 @@ export default function IncomeForm({
       isEditing && initialIncome
         ? updateIncome(propertyId, initialIncome.id, data)
         : createIncome(propertyId, data),
-    onSuccess: (_data, vars) => {
+    onSuccess: (savedIncome, vars) => {
       toast({ title: "Income saved" });
       setOpen(false);
       setForm(getInitialForm());
@@ -138,6 +140,7 @@ export default function IncomeForm({
       queryClient.invalidateQueries({ queryKey: ["income", vars.propertyId] });
       queryClient.invalidateQueries({ queryKey: ["pnl", vars.propertyId] });
       onCreated?.();
+      onSaved?.(savedIncome as IncomeRow);
     },
     onError: (err: any) => {
       const message = err instanceof Error ? err.message : "Failed to save income";
