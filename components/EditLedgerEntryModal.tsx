@@ -285,7 +285,7 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
                 className="confirm-slider"
               />
               <span
-                className={`pointer-events-none absolute inset-0 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
+                className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
                   isConfirmed ? "text-white" : "text-gray-600 dark:text-gray-200"
                 }`}
               >

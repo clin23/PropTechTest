@@ -137,7 +137,7 @@
   background: #2563eb;
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
   border: 2px solid #ffffff;
-  margin-top: -5px;
+  margin-top: 5px;
 }
 
 .confirm-slider::-moz-range-thumb{
@@ -147,7 +147,7 @@
   background: #2563eb;
   border: 2px solid #ffffff;
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
-  transform: translateY(-5px);
+  transform: translateY(5px);
 }
 
 .confirm-slider::-ms-thumb{
@@ -157,7 +157,7 @@
   background: #2563eb;
   border: 2px solid #ffffff;
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
-  margin-top: 0;
+  margin-top: 5px;
 }
 
 .confirm-slider::-webkit-slider-runnable-track{
