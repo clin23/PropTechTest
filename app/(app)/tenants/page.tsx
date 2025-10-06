@@ -1,180 +1,148 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { TenantDetailPanel } from '../../../components/tenants/TenantDetail';
-import { TenantListPanel } from '../../../components/tenants/TenantList';
-import type {
-  TenantListFilters,
-  TenantListItem,
-  TenantListQuery,
-} from '../../../lib/api/tenants';
-import { useTenants } from '../../../lib/api/tenants';
+import {
+  useTenantList,
+  useTenantWorkspace,
+  type TenantListParams,
+} from '../../../lib/tenants/client';
+import type { TenantSummary, TenantTag } from '../../../lib/tenants/types';
+import { TenantSearchBar } from './_components/TenantSearchBar';
+import { TenantListVirtual } from './_components/TenantListVirtual';
+import { TenantPreviewPanel } from './_components/TenantPreviewPanel';
 
-export default function TenantDirectoryPage() {
-  const [selectedTenant, setSelectedTenant] = useState<string | undefined>();
+const DEBOUNCE_MS = 250;
+
+export default function TenantsOverviewPage() {
+  const router = useRouter();
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<TenantListFilters>({
-    statuses: [],
-    arrearsOnly: false,
-    nextInspectionInDays: null,
-  });
-  const debouncedSearch = useDebouncedValue(search, 300);
-
-  const query: TenantListQuery = useMemo(
-    () => ({ search: debouncedSearch, filters }),
-    [debouncedSearch, filters]
-  );
-
-  const tenantsQuery = useTenants(query);
-
-  const handleSelect = useCallback((tenant: TenantListItem | undefined) => {
-    setSelectedTenant(tenant?.id);
-  }, []);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [tags, setTags] = useState<TenantTag[]>([]);
+  const [arrearsOnly, setArrearsOnly] = useState(false);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | undefined>();
+  const [lastGoKey, setLastGoKey] = useState<number>(0);
 
   useEffect(() => {
-    const tenants = tenantsQuery.data ?? [];
+    const timer = window.setTimeout(() => setDebouncedSearch(search), DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  const listParams: TenantListParams = useMemo(
+    () => ({ q: debouncedSearch, tags, arrearsOnly }),
+    [debouncedSearch, tags, arrearsOnly]
+  );
+
+  const tenantsQuery = useTenantList(listParams);
+  const tenants = tenantsQuery.data ?? [];
+
+  useEffect(() => {
     if (tenants.length === 0) {
-      if (selectedTenant !== undefined) {
-        setSelectedTenant(undefined);
-      }
+      setSelectedTenantId(undefined);
       return;
     }
-
-    const selectedExists = selectedTenant
-      ? tenants.some((tenant) => tenant.id === selectedTenant)
-      : false;
-
-    if (!selectedTenant || !selectedExists) {
-      const activeTenant = tenants.find((tenant) => tenant.currentPropertyId);
-      const fallback = activeTenant ?? tenants[0];
-      if (fallback) {
-        setSelectedTenant(fallback.id);
-      }
+    if (!selectedTenantId || !tenants.some((tenant) => tenant.id === selectedTenantId)) {
+      setSelectedTenantId(tenants[0].id);
     }
-  }, [selectedTenant, tenantsQuery.data]);
+  }, [tenants, selectedTenantId]);
 
-  const { leftWidth, onDragStart } = useSplitPane(32);
+  const previewQuery = useTenantWorkspace(selectedTenantId);
+
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (event.key === 'f') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (event.key === 'n') {
+        event.preventDefault();
+        alert('Shortcut: new note (open from quick actions).');
+      } else if (event.key === 't') {
+        event.preventDefault();
+        alert('Shortcut: new task.');
+      } else if (event.key === 'm') {
+        event.preventDefault();
+        alert('Shortcut: new maintenance job.');
+      } else if (event.key === 'g') {
+        setLastGoKey(Date.now());
+      } else if (event.key === 'o' && Date.now() - lastGoKey < 800) {
+        event.preventDefault();
+        router.push('/tenants');
+      } else if (event.key === 'p' && Date.now() - lastGoKey < 800) {
+        event.preventDefault();
+        router.push('/properties');
+      } else if (event.key === '[') {
+        event.preventDefault();
+        cycleTenant(tenants, selectedTenantId, -1, setSelectedTenantId);
+      } else if (event.key === ']') {
+        event.preventDefault();
+        cycleTenant(tenants, selectedTenantId, 1, setSelectedTenantId);
+      }
+    };
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [lastGoKey, router, tenants, selectedTenantId]);
+
+  const handleSelect = (tenant: TenantSummary) => {
+    setSelectedTenantId(tenant.id);
+  };
+
+  const handleOpen = (tenant: TenantSummary) => {
+    router.push(`/tenants/${tenant.id}`);
+  };
 
   return (
-    <div className="flex h-full min-h-[calc(100vh-4rem)] flex-col bg-background text-foreground">
-      <header className="border-b border-border/60 bg-surface">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-xl font-semibold">Tenant CRM</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage tenants, communications, tasks, and files in a single workspace.
-            </p>
-          </div>
-          <HelpTooltip />
-        </div>
-      </header>
-      <main className="flex-1 overflow-hidden">
-        <div className="flex h-full w-full overflow-hidden">
-          <div
-            className="h-full min-w-[18rem] max-w-[32rem] overflow-hidden border-r border-border/60 bg-surface/50"
-            style={{ width: `${leftWidth}%` }}
-          >
-            <TenantListPanel
-              tenants={tenantsQuery.data ?? []}
-              isLoading={tenantsQuery.isLoading}
-              isError={Boolean(tenantsQuery.error)}
-              onRetry={() => tenantsQuery.refetch()}
-              selectedTenantId={selectedTenant}
-              onSelect={handleSelect}
-              search={search}
-              onSearchChange={setSearch}
-              filters={filters}
-              onFiltersChange={setFilters}
-            />
-          </div>
-          <div
-            role="separator"
-            tabIndex={0}
-            onMouseDown={(event) => onDragStart(event.nativeEvent)}
-            onKeyDown={(event) => {
-              if (event.key === 'ArrowLeft') {
-                event.preventDefault();
-                onDragStart(undefined, -4);
-              } else if (event.key === 'ArrowRight') {
-                event.preventDefault();
-                onDragStart(undefined, 4);
-              }
-            }}
-            aria-orientation="vertical"
-            className="flex w-2 cursor-col-resize items-center justify-center bg-transparent outline-none"
-          >
-            <div className="h-16 w-[3px] rounded-full bg-border" />
-          </div>
-          <div className="flex-1 overflow-hidden bg-surface">
-            <TenantDetailPanel tenantId={selectedTenant} />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-function HelpTooltip() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-surface/80 text-sm font-medium text-muted-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        aria-label="Tenant CRM help"
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        ?
-      </button>
-      {open ? (
-        <div className="absolute right-0 z-20 mt-2 w-72 rounded-lg border border-border/60 bg-surface/95 p-4 text-sm shadow-lg">
-          <p className="font-semibold text-foreground">Need a hand?</p>
-          <p className="mt-1 text-muted-foreground">
-            Search tenants, use <kbd className="rounded border px-1">/</kbd> shortcuts in notes, and press
-            <kbd className="ml-1 rounded border px-1">Ctrl</kbd>+<kbd className="rounded border px-1">K</kbd> to jump to search. Contact support if something feels off.
+    <main className="flex min-h-[calc(100vh-4rem)] flex-col bg-background text-foreground">
+      <header className="border-b border-border/60 bg-surface/80">
+        <div className="mx-auto flex max-w-7xl flex-col gap-1 px-8 py-6">
+          <h1 className="text-2xl font-semibold">Tenant workspace</h1>
+          <p className="text-sm text-muted-foreground">
+            Segment tenants, preview arrears, and jump straight into guided actions.
           </p>
         </div>
-      ) : null}
-    </div>
+      </header>
+      <section className="mx-auto flex w-full max-w-7xl flex-1 gap-6 px-6 py-6">
+        <div className="w-[22rem] shrink-0 space-y-4" ref={(node) => (searchInputRef.current = node?.querySelector('input') ?? null)}>
+          <TenantSearchBar
+            value={search}
+            onValueChange={setSearch}
+            selectedTags={tags}
+            onTagsChange={setTags}
+            arrearsOnly={arrearsOnly}
+            onArrearsChange={setArrearsOnly}
+          />
+        </div>
+        <div className="flex min-w-0 flex-1 gap-6">
+          <div className="w-[28rem] shrink-0">
+            <TenantListVirtual
+              tenants={tenants}
+              isLoading={tenantsQuery.isLoading}
+              selectedId={selectedTenantId}
+              onSelect={handleSelect}
+              onOpen={handleOpen}
+            />
+          </div>
+          <div className="flex-1">
+            <TenantPreviewPanel tenant={previewQuery.data} isLoading={previewQuery.isLoading} />
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
 
-function useSplitPane(initialPercentage: number) {
-  const [leftWidth, setLeftWidth] = useState(initialPercentage);
-
-  const onDragStart = useCallback((event?: MouseEvent, deltaFromKey?: number) => {
-    if (typeof deltaFromKey === 'number') {
-      setLeftWidth((prev) => clamp(prev + deltaFromKey, 18, 60));
-      return;
-    }
-    if (!event) return;
-    const startX = event.clientX;
-    const handleMove = (move: MouseEvent) => {
-      const delta = move.clientX - startX;
-      const percentage = (delta / window.innerWidth) * 100;
-      setLeftWidth((prev) => clamp(prev + percentage, 18, 60));
-    };
-    const handleUp = () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
-    };
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
-  }, []);
-
-  return { leftWidth, onDragStart };
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function useDebouncedValue<T>(value: T, delay: number) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handle = window.setTimeout(() => setDebounced(value), delay);
-    return () => window.clearTimeout(handle);
-  }, [value, delay]);
-  return debounced;
+function cycleTenant(
+  tenants: TenantSummary[],
+  currentId: string | undefined,
+  direction: 1 | -1,
+  setSelected: (id: string) => void
+) {
+  if (tenants.length === 0) return;
+  const index = currentId ? tenants.findIndex((tenant) => tenant.id === currentId) : -1;
+  const nextIndex = index === -1 ? 0 : (index + direction + tenants.length) % tenants.length;
+  setSelected(tenants[nextIndex].id);
 }
