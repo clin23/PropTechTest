@@ -388,20 +388,24 @@ export default function TasksKanban({
             ]
           : [],
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["tasks"], exact: false }),
   });
   const updateMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<TaskDto> }) =>
       updateTask(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["tasks"], exact: false }),
   });
   const archiveMut = useMutation({
     mutationFn: (id: string) => archiveTask(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["tasks"], exact: false }),
   });
   const completeMut = useMutation({
     mutationFn: (id: string) => completeTask(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["tasks"], exact: false }),
   });
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
   const [completionPrompt, setCompletionPrompt] =
