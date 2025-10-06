@@ -120,6 +120,9 @@
   padding: 0;
   margin: 0 24px;
   background: transparent;
+  border: none;
+  outline: none;
+  color: transparent;
   -webkit-appearance: none;
   appearance: none;
 }
@@ -154,15 +157,19 @@
 }
 
 .confirm-slider::-webkit-slider-runnable-track{
+  -webkit-appearance: none;
   height: 48px;
   border-radius: 9999px;
   background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .confirm-slider::-moz-range-track{
   height: 48px;
   border-radius: 9999px;
   background: transparent;
+  border: none;
 }
 
 .confirm-slider::-ms-track{
@@ -170,4 +177,17 @@
   background: transparent;
   border-color: transparent;
   color: transparent;
+}
+
+.confirm-slider::-moz-range-progress{
+  height: 48px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.confirm-slider::-ms-fill-lower,
+.confirm-slider::-ms-fill-upper{
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
