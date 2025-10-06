@@ -32,5 +32,6 @@ export type ReminderDto = {
   documents?: ReminderDocumentDto[];
   checklist?: ReminderChecklistItemDto[];
   taskId?: string | null;
+  checklistTaskIds?: Record<string, string> | null;
 };
 
