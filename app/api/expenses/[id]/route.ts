@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { expenses } from '../../store';
 import { zExpense } from '../../../../lib/validation';
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '../../../../lib/prisma';
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const idx = expenses.findIndex((e) => e.id === params.id);
