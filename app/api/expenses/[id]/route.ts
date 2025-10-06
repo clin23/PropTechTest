@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { expenses } from '../../store';
-import { zExpense } from '../../../lib/validation';
+import { zExpense } from '../../../../lib/validation';
 import { prisma } from '../../../lib/prisma';
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
