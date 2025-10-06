@@ -261,15 +261,17 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
             Confirm changes
           </label>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-            <div className="relative flex h-10 w-full items-center overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700/80 sm:flex-1">
+            <div className="relative flex h-10 w-full items-center overflow-hidden rounded-full bg-black shadow-inner sm:flex-1">
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-full bg-blue-500/90 transition-all"
+                className="pointer-events-none absolute inset-0 rounded-full transition-all"
                 style={{
                   width:
                     confirmationProgress === 0
                       ? 0
                       : `${Math.min(100, confirmationProgress + 8)}%`,
+                  background:
+                    "linear-gradient(90deg, #000000 0%, #16a34a 100%)",
                 }}
               />
               <input
@@ -286,7 +288,7 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
               />
               <span
                 className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
-                  isConfirmed ? "text-white" : "text-gray-600 dark:text-gray-200"
+                  isConfirmed ? "text-white" : "text-white/80"
                 }`}
               >
                 {isConfirmed ? "Confirmed" : "Slide right to confirm"}
