@@ -256,15 +256,15 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
             evidence.
           </p>
         </div>
-        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
-          <div className="flex w-full flex-col gap-2 sm:w-80">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 sm:text-right">
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex w-full flex-col gap-2 sm:flex-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Confirm changes
             </label>
-            <div className="relative flex h-12 w-full items-center overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+            <div className="relative flex h-10 w-full items-center overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700/80">
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-full bg-blue-500 transition-all"
+                className="pointer-events-none absolute inset-0 rounded-full bg-blue-500/90 transition-all"
                 style={{
                   width:
                     confirmationProgress === 0
@@ -292,18 +292,18 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
                 {isConfirmed ? "Confirmed" : "Slide right to confirm"}
               </span>
             </div>
-            {error && <p className="text-sm text-red-500 sm:text-right">{error}</p>}
+            {error && <p className="text-sm text-red-500">{error}</p>}
           </div>
-          <div className="flex justify-end gap-3">
+          <div className="flex shrink-0 justify-end gap-3">
             <button
-              className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium transition hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+              className="h-10 rounded-lg bg-gray-200 px-4 text-sm font-medium transition hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
               onClick={handleRequestClose}
               disabled={isSaving}
             >
               Cancel
             </button>
             <button
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-400"
+              className="h-10 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-400"
               onClick={handleSave}
               disabled={isSaving || !isConfirmed}
             >
