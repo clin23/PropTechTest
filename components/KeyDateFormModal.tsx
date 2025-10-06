@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -89,6 +90,7 @@ export default function KeyDateFormModal({
   const [addToTasks, setAddToTasks] = useState(hasLinkedTasks(initialData));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+  const [isAnimatingIn, setIsAnimatingIn] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -241,16 +243,37 @@ export default function KeyDateFormModal({
     ));
   };
 
+  useEffect(() => {
+    if (!open) return;
+
+    const frame = requestAnimationFrame(() => setIsAnimatingIn(true));
+
+    return () => {
+      cancelAnimationFrame(frame);
+      setIsAnimatingIn(false);
+    };
+  }, [open]);
+
   if (!open || !portalTarget) return null;
+
+  const handleOverlayClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
 
   return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4 py-6 transition"
+      className={`fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4 py-6 transition-opacity duration-300 ${isAnimatingIn ? "opacity-100" : "opacity-0"}`}
       role="dialog"
       aria-modal="true"
       data-testid="key-date-modal"
+      onMouseDown={handleOverlayClick}
     >
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-xl bg-white p-6 shadow-xl transition-all duration-200 ease-out dark:bg-gray-900 dark:text-white">
+      <div
+        className={`max-h-[90vh] w-full max-w-2xl transform overflow-auto rounded-xl bg-white p-6 shadow-xl transition-all duration-300 ease-out ${isAnimatingIn ? "translate-y-0 scale-100 opacity-100" : "translate-y-4 scale-95 opacity-0"} dark:bg-gray-900 dark:text-white`}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <header className="mb-4 space-y-1">
           <h2 className="text-xl font-semibold">
             {initialData ? "Edit key date" : "Add key date"}
