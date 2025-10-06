@@ -76,6 +76,7 @@ export type Reminder = {
   documents?: ReminderDocument[];
   checklist?: ReminderChecklistItem[];
   taskId?: string | null;
+  checklistTaskIds?: Record<string, string> | null;
 };
 export type RentEntry = {
   id: string;
@@ -1500,6 +1501,7 @@ const initialReminders: Reminder[] = [
       { id: 'rem1-check1', text: 'Confirm renewal intentions' },
       { id: 'rem1-check2', text: 'Send renewal paperwork' },
     ],
+    checklistTaskIds: {},
   },
   {
     id: 'rem2',
@@ -1512,6 +1514,7 @@ const initialReminders: Reminder[] = [
     severity: 'med',
     documents: [],
     checklist: [{ id: 'rem2-check1', text: 'Compare local market rents' }],
+    checklistTaskIds: {},
   },
   {
     id: 'rem3',
@@ -1524,6 +1527,7 @@ const initialReminders: Reminder[] = [
     severity: 'low',
     documents: [],
     checklist: [],
+    checklistTaskIds: {},
   },
   {
     id: 'rem4',
@@ -1536,6 +1540,7 @@ const initialReminders: Reminder[] = [
     severity: 'low',
     documents: [],
     checklist: [{ id: 'rem4-check1', text: 'Notify tenants of inspection' }],
+    checklistTaskIds: {},
   },
   {
     id: 'rem5',
@@ -1556,6 +1561,7 @@ const initialReminders: Reminder[] = [
       { id: 'rem5-check1', text: 'Book technician' },
       { id: 'rem5-check2', text: 'Record compliance certificate' },
     ],
+    checklistTaskIds: {},
   },
 ];
 
@@ -1951,6 +1957,15 @@ const cloneReminderDocuments = (docs?: ReminderDocument[]) =>
 const cloneReminderChecklist = (items?: ReminderChecklistItem[]) =>
   items?.map((item) => ({ ...item })) ?? [];
 
+const cloneChecklistTaskIds = (map?: Record<string, string> | null) => {
+  if (!map) return {};
+  return Object.fromEntries(
+    Object.entries(map).filter((entry): entry is [string, string] =>
+      typeof entry[0] === 'string' && typeof entry[1] === 'string'
+    ),
+  );
+};
+
 export const createReminder = (
   data: Omit<Reminder, 'id'> & Partial<Pick<Reminder, 'id'>>,
 ): Reminder => {
@@ -1961,6 +1976,7 @@ export const createReminder = (
     documents: cloneReminderDocuments(data.documents),
     checklist: cloneReminderChecklist(data.checklist),
     taskId: data.taskId ?? null,
+    checklistTaskIds: cloneChecklistTaskIds(data.checklistTaskIds),
   };
   reminders.push(reminder);
   return reminder;
@@ -1986,6 +2002,10 @@ export const updateReminder = (
       data.checklist !== undefined
         ? cloneReminderChecklist(data.checklist)
         : current.checklist,
+    checklistTaskIds:
+      data.checklistTaskIds !== undefined
+        ? cloneChecklistTaskIds(data.checklistTaskIds)
+        : current.checklistTaskIds ?? {},
   };
   reminders[idx] = updated;
   return updated;
