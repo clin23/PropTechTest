@@ -17,22 +17,28 @@ export default function TaskList() {
   });
   const defaultProp = properties[0];
 
+  const invalidateTasks = () =>
+    qc.invalidateQueries({ queryKey: ["tasks"], exact: false });
+
   const createMut = useMutation({
     mutationFn: (title: string) =>
-      createTask({ title, properties: defaultProp ? [{ id: defaultProp.id, address: defaultProp.address }] : [] }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+      createTask({
+        title,
+        properties: defaultProp ? [{ id: defaultProp.id, address: defaultProp.address }] : [],
+      }),
+    onSuccess: invalidateTasks,
   });
   const updateMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<TaskDto> }) => updateTask(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: invalidateTasks,
   });
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteTask(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: invalidateTasks,
   });
   const completeMut = useMutation({
     mutationFn: (id: string) => completeTask(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: invalidateTasks,
   });
 
   return (

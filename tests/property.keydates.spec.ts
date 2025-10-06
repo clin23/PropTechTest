@@ -50,6 +50,7 @@ test('User can add, edit, and delete a key date with task sync', async ({ page }
 
   await page.getByRole('tab', { name: 'Tasks' }).click();
   await expect(page.getByText('Smoke alarm service (updated)')).toBeVisible();
+  await expect(page.getByText('Confirm technician availability')).toBeVisible();
 
   await page.getByRole('tab', { name: 'Key Dates' }).click();
   await list.getByText('Smoke alarm service (updated)').click();
@@ -66,5 +67,6 @@ test('User can add, edit, and delete a key date with task sync', async ({ page }
 
   await page.getByRole('tab', { name: 'Tasks' }).click();
   await expect(page.getByText('Smoke alarm service (updated)')).toHaveCount(0);
+  await expect(page.getByText('Confirm technician availability')).toHaveCount(0);
 });
 
