@@ -255,7 +255,7 @@ export default function ExpenseForm({
                 transition={{ duration: 0.2 }}
               >
                 <motion.form
-                  className="h-full w-full max-w-2xl max-h-full space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
+                  className="h-full w-full max-w-[500px] max-h-[500px] space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
                   onClick={(e) => e.stopPropagation()}
                   onSubmit={(e) => {
                     e.preventDefault();
