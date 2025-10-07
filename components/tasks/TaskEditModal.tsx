@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
@@ -219,14 +220,39 @@ export default function TaskEditModal({
     persistChanges(true);
   };
 
-  const handleClose = () => {
-    persistChanges();
-    onClose();
-  };
-
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
+    null
+  );
+
+  useEffect(() => {
+    setPortalContainer(document.body);
+    setIsVisible(true);
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+      setPortalContainer(null);
+    };
+  }, []);
+
+  const handleClose = () => {
+    if (isClosing) {
+      return;
+    }
+
+    persistChanges();
+    setIsClosing(true);
+    setIsVisible(false);
+    closeTimeoutRef.current = setTimeout(() => {
+      onClose();
+    }, 200);
+  };
 
   useEffect(() => {
     if (!menuOpen) {
@@ -259,13 +285,23 @@ export default function TaskEditModal({
     };
   }, [menuOpen]);
 
-  return (
+  if (!portalContainer) {
+    return null;
+  }
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-200 ${
+        isVisible ? "opacity-100" : "opacity-0"
+      }`}
       onClick={handleClose}
     >
       <div
-        className="relative w-[32rem] rounded-xl bg-white p-6 shadow space-y-4 dark:bg-gray-800 dark:text-white"
+        className={`relative mx-4 w-full max-w-3xl transform space-y-4 overflow-y-auto rounded-xl bg-white p-6 shadow transition-all duration-200 max-h-[90vh] ${
+          isVisible
+            ? "translate-y-0 scale-100 opacity-100"
+            : "translate-y-2 scale-95 opacity-0"
+        } dark:bg-gray-800 dark:text-white`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -323,71 +359,80 @@ export default function TaskEditModal({
             />
           </label>
         </div>
-        <div>
-          <label className="mb-1 block text-sm dark:text-gray-200">Property</label>
-          <select
-            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            value={selectedProps[0] ?? ""}
-            onChange={(e) => setSelectedProps(e.target.value ? [e.target.value] : [])}
-          >
-            <option value="">Select property</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.address}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm dark:text-gray-200">Vendor</label>
-          <select
-            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            value={vendorId}
-            onChange={(e) => setVendorId(e.target.value)}
-          >
-            <option value="">None</option>
-            {vendors.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm dark:text-gray-200">
-              Status label
-            </label>
-            <input
+            <label className="mb-1 block text-sm dark:text-gray-200">Property</label>
+            <select
               className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              value={statusIndicator.label}
-              onChange={(e) =>
-                updateStatusIndicator({ label: e.target.value })
-              }
-            />
+              value={selectedProps[0] ?? ""}
+              onChange={(e) => setSelectedProps(e.target.value ? [e.target.value] : [])}
+            >
+              <option value="">Select property</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.address}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm dark:text-gray-200">
-              Status colour
-            </label>
-            <div className="flex items-center gap-3">
+            <label className="mb-1 block text-sm dark:text-gray-200">Vendor</label>
+            <select
+              className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              value={vendorId}
+              onChange={(e) => setVendorId(e.target.value)}
+            >
+              <option value="">None</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start">
+          <div className="flex-1 space-y-3">
+            <div>
+              <label className="mb-1 block text-sm dark:text-gray-200">
+                Status label
+              </label>
               <input
-                type="color"
-                className="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-transparent p-1 dark:border-gray-600"
-                value={resolvedColorValue}
-                onChange={(event) =>
-                  updateStatusIndicator({ color: event.target.value })
+                className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                value={statusIndicator.label}
+                onChange={(e) =>
+                  updateStatusIndicator({ label: e.target.value })
                 }
-                aria-label="Choose status colour"
               />
-              <span className="rounded border border-gray-200 px-2 py-1 font-mono text-xs uppercase tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
-                {displayedColorValue}
-              </span>
             </div>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Use the colour picker or choose a preset below.
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div>
+              <label className="mb-1 block text-sm dark:text-gray-200">
+                Status colour
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  className="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-transparent p-1 dark:border-gray-600"
+                  value={resolvedColorValue}
+                  onChange={(event) =>
+                    updateStatusIndicator({ color: event.target.value })
+                  }
+                  aria-label="Choose status colour"
+                />
+                <span className="rounded border border-gray-200 px-2 py-1 font-mono text-xs uppercase tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
+                  {displayedColorValue}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Use the colour picker or choose a preset.
+              </p>
+            </div>
+          </div>
+          <div className="flex-1">
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Presets
+            </span>
+            <div className="flex flex-wrap gap-2">
               {STATUS_INDICATOR_PRESETS.map((preset) => {
                 const isActive =
                   preset.color === statusIndicator.color &&
@@ -457,6 +502,7 @@ export default function TaskEditModal({
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    portalContainer
   );
 }
