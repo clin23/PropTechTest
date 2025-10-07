@@ -264,14 +264,15 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
             <div className="relative flex h-10 w-full items-center overflow-hidden rounded-full bg-black shadow-inner sm:flex-1">
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-full transition-all"
+                className="pointer-events-none absolute inset-0 rounded-full transition-all duration-200 ease-out"
                 style={{
-                  width:
-                    confirmationProgress === 0
-                      ? 0
-                      : `${Math.min(100, confirmationProgress + 8)}%`,
-                  background:
-                    "linear-gradient(90deg, #000000 0%, #16a34a 100%)",
+                  transformOrigin: "left center",
+                  transform: `scaleX(${Math.min(Math.max(confirmationProgress, 0), 100) / 100})`,
+                  background: isConfirmed
+                    ? "#16a34a"
+                    : "linear-gradient(90deg, #000000 0%, #16a34a 100%)",
+                  opacity: confirmationProgress > 0 ? 1 : 0,
+                  willChange: "transform, background",
                 }}
               />
               <input
