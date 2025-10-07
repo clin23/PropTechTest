@@ -159,7 +159,7 @@ export default function DocumentUploadModal({ open, onClose, propertyId }: Props
             transition={{ duration: 0.2 }}
           >
             <motion.div
-              className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-lg dark:bg-slate-900 dark:text-slate-100"
+              className="w-full max-w-[500px] max-h-[500px] space-y-4 overflow-y-auto rounded-xl bg-white p-6 shadow-lg dark:bg-slate-900 dark:text-slate-100"
               onClick={(e) => e.stopPropagation()}
               initial={{ opacity: 0, y: 16, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
