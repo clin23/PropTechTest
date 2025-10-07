@@ -60,6 +60,10 @@ export default function IncomesTable({
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [search, setSearch] = useState("");
+  const [fromPlaceholder, setFromPlaceholder] = useState("From (field 1)");
+  const [toPlaceholder, setToPlaceholder] = useState("To (field 2)");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<IncomeRow | null>(null);
   const [selectedIncome, setSelectedIncome] = useState<IncomeRow | null>(null);
   const [detailConfirm, setDetailConfirm] = useState("");
@@ -75,6 +79,7 @@ export default function IncomesTable({
   const removeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const notificationIdRef = useRef(0);
   const editingSnapshotRef = useRef<IncomeRow | null>(null);
+  const sortMenuRef = useRef<HTMLDivElement | null>(null);
 
   const excludedCategories = useMemo(
     () => excludeCategories.map((value) => value.trim().toLowerCase()),
@@ -135,6 +140,27 @@ export default function IncomesTable({
     };
   }, [notification]);
 
+  useEffect(() => {
+    if (!sortMenuOpen) {
+      return;
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      if (!sortMenuRef.current) {
+        return;
+      }
+      if (event.target instanceof Node && !sortMenuRef.current.contains(event.target)) {
+        setSortMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [sortMenuOpen]);
+
   const filtered = useMemo(() => {
     if (!excludedCategories.length) {
       return data;
@@ -148,7 +174,7 @@ export default function IncomesTable({
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
 
-    return filtered.filter((r) => {
+    const matches = filtered.filter((r) => {
       const afterFrom = from ? new Date(r.date) >= new Date(from) : true;
       const beforeTo = to ? new Date(r.date) <= new Date(to) : true;
 
@@ -171,7 +197,16 @@ export default function IncomesTable({
 
       return afterFrom && beforeTo && matchesTerm;
     });
-  }, [filtered, from, search, to]);
+
+    const sorted = [...matches];
+    sorted.sort((a, b) =>
+      sortOrder === "asc"
+        ? (a.date || "").localeCompare(b.date || "")
+        : (b.date || "").localeCompare(a.date || "")
+    );
+
+    return sorted;
+  }, [filtered, from, search, sortOrder, to]);
 
   const openDetail = (income: IncomeRow) => {
     setSelectedIncome(income);
@@ -192,6 +227,18 @@ export default function IncomesTable({
   ) => {
     notificationIdRef.current += 1;
     setNotification({ id: notificationIdRef.current, message, undo });
+  };
+
+  const datePlaceholder = "dd/mm/yyyy";
+
+  const clearFilters = () => {
+    setFrom("");
+    setTo("");
+    setSearch("");
+    setFromPlaceholder("From (field 1)");
+    setToPlaceholder("To (field 2)");
+    setSortOrder("desc");
+    setSortMenuOpen(false);
   };
 
   const handleEdit = (income: IncomeRow) => {
@@ -325,39 +372,149 @@ export default function IncomesTable({
           className={filterControlClass}
           value={from}
           onChange={(e) => setFrom(e.target.value)}
-          placeholder="From"
+          placeholder={fromPlaceholder}
+          onFocus={() => setFromPlaceholder(datePlaceholder)}
+          onBlur={() => {
+            if (!from) {
+              setFromPlaceholder("From (field 1)");
+            }
+          }}
         />
         <input
           type="date"
           className={filterControlClass}
           value={to}
           onChange={(e) => setTo(e.target.value)}
-          placeholder="To"
+          placeholder={toPlaceholder}
+          onFocus={() => setToPlaceholder(datePlaceholder)}
+          onBlur={() => {
+            if (!to) {
+              setToPlaceholder("To (field 2)");
+            }
+          }}
         />
-        <div className="relative">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
+        <div className="relative" ref={sortMenuRef}>
+          <button
+            type="button"
+            className={`${filterControlClass} flex h-10 w-10 items-center justify-center px-0`}
+            onClick={() => setSortMenuOpen((open) => !open)}
+            aria-haspopup="menu"
+            aria-expanded={sortMenuOpen}
+            aria-label="Toggle date sort order"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-5 w-5"
               aria-hidden="true"
             >
               <path
-                fillRule="evenodd"
-                d="M9 3.5a5.5 5.5 0 1 0 3.356 9.86l3.641 3.642a.75.75 0 1 0 1.06-1.061l-3.64-3.642A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"
-                clipRule="evenodd"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.25 7.5h7.5m-7.5 4.5h5.25M12 3v18m0 0 3-3m-3 3-3-3"
               />
             </svg>
-          </span>
-          <input
-            type="search"
-            className={`${filterControlClass} w-full min-w-[18rem] pl-10`}
-            placeholder="Search for other income"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search for other income"
-          />
+          </button>
+          <div
+            className={`absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg transition-all duration-150 ease-out dark:border-gray-700 dark:bg-gray-800 ${
+              sortMenuOpen ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
+            }`}
+            role="menu"
+          >
+            <button
+              type="button"
+              className={`flex w-full items-center justify-between px-4 py-2 text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                sortOrder === "asc" ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
+              }`}
+              onClick={() => {
+                setSortOrder("asc");
+                setSortMenuOpen(false);
+              }}
+              role="menuitem"
+            >
+              <span>Date ascending</span>
+              {sortOrder === "asc" && (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.704 5.29a1 1 0 0 1 0 1.42l-7.004 7a1 1 0 0 1-1.42 0l-3.002-3a1 1 0 1 1 1.42-1.42L9 11.59l6.294-6.3a1 1 0 0 1 1.41 0Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+            </button>
+            <button
+              type="button"
+              className={`flex w-full items-center justify-between px-4 py-2 text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                sortOrder === "desc" ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
+              }`}
+              onClick={() => {
+                setSortOrder("desc");
+                setSortMenuOpen(false);
+              }}
+              role="menuitem"
+            >
+              <span>Date descending</span>
+              {sortOrder === "desc" && (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.704 5.29a1 1 0 0 1 0 1.42l-7.004 7a1 1 0 0 1-1.42 0l-3.002-3a1 1 0 1 1 1.42-1.42L9 11.59l6.294-6.3a1 1 0 0 1 1.41 0Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9 3.5a5.5 5.5 0 1 0 3.356 9.86l3.641 3.642a.75.75 0 1 0 1.06-1.061l-3.64-3.642A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </span>
+            <input
+              type="search"
+              className={`${filterControlClass} w-full min-w-[18rem] pl-10`}
+              placeholder="Search for other income"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search for other income"
+            />
+          </div>
+          <button
+            type="button"
+            className="h-10 rounded-full border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+            onClick={clearFilters}
+          >
+            Clear filters
+          </button>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto pt-4">{content}</div>
