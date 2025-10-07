@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
@@ -225,13 +226,18 @@ export default function TaskEditModal({
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
+    null
+  );
 
   useEffect(() => {
+    setPortalContainer(document.body);
     setIsVisible(true);
     return () => {
       if (closeTimeoutRef.current) {
         clearTimeout(closeTimeoutRef.current);
       }
+      setPortalContainer(null);
     };
   }, []);
 
@@ -279,7 +285,11 @@ export default function TaskEditModal({
     };
   }, [menuOpen]);
 
-  return (
+  if (!portalContainer) {
+    return null;
+  }
+
+  return createPortal(
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-200 ${
         isVisible ? "opacity-100" : "opacity-0"
@@ -492,6 +502,7 @@ export default function TaskEditModal({
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    portalContainer
   );
 }

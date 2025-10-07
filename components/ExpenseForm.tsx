@@ -18,6 +18,19 @@ import type { ExpenseRow } from "../types/expense";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
+
+const calculateGSTFromAmount = (amount: string) => {
+  const parsed = parseFloat(amount);
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
+  const gstValue = parsed * 0.1;
+  if (!Number.isFinite(gstValue)) {
+    return "";
+  }
+  return (Math.round(gstValue * 100) / 100).toFixed(2);
+};
+
 type FormState = {
   propertyId: string;
   date: string;
@@ -26,6 +39,7 @@ type FormState = {
   vendor: string;
   amount: string;
   gst: string;
+  applyGST: boolean;
   notes: string;
   label: string;
   receipt: File | null;
@@ -105,14 +119,24 @@ export default function ExpenseForm({
       return "";
     })();
 
+    const defaultAmount = coerceString(typedDefaults.amount);
+    const defaultGST = coerceString(typedDefaults.gst);
+    const applyGST = (() => {
+      const parsed = parseFloat(defaultGST);
+      return Number.isFinite(parsed) && parsed > 0;
+    })();
+
     return {
       propertyId: coerceString(propertyId ?? typedDefaults.propertyId),
       date: coerceString(typedDefaults.date),
       group: derivedGroup,
       category: defaultCategory,
       vendor: coerceString(typedDefaults.vendor),
-      amount: coerceString(typedDefaults.amount),
-      gst: coerceString(typedDefaults.gst),
+      amount: defaultAmount,
+      gst: applyGST
+        ? defaultGST || calculateGSTFromAmount(defaultAmount)
+        : "",
+      applyGST,
       notes: coerceString(typedDefaults.notes),
       label: defaultLabel,
       receipt: null,
@@ -286,7 +310,10 @@ export default function ExpenseForm({
                         category: form.category || form.group,
                         vendor: form.vendor,
                         amount: parseFloat(form.amount),
-                        gst: form.gst ? parseFloat(form.gst) : 0,
+                        gst:
+                          form.applyGST && form.gst
+                            ? parseFloat(form.gst)
+                            : 0,
                         notes: form.notes || undefined,
                         label: form.label || undefined,
                       },
@@ -440,18 +467,56 @@ export default function ExpenseForm({
                   type="number"
                   className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                   value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  onChange={(e) => {
+                    const nextAmount = e.target.value;
+                    setForm((prev) => ({
+                      ...prev,
+                      amount: nextAmount,
+                      gst: prev.applyGST
+                        ? calculateGSTFromAmount(nextAmount)
+                        : "",
+                    }));
+                  }}
                 />
               </label>
-              <label className="block text-gray-700 dark:text-gray-300">
-                GST
-                <input
-                  type="number"
-                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.gst}
-                  onChange={(e) => setForm({ ...form, gst: e.target.value })}
-                />
-              </label>
+              <div className="flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-900/40">
+                <label
+                  htmlFor="gst-toggle"
+                  className="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                >
+                  <input
+                    id="gst-toggle"
+                    type="checkbox"
+                    className="h-4 w-4"
+                    aria-label="GST"
+                    checked={form.applyGST}
+                    onChange={(e) => {
+                      const shouldApply = e.target.checked;
+                      setForm((prev) => ({
+                        ...prev,
+                        applyGST: shouldApply,
+                        gst: shouldApply
+                          ? calculateGSTFromAmount(prev.amount)
+                          : "",
+                      }));
+                    }}
+                  />
+                  <span className="flex items-center gap-1">
+                    GST
+                    <span
+                      className="cursor-help text-sm text-gray-500 dark:text-gray-400"
+                      title="Select this option if the expense is not inclusive of GST. If selected, 10% will be logged in the GST column; otherwise the GST column will remain blank."
+                    >
+                      ?
+                    </span>
+                  </span>
+                </label>
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  {form.applyGST && form.gst
+                    ? `$${form.gst}`
+                    : "No GST applied"}
+                </span>
+              </div>
               <label className="block text-gray-700 dark:text-gray-300">
                 Notes
                 <textarea
