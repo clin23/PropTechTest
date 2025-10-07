@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listProperties, getProperty, fetchTenants, getTenant } from "../lib/api";
@@ -108,6 +108,7 @@ function SettingsIcon() {
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [recentPropertyIds, setRecentPropertyIds] = useState<string[]>([]);
   const [recentTenantIds, setRecentTenantIds] = useState<string[]>([]);
   const pathname = usePathname();
@@ -225,10 +226,41 @@ export default function Sidebar() {
     },
   ];
 
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    closeTimeoutRef.current = setTimeout(() => setOpen(false), 200);
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      handleMouseLeave();
+    }
+  };
+
   return (
     <div
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleMouseEnter}
+      onBlur={handleBlur}
       className={`relative h-screen bg-bg-base border-r border-[var(--border)] overflow-hidden transition-[width] duration-300 ease-in-out ${
         open ? "w-64" : "w-16"
       }`}
@@ -249,7 +281,10 @@ export default function Sidebar() {
                 <Link
                   href={link.href}
                   prefetch
-                  onMouseEnter={() => router.prefetch(link.href)}
+                  onMouseEnter={() => {
+                    handleMouseEnter();
+                    router.prefetch(link.href);
+                  }}
                   className={`relative flex items-center px-4 py-2 rounded hover:bg-[var(--hover)] text-text-primary ${
                     open ? "" : "justify-center"
                   } ${
@@ -278,6 +313,7 @@ export default function Sidebar() {
                         href={child.href}
                         prefetch
                         onMouseEnter={() => {
+                          handleMouseEnter();
                           router.prefetch(child.href);
                           child.prefetch?.();
                         }}
@@ -300,6 +336,7 @@ export default function Sidebar() {
           <Link
             href="/settings"
             className="p-2 rounded hover:bg-[var(--hover)]"
+            onMouseEnter={handleMouseEnter}
             aria-label="Settings"
           >
             <SettingsIcon />
