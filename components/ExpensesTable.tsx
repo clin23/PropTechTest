@@ -239,6 +239,7 @@ export default function ExpensesTable({
     }
 
     return data.filter((expense) => {
+      const total = expense.amount + expense.gst;
       const haystack = [
         expense.category,
         expense.vendor,
@@ -247,6 +248,7 @@ export default function ExpensesTable({
         expense.date,
         expense.amount ? String(expense.amount) : undefined,
         expense.gst ? String(expense.gst) : undefined,
+        total ? String(total) : undefined,
         !propertyId ? propertyMap[expense.propertyId] : undefined,
       ];
 
@@ -264,7 +266,7 @@ export default function ExpensesTable({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
-        className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 dark:border-gray-800 dark:bg-gray-900"
+        className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-gray-800 dark:bg-gray-900"
       >
         {!propertyId && (
           <select
@@ -327,7 +329,7 @@ export default function ExpensesTable({
           ) : filteredData.length === 0 ? (
             <EmptyState message="No expenses match your search." />
           ) : (
-            <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mx-6 lg:mx-8 dark:border-gray-700 dark:bg-gray-800">
               <table className="min-w-full">
                 <thead>
                   <tr className="bg-gray-100 dark:bg-gray-700">
@@ -335,8 +337,7 @@ export default function ExpensesTable({
                     <th className="p-2 text-left">Date</th>
                     <th className="p-2 text-left">Category</th>
                     <th className="p-2 text-left">Vendor</th>
-                    <th className="p-2 text-left">Amount</th>
-                    <th className="p-2 text-left">GST</th>
+                    <th className="p-2 text-left">Total</th>
                     <th className="p-2 text-left">Notes</th>
                     <th className="p-2 text-left">Receipt</th>
                   </tr>
@@ -363,8 +364,7 @@ export default function ExpensesTable({
                       <td className="p-2">{formatShortDate(r.date)}</td>
                       <td className="p-2">{r.category}</td>
                       <td className="p-2">{r.vendor}</td>
-                      <td className="p-2">{r.amount}</td>
-                      <td className="p-2">{r.gst}</td>
+                      <td className="p-2">{r.amount + r.gst}</td>
                       <td className="p-2">
                         {r.notes ? (
                           <span
@@ -494,6 +494,10 @@ export default function ExpensesTable({
                 <div>
                   <dt className="text-gray-500 dark:text-gray-400">Vendor</dt>
                   <dd>{selectedExpense.vendor || "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">Total</dt>
+                  <dd>{selectedExpense.amount + selectedExpense.gst}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 dark:text-gray-400">Amount</dt>
