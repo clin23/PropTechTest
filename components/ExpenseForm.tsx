@@ -338,26 +338,31 @@ export default function ExpenseForm({
                       className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                       value={form.group}
                       onChange={(e) =>
-                        setForm({ ...form, group: e.target.value, category: "" })
+                        setForm({
+                          ...form,
+                          group: e.target.value,
+                          category: "",
+                          label: "",
+                        })
                       }
                     >
-                  <option value="">Select category</option>
-                  {recent.length > 0 && (
-                    <optgroup label="Recent">
-                      {recent.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {humanize(cat)}
+                      <option value="">Select category</option>
+                      {recent.length > 0 && (
+                        <optgroup label="Recent">
+                          {recent.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {humanize(cat)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {Object.keys(EXPENSE_CATEGORIES).map((group) => (
+                        <option key={group} value={group}>
+                          {humanize(group)}
                         </option>
                       ))}
-                    </optgroup>
-                  )}
-                  {Object.keys(EXPENSE_CATEGORIES).map((group) => (
-                    <option key={group} value={group}>
-                      {humanize(group)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                    </select>
+                  </label>
               {form.group && (
                 form.category === "" && form.label === "" ? (
                   <div className="flex items-start gap-2">
@@ -420,16 +425,6 @@ export default function ExpenseForm({
                     />
                   </label>
                 )
-              )}
-              {!form.group && (
-                <label className="block text-gray-700 dark:text-gray-300">
-                  Custom label
-                  <input
-                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                    value={form.label}
-                    onChange={(e) => setForm({ ...form, label: e.target.value })}
-                  />
-                </label>
               )}
               <label className="block text-gray-700 dark:text-gray-300">
                 Vendor
