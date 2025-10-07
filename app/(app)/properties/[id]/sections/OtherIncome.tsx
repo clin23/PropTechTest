@@ -1,19 +1,11 @@
 "use client";
 
 import IncomesTable from "../../../../../components/IncomesTable";
+import { RENT_LEDGER_CATEGORY_NAMES } from "../../../../../lib/income-ledger";
 
 interface OtherIncomeProps {
   propertyId: string;
 }
-
-const CORE_RENT_CATEGORIES = [
-  "Base rent",
-  "Rent",
-  "Rent payment",
-  "Core rent",
-  "Arrears catch-up",
-  "Arrears catchup",
-];
 
 export default function OtherIncome({ propertyId }: OtherIncomeProps) {
   return (
@@ -21,7 +13,7 @@ export default function OtherIncome({ propertyId }: OtherIncomeProps) {
       <div className="flex-1 min-h-0">
         <IncomesTable
           propertyId={propertyId}
-          excludeCategories={CORE_RENT_CATEGORIES}
+          excludeCategories={[...RENT_LEDGER_CATEGORY_NAMES]}
         />
       </div>
     </div>
