@@ -353,10 +353,10 @@ export default function IncomesTable({
           <input
             type="search"
             className={`${filterControlClass} w-full min-w-[12rem] pl-10`}
-            placeholder="Search income"
+            placeholder="Search for other income"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search income"
+            aria-label="Search for other income"
           />
         </div>
       </div>
