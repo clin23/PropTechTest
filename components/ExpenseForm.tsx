@@ -461,61 +461,63 @@ export default function ExpenseForm({
                   onChange={(e) => setForm({ ...form, vendor: e.target.value })}
                 />
               </label>
-              <label className="block text-gray-700 dark:text-gray-300">
-                Amount
-                <input
-                  type="number"
-                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.amount}
-                  onChange={(e) => {
-                    const nextAmount = e.target.value;
-                    setForm((prev) => ({
-                      ...prev,
-                      amount: nextAmount,
-                      gst: prev.applyGST
-                        ? calculateGSTFromAmount(nextAmount)
-                        : "",
-                    }));
-                  }}
-                />
-              </label>
-              <div className="flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-900/40">
-                <label
-                  htmlFor="gst-toggle"
-                  className="flex items-center gap-2 text-gray-700 dark:text-gray-300"
-                >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
+                <label className="block text-gray-700 dark:text-gray-300 sm:flex-1 sm:max-w-xs">
+                  Amount
                   <input
-                    id="gst-toggle"
-                    type="checkbox"
-                    className="h-4 w-4"
-                    aria-label="GST"
-                    checked={form.applyGST}
+                    type="number"
+                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    value={form.amount}
                     onChange={(e) => {
-                      const shouldApply = e.target.checked;
+                      const nextAmount = e.target.value;
                       setForm((prev) => ({
                         ...prev,
-                        applyGST: shouldApply,
-                        gst: shouldApply
-                          ? calculateGSTFromAmount(prev.amount)
+                        amount: nextAmount,
+                        gst: prev.applyGST
+                          ? calculateGSTFromAmount(nextAmount)
                           : "",
                       }));
                     }}
                   />
-                  <span className="flex items-center gap-1">
-                    GST
-                    <span
-                      className="cursor-help text-sm text-gray-500 dark:text-gray-400"
-                      title="Select this option if the expense is not inclusive of GST. If selected, 10% will be logged in the GST column; otherwise the GST column will remain blank."
-                    >
-                      ?
-                    </span>
-                  </span>
                 </label>
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {form.applyGST && form.gst
-                    ? `$${form.gst}`
-                    : "No GST applied"}
-                </span>
+                <div className="flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 sm:flex-1 sm:max-w-xs">
+                  <label
+                    htmlFor="gst-toggle"
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      id="gst-toggle"
+                      type="checkbox"
+                      className="h-4 w-4"
+                      aria-label="GST"
+                      checked={form.applyGST}
+                      onChange={(e) => {
+                        const shouldApply = e.target.checked;
+                        setForm((prev) => ({
+                          ...prev,
+                          applyGST: shouldApply,
+                          gst: shouldApply
+                            ? calculateGSTFromAmount(prev.amount)
+                            : "",
+                        }));
+                      }}
+                    />
+                    <span className="flex items-center gap-1">
+                      GST
+                      <span
+                        className="cursor-help text-sm text-gray-500 dark:text-gray-400"
+                        title="Select this option if the expense is not inclusive of GST. If selected, 10% will be logged in the GST column; otherwise the GST column will remain blank."
+                      >
+                        ?
+                      </span>
+                    </span>
+                  </label>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {form.applyGST && form.gst
+                      ? `$${form.gst}`
+                      : "No GST applied"}
+                  </span>
+                </div>
               </div>
               <label className="block text-gray-700 dark:text-gray-300">
                 Notes
