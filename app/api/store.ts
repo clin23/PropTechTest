@@ -2046,7 +2046,22 @@ export const createTask = (
 export const updateTask = (id: string, data: Partial<TaskDto>): TaskDto | null => {
   const idx = tasks.findIndex((t) => t.id === id);
   if (idx === -1) return null;
-  const updated = { ...tasks[idx], ...data, updatedAt: new Date().toISOString() } as TaskDto;
+  const current = tasks[idx];
+  const statusChanged =
+    data.status !== undefined && data.status !== current.status;
+  const nextCompleted =
+    data.completed !== undefined
+      ? data.completed
+      : statusChanged && current.completed
+        ? false
+        : current.completed ?? false;
+
+  const updated = {
+    ...current,
+    ...data,
+    completed: nextCompleted,
+    updatedAt: new Date().toISOString(),
+  } as TaskDto;
   tasks[idx] = updated;
   return updated;
 };
