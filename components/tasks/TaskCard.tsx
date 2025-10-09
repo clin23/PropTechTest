@@ -45,11 +45,15 @@ export default function TaskCard({
       (startOfDue.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24);
     return diff === 1;
   })();
-  const normalizedStatus = (task.status ?? "").toLowerCase();
   const completed =
     typeof isCompleted === "boolean"
       ? isCompleted
-      : normalizedStatus === "done" || normalizedStatus === "complete";
+      : Boolean(task.completed);
+  const borderColorClass = completed
+    ? "border-green-500"
+    : dueSoon
+      ? "border-yellow-500"
+      : "";
   const indicatorValue = deriveIndicatorForTask({
     status: task.status,
     tags: task.tags,
@@ -60,7 +64,7 @@ export default function TaskCard({
     <div
       className={`group relative flex flex-col rounded border p-2 ${
         onClick ? "cursor-pointer" : ""
-      } ${dueSoon ? "border-yellow-500" : ""}`}
+      } ${borderColorClass}`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-2">
