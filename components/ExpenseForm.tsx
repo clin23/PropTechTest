@@ -510,11 +510,11 @@ export default function ExpenseForm({
                       />
                       {form.applyGST ? "GST applied" : "Apply GST"}
                     </label>
-                    <span className="whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                      {form.applyGST && form.gst
-                        ? `$${form.gst}`
-                        : "Not Applied"}
-                    </span>
+                    {form.applyGST && form.gst ? (
+                      <span className="whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                        {`$${form.gst}`}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </div>
