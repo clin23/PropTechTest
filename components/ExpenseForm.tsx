@@ -466,7 +466,7 @@ export default function ExpenseForm({
                   Amount
                   <input
                     type="number"
-                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    className="border p-1 w-full rounded bg-white text-gray-900 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                     value={form.amount}
                     onChange={(e) => {
                       const nextAmount = e.target.value;
@@ -480,43 +480,42 @@ export default function ExpenseForm({
                     }}
                   />
                 </label>
-                <div className="flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 sm:flex-1 sm:max-w-xs">
+                <div className="sm:flex-1 sm:max-w-xs">
                   <label
                     htmlFor="gst-toggle"
-                    className="flex items-center gap-2"
+                    className="block text-gray-700 dark:text-gray-300"
                   >
-                    <input
-                      id="gst-toggle"
-                      type="checkbox"
-                      className="h-4 w-4"
-                      aria-label="GST"
-                      checked={form.applyGST}
-                      onChange={(e) => {
-                        const shouldApply = e.target.checked;
-                        setForm((prev) => ({
-                          ...prev,
-                          applyGST: shouldApply,
-                          gst: shouldApply
-                            ? calculateGSTFromAmount(prev.amount)
-                            : "",
-                        }));
-                      }}
-                    />
-                    <span className="flex items-center gap-1">
-                      GST
-                      <span
-                        className="cursor-help text-sm text-gray-500 dark:text-gray-400"
-                        title="Select this option if the expense is not inclusive of GST. If selected, 10% will be logged in the GST column; otherwise the GST column will remain blank."
-                      >
-                        ?
-                      </span>
-                    </span>
+                    GST
                   </label>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    {form.applyGST && form.gst
-                      ? `$${form.gst}`
-                      : "No GST applied"}
-                  </span>
+                  <div className="mt-1 flex items-center justify-between rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                    <label
+                      htmlFor="gst-toggle"
+                      className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200"
+                    >
+                      <input
+                        id="gst-toggle"
+                        type="checkbox"
+                        className="h-4 w-4 rounded border border-gray-500 bg-white text-gray-900 accent-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 dark:border-gray-400 dark:bg-gray-900 dark:text-gray-100 dark:accent-gray-800 dark:focus-visible:ring-gray-400"
+                        checked={form.applyGST}
+                        onChange={(e) => {
+                          const shouldApply = e.target.checked;
+                          setForm((prev) => ({
+                            ...prev,
+                            applyGST: shouldApply,
+                            gst: shouldApply
+                              ? calculateGSTFromAmount(prev.amount)
+                              : "",
+                          }));
+                        }}
+                      />
+                      Apply GST
+                    </label>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      {form.applyGST && form.gst
+                        ? `$${form.gst}`
+                        : "No GST applied"}
+                    </span>
+                  </div>
                 </div>
               </div>
               <label className="block text-gray-700 dark:text-gray-300">
