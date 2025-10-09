@@ -84,13 +84,34 @@ export default function TaskEditModal({
       ? statusIndicator.color.toUpperCase()
       : statusIndicator.color;
 
-  const updateStatusIndicator = useCallback(
-    (value: Partial<StatusIndicatorValue>) => {
-      setStatusIndicator((prev) =>
-        normalizeStatusIndicatorValue({ ...prev, ...value })
-      );
-    },
+  const isCompletedIndicator = useCallback(
+    (value: StatusIndicatorValue) =>
+      value.label === COMPLETED_STATUS_INDICATOR.label &&
+      value.color === COMPLETED_STATUS_INDICATOR.color,
     []
+  );
+
+  const updateStatusIndicator = useCallback(
+    (
+      value: Partial<StatusIndicatorValue>,
+      options?: { fromPreset?: boolean }
+    ) => {
+      setStatusIndicator((previous) => {
+        const next = normalizeStatusIndicatorValue({ ...previous, ...value });
+        const matchesCompleted = isCompletedIndicator(next);
+
+        setCompleted((current) => {
+          if (matchesCompleted) {
+            return options?.fromPreset ? true : current;
+          }
+
+          return current ? false : current;
+        });
+
+        return matchesCompleted ? COMPLETED_STATUS_INDICATOR : next;
+      });
+    },
+    [isCompletedIndicator]
   );
 
   const initialPayloadRef = useRef<string>();
@@ -520,10 +541,13 @@ export default function TaskEditModal({
                         : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
                     }`}
                     onClick={() =>
-                      updateStatusIndicator({
-                        label: preset.label,
-                        color: preset.color,
-                      })
+                      updateStatusIndicator(
+                        {
+                          label: preset.label,
+                          color: preset.color,
+                        },
+                        { fromPreset: true }
+                      )
                     }
                   >
                     <span
