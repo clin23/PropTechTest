@@ -285,15 +285,15 @@ export default function IncomesTable({
     content = <EmptyState message="No income records found." />;
   } else if (hasMatches) {
     content = (
-      <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div className="-mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:-mx-6 lg:-mx-8 dark:border-gray-700 dark:bg-gray-800">
         <table className="min-w-full">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-700">
-              <th className="p-2 text-left">Date</th>
-              <th className="p-2 text-left">Category</th>
-              <th className="p-2 text-center">Evidence</th>
-              <th className="p-2 text-left">Amount</th>
-              <th className="p-2 text-left">Notes</th>
+              <th className="px-4 py-3 text-left">Date</th>
+              <th className="px-4 py-3 text-left">Category</th>
+              <th className="px-4 py-3 text-center">Evidence</th>
+              <th className="px-4 py-3 text-left">Amount</th>
+              <th className="px-4 py-3 text-left">Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -312,9 +312,9 @@ export default function IncomesTable({
                 tabIndex={0}
                 aria-label={`View income entry for ${formatShortDate(r.date)}`}
               >
-                <td className="p-2">{formatShortDate(r.date)}</td>
-                <td className="p-2">{r.category || r.label || "—"}</td>
-                <td className="p-2 text-center">
+                <td className="px-4 py-3">{formatShortDate(r.date)}</td>
+                <td className="px-4 py-3">{r.category || r.label || "—"}</td>
+                <td className="px-4 py-3 text-center">
                   {r.evidenceUrl ? (
                     <EvidenceLink
                       href={r.evidenceUrl}
@@ -325,8 +325,8 @@ export default function IncomesTable({
                     <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                   )}
                 </td>
-                <td className="p-2">{r.amount}</td>
-                <td className="p-2">
+                <td className="px-4 py-3">{r.amount}</td>
+                <td className="px-4 py-3">
                   {r.notes ? (
                     <span
                       className="inline-flex items-center text-gray-600 dark:text-gray-300"

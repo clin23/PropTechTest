@@ -494,17 +494,17 @@ export default function ExpensesTable({
           ) : filteredData.length === 0 ? (
             <EmptyState message="No expenses match your search." />
           ) : (
-            <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mx-6 lg:mx-8 dark:border-gray-700 dark:bg-gray-800">
+            <div className="-mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:-mx-6 lg:-mx-8 dark:border-gray-700 dark:bg-gray-800">
               <table className="min-w-full">
                 <thead>
                   <tr className="bg-gray-100 dark:bg-gray-700">
-                    {!propertyId && <th className="p-2 text-left">Property</th>}
-                    <th className="p-2 text-left">Date</th>
-                    <th className="p-2 text-left">Category</th>
-                    <th className="p-2 text-left">Vendor</th>
-                    <th className="p-2 text-left">Total</th>
-                    <th className="p-2 text-left">Notes</th>
-                    <th className="p-2 text-left">Receipt</th>
+                    {!propertyId && <th className="px-4 py-3 text-left">Property</th>}
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-left">Category</th>
+                    <th className="px-4 py-3 text-left">Vendor</th>
+                    <th className="px-4 py-3 text-left">Total</th>
+                    <th className="px-4 py-3 text-left">Notes</th>
+                    <th className="px-4 py-3 text-left">Receipt</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -524,13 +524,13 @@ export default function ExpensesTable({
                       aria-label={`View expense ${r.vendor ? `from ${r.vendor}` : ""} dated ${formatShortDate(r.date)}`.trim()}
                     >
                       {!propertyId && (
-                        <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
+                        <td className="px-4 py-3">{propertyMap[r.propertyId] || r.propertyId}</td>
                       )}
-                      <td className="p-2">{formatShortDate(r.date)}</td>
-                      <td className="p-2">{r.category}</td>
-                      <td className="p-2">{r.vendor}</td>
-                      <td className="p-2">{r.amount + r.gst}</td>
-                      <td className="p-2">
+                      <td className="px-4 py-3">{formatShortDate(r.date)}</td>
+                      <td className="px-4 py-3">{r.category}</td>
+                      <td className="px-4 py-3">{r.vendor}</td>
+                      <td className="px-4 py-3">{r.amount + r.gst}</td>
+                      <td className="px-4 py-3">
                         {r.notes ? (
                           <span
                             className="inline-flex items-center text-gray-600 dark:text-gray-300"
@@ -553,7 +553,7 @@ export default function ExpensesTable({
                           <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                         )}
                       </td>
-                      <td className="p-2">
+                      <td className="px-4 py-3">
                         <ReceiptLink url={r.receiptUrl} />
                       </td>
                     </tr>
