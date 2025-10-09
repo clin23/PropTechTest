@@ -85,6 +85,10 @@ const FALLBACK_INDICATOR = sanitizeStatusIndicatorValue(
   DEFAULT_STATUS_INDICATOR
 );
 
+export const COMPLETED_STATUS_INDICATOR = sanitizeStatusIndicatorValue(
+  LEGACY_PRESET_REGISTRY.done
+);
+
 const getLegacyIndicatorPreset = (
   key?: string | null
 ): StatusIndicatorPreset | null => {
@@ -152,8 +156,12 @@ export const extractIndicatorFromTags = (
 };
 
 export const deriveIndicatorForTask = (
-  task: Pick<TaskDto, "status" | "tags">
+  task: Pick<TaskDto, "status" | "tags"> & { completed?: boolean }
 ): StatusIndicatorValue => {
+  if (task.completed) {
+    return COMPLETED_STATUS_INDICATOR;
+  }
+
   const taggedIndicator = extractIndicatorFromTags(task.tags);
   if (taggedIndicator) {
     return taggedIndicator;
@@ -172,10 +180,7 @@ export const deriveIndicatorForTask = (
   }
 
   if (isDoneStatus(task.status)) {
-    return sanitizeStatusIndicatorValue({
-      label: LEGACY_PRESET_REGISTRY.done.label,
-      color: "var(--text-muted)",
-    });
+    return COMPLETED_STATUS_INDICATOR;
   }
 
   if (typeof task.status === "string" && task.status.trim()) {
