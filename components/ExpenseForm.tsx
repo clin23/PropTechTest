@@ -466,7 +466,7 @@ export default function ExpenseForm({
                   Amount
                   <input
                     type="number"
-                    className="border p-1 w-full rounded bg-white text-gray-900 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    className="mt-1 h-10 w-full rounded border bg-white px-3 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                     value={form.amount}
                     onChange={(e) => {
                       const nextAmount = e.target.value;
@@ -487,7 +487,7 @@ export default function ExpenseForm({
                   >
                     GST
                   </label>
-                  <div className="mt-1 flex items-center justify-between rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                  <div className="mt-1 flex h-10 items-center justify-between gap-3 rounded border border-gray-300 bg-white px-3 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
                     <label
                       htmlFor="gst-toggle"
                       className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200"
