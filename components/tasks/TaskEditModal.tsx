@@ -62,6 +62,7 @@ export default function TaskEditModal({
   const [attachments, setAttachments] = useState<
     TaskDto["attachments"]
   >(task.attachments ?? []);
+  const [completed, setCompleted] = useState<boolean>(Boolean(task.completed));
 
   const resolvedColorValue = resolveColorInputValue(statusIndicator.color);
   const presetLabel = PRESET_COLOR_LABELS.get(statusIndicator.color);
@@ -92,6 +93,7 @@ export default function TaskEditModal({
       vendorId: draftVendorId,
       attachments: draftAttachments,
       statusIndicator: draftIndicator,
+      completed: draftCompleted,
     }: {
       title: string;
       description: string;
@@ -101,6 +103,7 @@ export default function TaskEditModal({
       vendorId: string;
       attachments: TaskDto["attachments"];
       statusIndicator: StatusIndicatorValue;
+      completed: boolean;
     }) => {
       const resolvedProperties = draftSelectedProps
         .map((id) => {
@@ -137,6 +140,7 @@ export default function TaskEditModal({
         vendor: resolvedVendor,
         attachments: draftAttachments,
         tags: mergeIndicatorIntoTags(task.tags, sanitizedIndicator),
+        completed: draftCompleted,
       } satisfies Partial<TaskDto>;
     },
     [properties, vendors, task]
@@ -158,6 +162,7 @@ export default function TaskEditModal({
       vendorId: task.vendor?.id ?? "",
       attachments: task.attachments ?? [],
       statusIndicator: indicator,
+      completed: Boolean(task.completed),
     } as const;
 
     initialPayloadRef.current = JSON.stringify(createPayload(baseState));
@@ -170,6 +175,7 @@ export default function TaskEditModal({
     setVendorId(baseState.vendorId);
     setAttachments(baseState.attachments);
     setStatusIndicator(baseState.statusIndicator);
+    setCompleted(baseState.completed);
   }, [task, createPayload]);
 
   const handleFiles = (files: FileList | null) => {
@@ -188,11 +194,12 @@ export default function TaskEditModal({
         description,
         dueDate,
         dueTime,
-      selectedProps,
-      vendorId,
-      attachments,
-      statusIndicator: normalizeStatusIndicatorValue(statusIndicator),
-    });
+        selectedProps,
+        vendorId,
+        attachments,
+        statusIndicator: normalizeStatusIndicatorValue(statusIndicator),
+        completed,
+      });
 
       const serialized = JSON.stringify(payload);
       if (!force && serialized === initialPayloadRef.current) {
@@ -213,6 +220,7 @@ export default function TaskEditModal({
       statusIndicator,
       title,
       vendorId,
+      completed,
     ]
   );
 
@@ -328,6 +336,15 @@ export default function TaskEditModal({
           </div>
         )}
         <h2 className="text-lg font-semibold">Task Details</h2>
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
+            checked={completed}
+            onChange={(event) => setCompleted(event.target.checked)}
+          />
+          <span>Task is completed</span>
+        </label>
         <input
           className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           value={title}

@@ -821,11 +821,11 @@ export default function TasksKanban({
                                 onClick={() => setEditingTask(task)}
                                 showProperties={showPropertiesOnCards}
                                 onComplete={
-                                  task.status !== "done"
+                                  !task.completed
                                     ? () => handleCompleteTask(task)
                                     : undefined
                                 }
-                                isCompleted={task.status === "done"}
+                                isCompleted={Boolean(task.completed)}
                                 isCompleting={
                                   completingTaskId === task.id &&
                                   completeMut.isPending
