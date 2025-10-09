@@ -318,7 +318,7 @@ export default function ExpensesTable({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="sticky top-0 z-20 -mx-4 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-gray-800 dark:bg-gray-900">
+      <div className="sticky top-0 z-20 -mx-4 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="flex flex-1 basis-0 flex-wrap items-center gap-2 sm:basis-auto sm:flex-none sm:items-stretch">
             {!propertyId && (
@@ -494,7 +494,7 @@ export default function ExpensesTable({
           ) : filteredData.length === 0 ? (
             <EmptyState message="No expenses match your search." />
           ) : (
-            <div className="-mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:-mx-6 lg:-mx-8 dark:border-gray-700 dark:bg-gray-800">
+            <div className="-mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:-mx-6 dark:border-gray-700 dark:bg-gray-800">
               <table className="min-w-full">
                 <thead>
                   <tr className="bg-gray-100 dark:bg-gray-700">

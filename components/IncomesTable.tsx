@@ -285,7 +285,7 @@ export default function IncomesTable({
     content = <EmptyState message="No income records found." />;
   } else if (hasMatches) {
     content = (
-      <div className="-mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:-mx-6 lg:-mx-8 dark:border-gray-700 dark:bg-gray-800">
+      <div className="-mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:-mx-6 dark:border-gray-700 dark:bg-gray-800">
         <table className="min-w-full">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-700">
