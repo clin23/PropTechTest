@@ -297,6 +297,8 @@ export default function ExpensesTable({
   const filterControlClass =
     "h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 
+  const dateFilterClass = `${filterControlClass} w-32`;
+
   const datePlaceholder = "dd/mm/yyyy";
 
   const clearFilters = () => {
@@ -317,7 +319,7 @@ export default function ExpensesTable({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
-        className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-gray-800 dark:bg-gray-900"
+        className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-gray-800 dark:bg-gray-900"
       >
         {!propertyId && (
           <select
@@ -335,7 +337,7 @@ export default function ExpensesTable({
         )}
         <input
           type="date"
-          className={filterControlClass}
+          className={dateFilterClass}
           value={from}
           onChange={(e) => setFrom(e.target.value)}
           placeholder={fromPlaceholder}
@@ -348,7 +350,7 @@ export default function ExpensesTable({
         />
         <input
           type="date"
-          className={filterControlClass}
+          className={dateFilterClass}
           value={to}
           onChange={(e) => setTo(e.target.value)}
           placeholder={toPlaceholder}
