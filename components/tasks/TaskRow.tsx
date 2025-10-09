@@ -95,7 +95,7 @@ export default function TaskRow({
       <div className="flex items-start gap-2">
         <input
           type="checkbox"
-          checked={task.status === "done"}
+          checked={Boolean(task.completed)}
           onChange={onToggle}
           className="mt-1"
         />
