@@ -27,6 +27,7 @@ export default function PropertyDocumentsTable({
               <tr>
                 <th className="p-2 text-left">File Name</th>
                 <th className="p-2 text-left">Notes</th>
+                <th className="p-2 text-left">Tag</th>
                 <th className="p-2 text-left">Links</th>
                 <th className="p-2 text-left">Upload Date</th>
               </tr>
@@ -41,6 +42,9 @@ export default function PropertyDocumentsTable({
                     </td>
                     <td className="p-2 align-top text-sm text-gray-600 whitespace-pre-line">
                       {d.notes ? d.notes : "—"}
+                    </td>
+                    <td className="p-2 align-top text-sm text-gray-600">
+                      {d.tag ? d.tag : "—"}
                     </td>
                     <td className="p-2 align-top text-sm">
                       <div className="flex flex-col gap-1">
