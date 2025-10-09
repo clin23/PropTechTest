@@ -1,5 +1,11 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ChangeEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
@@ -9,6 +15,8 @@ import {
   normalizeStatusIndicatorValue,
   deriveIndicatorForTask,
   mergeIndicatorIntoTags,
+  extractIndicatorFromTags,
+  COMPLETED_STATUS_INDICATOR,
   type StatusIndicatorValue,
 } from "./statusIndicator";
 
@@ -56,12 +64,17 @@ export default function TaskEditModal({
     task.properties.map((p) => p.id)
   );
   const [statusIndicator, setStatusIndicator] = useState<StatusIndicatorValue>(
-    deriveIndicatorForTask({ status: task.status, tags: task.tags })
+    deriveIndicatorForTask({
+      status: task.status,
+      tags: task.tags,
+      completed: task.completed,
+    })
   );
   const [vendorId, setVendorId] = useState<string>(task.vendor?.id ?? "");
   const [attachments, setAttachments] = useState<
     TaskDto["attachments"]
   >(task.attachments ?? []);
+  const [completed, setCompleted] = useState<boolean>(Boolean(task.completed));
 
   const resolvedColorValue = resolveColorInputValue(statusIndicator.color);
   const presetLabel = PRESET_COLOR_LABELS.get(statusIndicator.color);
@@ -71,16 +84,38 @@ export default function TaskEditModal({
       ? statusIndicator.color.toUpperCase()
       : statusIndicator.color;
 
-  const updateStatusIndicator = useCallback(
-    (value: Partial<StatusIndicatorValue>) => {
-      setStatusIndicator((prev) =>
-        normalizeStatusIndicatorValue({ ...prev, ...value })
-      );
-    },
+  const isCompletedIndicator = useCallback(
+    (value: StatusIndicatorValue) =>
+      value.label === COMPLETED_STATUS_INDICATOR.label &&
+      value.color === COMPLETED_STATUS_INDICATOR.color,
     []
   );
 
+  const updateStatusIndicator = useCallback(
+    (
+      value: Partial<StatusIndicatorValue>,
+      options?: { fromPreset?: boolean }
+    ) => {
+      setStatusIndicator((previous) => {
+        const next = normalizeStatusIndicatorValue({ ...previous, ...value });
+        const matchesCompleted = isCompletedIndicator(next);
+
+        setCompleted((current) => {
+          if (matchesCompleted) {
+            return options?.fromPreset ? true : current;
+          }
+
+          return current ? false : current;
+        });
+
+        return matchesCompleted ? COMPLETED_STATUS_INDICATOR : next;
+      });
+    },
+    [isCompletedIndicator]
+  );
+
   const initialPayloadRef = useRef<string>();
+  const lastNonCompletedIndicatorRef = useRef<StatusIndicatorValue | null>(null);
 
   const createPayload = useCallback(
     ({
@@ -92,6 +127,7 @@ export default function TaskEditModal({
       vendorId: draftVendorId,
       attachments: draftAttachments,
       statusIndicator: draftIndicator,
+      completed: draftCompleted,
     }: {
       title: string;
       description: string;
@@ -101,6 +137,7 @@ export default function TaskEditModal({
       vendorId: string;
       attachments: TaskDto["attachments"];
       statusIndicator: StatusIndicatorValue;
+      completed: boolean;
     }) => {
       const resolvedProperties = draftSelectedProps
         .map((id) => {
@@ -137,18 +174,29 @@ export default function TaskEditModal({
         vendor: resolvedVendor,
         attachments: draftAttachments,
         tags: mergeIndicatorIntoTags(task.tags, sanitizedIndicator),
+        completed: draftCompleted,
       } satisfies Partial<TaskDto>;
     },
     [properties, vendors, task]
   );
 
   useEffect(() => {
-    const indicator = normalizeStatusIndicatorValue(
-      deriveIndicatorForTask({
-        status: task.status,
-        tags: task.tags,
-      })
+    const indicatorFromTags = extractIndicatorFromTags(task.tags);
+    const fallbackIndicator = normalizeStatusIndicatorValue(
+      indicatorFromTags ??
+        deriveIndicatorForTask({
+          status: task.status,
+          tags: task.tags,
+          completed: false,
+        })
     );
+    lastNonCompletedIndicatorRef.current = fallbackIndicator;
+
+    const isCompleted = Boolean(task.completed);
+    const indicatorForState = isCompleted
+      ? COMPLETED_STATUS_INDICATOR
+      : fallbackIndicator;
+
     const baseState = {
       title: task.title,
       description: task.description ?? "",
@@ -157,7 +205,8 @@ export default function TaskEditModal({
       selectedProps: task.properties.map((p) => p.id),
       vendorId: task.vendor?.id ?? "",
       attachments: task.attachments ?? [],
-      statusIndicator: indicator,
+      statusIndicator: indicatorForState,
+      completed: isCompleted,
     } as const;
 
     initialPayloadRef.current = JSON.stringify(createPayload(baseState));
@@ -170,7 +219,16 @@ export default function TaskEditModal({
     setVendorId(baseState.vendorId);
     setAttachments(baseState.attachments);
     setStatusIndicator(baseState.statusIndicator);
+    setCompleted(baseState.completed);
   }, [task, createPayload]);
+
+  useEffect(() => {
+    if (!completed) {
+      lastNonCompletedIndicatorRef.current = normalizeStatusIndicatorValue(
+        statusIndicator
+      );
+    }
+  }, [completed, statusIndicator]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -188,11 +246,12 @@ export default function TaskEditModal({
         description,
         dueDate,
         dueTime,
-      selectedProps,
-      vendorId,
-      attachments,
-      statusIndicator: normalizeStatusIndicatorValue(statusIndicator),
-    });
+        selectedProps,
+        vendorId,
+        attachments,
+        statusIndicator: normalizeStatusIndicatorValue(statusIndicator),
+        completed,
+      });
 
       const serialized = JSON.stringify(payload);
       if (!force && serialized === initialPayloadRef.current) {
@@ -213,8 +272,34 @@ export default function TaskEditModal({
       statusIndicator,
       title,
       vendorId,
+      completed,
     ]
   );
+
+  const handleCompletionChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextCompleted = event.target.checked;
+    setCompleted(nextCompleted);
+    if (nextCompleted) {
+      setStatusIndicator(COMPLETED_STATUS_INDICATOR);
+      return;
+    }
+
+    const fallback = lastNonCompletedIndicatorRef.current;
+    if (fallback) {
+      setStatusIndicator(normalizeStatusIndicatorValue(fallback));
+      return;
+    }
+
+    setStatusIndicator(
+      normalizeStatusIndicatorValue(
+        deriveIndicatorForTask({
+          status: task.status,
+          tags: task.tags,
+          completed: false,
+        })
+      )
+    );
+  };
 
   const handleSave = () => {
     persistChanges(true);
@@ -328,6 +413,15 @@ export default function TaskEditModal({
           </div>
         )}
         <h2 className="text-lg font-semibold">Task Details</h2>
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
+            checked={completed}
+            onChange={handleCompletionChange}
+          />
+          <span>Task is completed</span>
+        </label>
         <input
           className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           value={title}
@@ -447,10 +541,13 @@ export default function TaskEditModal({
                         : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
                     }`}
                     onClick={() =>
-                      updateStatusIndicator({
-                        label: preset.label,
-                        color: preset.color,
-                      })
+                      updateStatusIndicator(
+                        {
+                          label: preset.label,
+                          color: preset.color,
+                        },
+                        { fromPreset: true }
+                      )
                     }
                   >
                     <span

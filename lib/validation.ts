@@ -165,6 +165,7 @@ export const zTask = z.object({
   description: z.string().optional(),
   // Accept any string so additional columns can be created on the Kanban board
   status: z.string().default('todo'),
+  completed: z.boolean().optional(),
   priority: z.enum(['low','normal','high']).default('normal'),
   cadence: z.enum(['Immediate','Weekly','Monthly','Yearly','Custom']).default('Immediate'),
   dueDate: z.string().optional(),
