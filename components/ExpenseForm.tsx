@@ -490,7 +490,7 @@ export default function ExpenseForm({
                   <div className="mt-1 flex h-10 items-center justify-between gap-3 rounded border border-gray-300 bg-white px-3 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
                     <label
                       htmlFor="gst-toggle"
-                      className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200"
+                      className="flex items-center gap-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200"
                     >
                       <input
                         id="gst-toggle"
@@ -508,12 +508,12 @@ export default function ExpenseForm({
                           }));
                         }}
                       />
-                      Apply GST
+                      {form.applyGST ? "GST applied" : "Apply GST"}
                     </label>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                    <span className="whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                       {form.applyGST && form.gst
                         ? `$${form.gst}`
-                        : "No GST applied"}
+                        : "Not Applied"}
                     </span>
                   </div>
                 </div>
