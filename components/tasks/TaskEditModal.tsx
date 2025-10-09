@@ -1,5 +1,11 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ChangeEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
@@ -9,6 +15,8 @@ import {
   normalizeStatusIndicatorValue,
   deriveIndicatorForTask,
   mergeIndicatorIntoTags,
+  extractIndicatorFromTags,
+  COMPLETED_STATUS_INDICATOR,
   type StatusIndicatorValue,
 } from "./statusIndicator";
 
@@ -56,7 +64,11 @@ export default function TaskEditModal({
     task.properties.map((p) => p.id)
   );
   const [statusIndicator, setStatusIndicator] = useState<StatusIndicatorValue>(
-    deriveIndicatorForTask({ status: task.status, tags: task.tags })
+    deriveIndicatorForTask({
+      status: task.status,
+      tags: task.tags,
+      completed: task.completed,
+    })
   );
   const [vendorId, setVendorId] = useState<string>(task.vendor?.id ?? "");
   const [attachments, setAttachments] = useState<
@@ -82,6 +94,7 @@ export default function TaskEditModal({
   );
 
   const initialPayloadRef = useRef<string>();
+  const lastNonCompletedIndicatorRef = useRef<StatusIndicatorValue | null>(null);
 
   const createPayload = useCallback(
     ({
@@ -147,12 +160,22 @@ export default function TaskEditModal({
   );
 
   useEffect(() => {
-    const indicator = normalizeStatusIndicatorValue(
-      deriveIndicatorForTask({
-        status: task.status,
-        tags: task.tags,
-      })
+    const indicatorFromTags = extractIndicatorFromTags(task.tags);
+    const fallbackIndicator = normalizeStatusIndicatorValue(
+      indicatorFromTags ??
+        deriveIndicatorForTask({
+          status: task.status,
+          tags: task.tags,
+          completed: false,
+        })
     );
+    lastNonCompletedIndicatorRef.current = fallbackIndicator;
+
+    const isCompleted = Boolean(task.completed);
+    const indicatorForState = isCompleted
+      ? COMPLETED_STATUS_INDICATOR
+      : fallbackIndicator;
+
     const baseState = {
       title: task.title,
       description: task.description ?? "",
@@ -161,8 +184,8 @@ export default function TaskEditModal({
       selectedProps: task.properties.map((p) => p.id),
       vendorId: task.vendor?.id ?? "",
       attachments: task.attachments ?? [],
-      statusIndicator: indicator,
-      completed: Boolean(task.completed),
+      statusIndicator: indicatorForState,
+      completed: isCompleted,
     } as const;
 
     initialPayloadRef.current = JSON.stringify(createPayload(baseState));
@@ -177,6 +200,14 @@ export default function TaskEditModal({
     setStatusIndicator(baseState.statusIndicator);
     setCompleted(baseState.completed);
   }, [task, createPayload]);
+
+  useEffect(() => {
+    if (!completed) {
+      lastNonCompletedIndicatorRef.current = normalizeStatusIndicatorValue(
+        statusIndicator
+      );
+    }
+  }, [completed, statusIndicator]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -223,6 +254,31 @@ export default function TaskEditModal({
       completed,
     ]
   );
+
+  const handleCompletionChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextCompleted = event.target.checked;
+    setCompleted(nextCompleted);
+    if (nextCompleted) {
+      setStatusIndicator(COMPLETED_STATUS_INDICATOR);
+      return;
+    }
+
+    const fallback = lastNonCompletedIndicatorRef.current;
+    if (fallback) {
+      setStatusIndicator(normalizeStatusIndicatorValue(fallback));
+      return;
+    }
+
+    setStatusIndicator(
+      normalizeStatusIndicatorValue(
+        deriveIndicatorForTask({
+          status: task.status,
+          tags: task.tags,
+          completed: false,
+        })
+      )
+    );
+  };
 
   const handleSave = () => {
     persistChanges(true);
@@ -341,7 +397,7 @@ export default function TaskEditModal({
             type="checkbox"
             className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
             checked={completed}
-            onChange={(event) => setCompleted(event.target.checked)}
+            onChange={handleCompletionChange}
           />
           <span>Task is completed</span>
         </label>

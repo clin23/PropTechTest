@@ -57,6 +57,7 @@ export default function TaskCard({
   const indicatorValue = deriveIndicatorForTask({
     status: task.status,
     tags: task.tags,
+    completed: task.completed,
   });
   const statusInfo = getIndicatorPresentation(indicatorValue);
 
