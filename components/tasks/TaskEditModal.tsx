@@ -532,10 +532,13 @@ export default function TaskEditModal({
                         : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
                     }`}
                     onClick={() =>
-                      updateStatusIndicator({
-                        label: preset.label,
-                        color: preset.color,
-                      })
+                      updateStatusIndicator(
+                        {
+                          label: preset.label,
+                          color: preset.color,
+                        },
+                        { fromPreset: true }
+                      )
                     }
                   >
                     <span
