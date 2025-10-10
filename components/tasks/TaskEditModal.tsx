@@ -94,21 +94,12 @@ export default function TaskEditModal({
   );
 
   const updateStatusIndicator = useCallback(
-    (
-      value: Partial<StatusIndicatorValue>,
-      options?: { fromPreset?: boolean }
-    ) => {
+    (value: Partial<StatusIndicatorValue>) => {
       setStatusIndicator((previous) => {
         const next = normalizeStatusIndicatorValue({ ...previous, ...value });
         const matchesCompleted = isCompletedIndicator(next);
 
-        setCompleted((current) => {
-          if (matchesCompleted) {
-            return options?.fromPreset ? true : current;
-          }
-
-          return current ? false : current;
-        });
+        setCompleted(matchesCompleted);
 
         return matchesCompleted ? COMPLETED_STATUS_INDICATOR : next;
       });
