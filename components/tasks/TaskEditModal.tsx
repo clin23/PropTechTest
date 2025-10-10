@@ -371,7 +371,7 @@ export default function TaskEditModal({
 
   const completionSectionClasses = completed
     ? "border-green-300 bg-green-50 dark:border-green-500 dark:bg-green-900/40"
-    : "border-green-200 bg-green-50/80 dark:border-green-700 dark:bg-green-900/20";
+    : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/60";
   const completionLabel = completed ? "Task completed" : "Complete task";
 
   return createPortal(
