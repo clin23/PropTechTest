@@ -56,45 +56,47 @@ export default function RentLedgerTable({
     <>
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex-1 overflow-y-auto">
-          <div className="-mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:-mx-6 dark:border-gray-700 dark:bg-gray-800">
-            <table className="min-w-full">
-              <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left">Date</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Amount</th>
-                  <th className="px-4 py-3 text-center">Evidence</th>
-                  <th className="px-4 py-3 text-left">Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((e) => (
-                  <tr
-                    key={e.id}
-                    className="cursor-pointer border-t border-gray-200 transition hover:bg-gray-50 focus-within:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/60 dark:focus-within:bg-gray-700/60"
-                    onClick={() => setSelected(e)}
-                  >
-                    <td className="px-4 py-3">{formatShortDate(e.date)}</td>
-                    <td className="px-4 py-3">
-                      <StatusDot status={e.status} />
-                    </td>
-                    <td className="px-4 py-3">{e.amount}</td>
-                    <td className="px-4 py-3 text-center">
-                      {e.evidenceUrl ? (
-                        <EvidenceLink
-                          href={e.evidenceUrl}
-                          fileName={e.evidenceName}
-                          className="mx-auto"
-                        />
-                      ) : (
-                        <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">{e.balance}</td>
+          <div className="px-4 pb-4 pt-4 sm:px-6 lg:px-8">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <table className="min-w-full">
+                <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-left">Amount</th>
+                    <th className="px-4 py-3 text-center">Evidence</th>
+                    <th className="px-4 py-3 text-left">Balance</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {entries.map((e) => (
+                    <tr
+                      key={e.id}
+                      className="cursor-pointer border-t border-gray-200 transition hover:bg-gray-50 focus-within:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/60 dark:focus-within:bg-gray-700/60"
+                      onClick={() => setSelected(e)}
+                    >
+                      <td className="px-4 py-3">{formatShortDate(e.date)}</td>
+                      <td className="px-4 py-3">
+                        <StatusDot status={e.status} />
+                      </td>
+                      <td className="px-4 py-3">{e.amount}</td>
+                      <td className="px-4 py-3 text-center">
+                        {e.evidenceUrl ? (
+                          <EvidenceLink
+                            href={e.evidenceUrl}
+                            fileName={e.evidenceName}
+                            className="mx-auto"
+                          />
+                        ) : (
+                          <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">{e.balance}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
