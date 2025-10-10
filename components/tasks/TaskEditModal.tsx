@@ -20,6 +20,8 @@ import {
   type StatusIndicatorValue,
 } from "./statusIndicator";
 
+const MODAL_TRANSITION_DURATION = 300;
+
 const createHex = (value: string) => `#${value.toLowerCase()}`;
 
 const COLOR_TOKEN_FALLBACKS: Record<string, string> = {
@@ -327,7 +329,7 @@ export default function TaskEditModal({
     setIsVisible(false);
     closeTimeoutRef.current = setTimeout(() => {
       onClose();
-    }, 200);
+    }, MODAL_TRANSITION_DURATION);
   };
 
   useEffect(() => {
@@ -376,16 +378,18 @@ export default function TaskEditModal({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-200 ${
-        isVisible ? "opacity-100" : "opacity-0"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity transition-[backdrop-filter] duration-300 ${
+        isVisible
+          ? "opacity-100 backdrop-blur-sm"
+          : "opacity-0 backdrop-blur-none"
       }`}
       onClick={handleClose}
     >
       <div
-        className={`relative mx-4 w-full max-w-3xl transform space-y-4 overflow-y-auto rounded-xl bg-white p-6 shadow transition-all duration-200 max-h-[90vh] ${
+        className={`relative mx-4 w-full max-w-3xl transform space-y-4 overflow-y-auto rounded-xl bg-white p-6 shadow transition-transform transition-opacity duration-300 max-h-[90vh] ${
           isVisible
-            ? "translate-y-0 scale-100 opacity-100"
-            : "translate-y-2 scale-95 opacity-0"
+            ? "translate-y-0 scale-100 opacity-100 ease-out"
+            : "translate-y-4 scale-95 opacity-0 ease-in"
         } ${modalContainerClasses} dark:bg-gray-800 dark:text-white`}
         onClick={(e) => e.stopPropagation()}
       >
