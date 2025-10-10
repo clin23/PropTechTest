@@ -374,6 +374,14 @@ export default function TaskEditModal({
     return null;
   }
 
+  const modalContainerClasses = completed
+    ? "border-2 border-green-500 shadow-lg dark:border-green-400"
+    : "border border-transparent";
+
+  const completionSectionClasses = completed
+    ? "border-green-300 bg-green-50 dark:border-green-500 dark:bg-green-900/40"
+    : "border-green-200 bg-green-50/80 dark:border-green-700 dark:bg-green-900/20";
+
   return createPortal(
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-200 ${
@@ -386,7 +394,7 @@ export default function TaskEditModal({
           isVisible
             ? "translate-y-0 scale-100 opacity-100"
             : "translate-y-2 scale-95 opacity-0"
-        } dark:bg-gray-800 dark:text-white`}
+        } ${modalContainerClasses} dark:bg-gray-800 dark:text-white`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -413,15 +421,96 @@ export default function TaskEditModal({
           </div>
         )}
         <h2 className="text-lg font-semibold">Task Details</h2>
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
-            checked={completed}
-            onChange={handleCompletionChange}
-          />
-          <span>Task is completed</span>
-        </label>
+        <div
+          className={`rounded-lg border p-4 transition-colors ${completionSectionClasses}`}
+        >
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
+              checked={completed}
+              onChange={handleCompletionChange}
+            />
+            <span>Task is completed</span>
+          </label>
+          <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start">
+            <div className="flex-1 space-y-3">
+              <div>
+                <label className="mb-1 block text-sm dark:text-gray-200">
+                  Status label
+                </label>
+                <input
+                  className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  value={statusIndicator.label}
+                  onChange={(e) =>
+                    updateStatusIndicator({ label: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm dark:text-gray-200">
+                  Status colour
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    className="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-transparent p-1 dark:border-gray-600"
+                    value={resolvedColorValue}
+                    onChange={(event) =>
+                      updateStatusIndicator({ color: event.target.value })
+                    }
+                    aria-label="Choose status colour"
+                  />
+                  <span className="rounded border border-gray-200 px-2 py-1 font-mono text-xs uppercase tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
+                    {displayedColorValue}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Use the colour picker or choose a preset.
+                </p>
+              </div>
+            </div>
+            <div className="flex-1">
+              <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                Presets
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {STATUS_INDICATOR_PRESETS.map((preset) => {
+                  const isActive =
+                    preset.color === statusIndicator.color &&
+                    preset.label === statusIndicator.label;
+                  return (
+                    <button
+                      key={`${preset.label}-${preset.color}`}
+                      type="button"
+                      className={`flex items-center gap-2 rounded border px-2 py-1 text-xs transition ${
+                        isActive
+                          ? "border-gray-900 bg-gray-100 dark:border-gray-100 dark:bg-gray-800"
+                          : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
+                      }`}
+                      onClick={() =>
+                        updateStatusIndicator(
+                          {
+                            label: preset.label,
+                            color: preset.color,
+                          },
+                          { fromPreset: true }
+                        )
+                      }
+                    >
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: preset.color }}
+                        aria-hidden
+                      />
+                      <span>{preset.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
         <input
           className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           value={title}
@@ -483,83 +572,6 @@ export default function TaskEditModal({
                 </option>
               ))}
             </select>
-          </div>
-        </div>
-        <div className="flex flex-col gap-4 md:flex-row md:items-start">
-          <div className="flex-1 space-y-3">
-            <div>
-              <label className="mb-1 block text-sm dark:text-gray-200">
-                Status label
-              </label>
-              <input
-                className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                value={statusIndicator.label}
-                onChange={(e) =>
-                  updateStatusIndicator({ label: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm dark:text-gray-200">
-                Status colour
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  className="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-transparent p-1 dark:border-gray-600"
-                  value={resolvedColorValue}
-                  onChange={(event) =>
-                    updateStatusIndicator({ color: event.target.value })
-                  }
-                  aria-label="Choose status colour"
-                />
-                <span className="rounded border border-gray-200 px-2 py-1 font-mono text-xs uppercase tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
-                  {displayedColorValue}
-                </span>
-              </div>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Use the colour picker or choose a preset.
-              </p>
-            </div>
-          </div>
-          <div className="flex-1">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Presets
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {STATUS_INDICATOR_PRESETS.map((preset) => {
-                const isActive =
-                  preset.color === statusIndicator.color &&
-                  preset.label === statusIndicator.label;
-                return (
-                  <button
-                    key={`${preset.label}-${preset.color}`}
-                    type="button"
-                    className={`flex items-center gap-2 rounded border px-2 py-1 text-xs transition ${
-                      isActive
-                        ? "border-gray-900 bg-gray-100 dark:border-gray-100 dark:bg-gray-800"
-                        : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
-                    }`}
-                    onClick={() =>
-                      updateStatusIndicator(
-                        {
-                          label: preset.label,
-                          color: preset.color,
-                        },
-                        { fromPreset: true }
-                      )
-                    }
-                  >
-                    <span
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: preset.color }}
-                      aria-hidden
-                    />
-                    <span>{preset.label}</span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
         <div>
