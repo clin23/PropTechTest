@@ -14,6 +14,7 @@ import type { IncomeRow } from "../types/income";
 import EmptyState from "./EmptyState";
 import EvidenceLink from "./EvidenceLink";
 import IncomeForm from "./IncomeForm";
+import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
 
 interface IncomesTableProps {
   propertyId: string;
@@ -80,6 +81,7 @@ export default function IncomesTable({
   const notificationIdRef = useRef(0);
   const editingSnapshotRef = useRef<IncomeRow | null>(null);
   const sortMenuRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   const excludedCategories = useMemo(
     () => excludeCategories.map((value) => value.trim().toLowerCase()),
@@ -523,7 +525,7 @@ export default function IncomesTable({
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="space-y-2 px-4 pt-4 sm:px-6 lg:px-8">{content}</div>
       </div>
       <IncomeForm

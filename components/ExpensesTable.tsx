@@ -15,6 +15,7 @@ import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
 import ExpenseForm from "./ExpenseForm";
+import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
 
 function ReceiptLink({ url }: { url?: string | null }) {
   if (!url) {
@@ -69,6 +70,7 @@ export default function ExpensesTable({
   const notificationIdRef = useRef(0);
   const editingSnapshotRef = useRef<ExpenseRow | null>(null);
   const sortMenuRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -489,7 +491,7 @@ export default function ExpensesTable({
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="space-y-2 px-4 pt-4 sm:px-6 lg:px-8">
           {data.length === 0 ? (
             <EmptyState message="No expenses found." />
