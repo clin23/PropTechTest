@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export type TaskCompletionPreference = "ask" | "keep" | "archive";
+export type TaskCompletionPreference = "keep" | "archive";
 
 const STORAGE_KEY = "taskCompletionPreference";
 
@@ -11,11 +11,6 @@ export const TASK_COMPLETION_PREFERENCE_OPTIONS: Array<{
   label: string;
   description: string;
 }> = [
-  {
-    value: "ask",
-    label: "Ask every time",
-    description: "Show the prompt each time a task is completed.",
-  },
   {
     value: "keep",
     label: "Keep in list",
@@ -28,15 +23,19 @@ export const TASK_COMPLETION_PREFERENCE_OPTIONS: Array<{
   },
 ];
 
-function parsePreference(value: string | null): TaskCompletionPreference {
-  if (value === "keep" || value === "archive" || value === "ask") {
+function parsePreference(
+  value: string | null
+): TaskCompletionPreference | null {
+  if (value === "keep" || value === "archive") {
     return value;
   }
-  return "ask";
+  return null;
 }
 
 export function useTaskCompletionPreference() {
-  const [preference, setPreferenceState] = useState<TaskCompletionPreference>("ask");
+  const [preference, setPreferenceState] = useState<
+    TaskCompletionPreference | null
+  >(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
