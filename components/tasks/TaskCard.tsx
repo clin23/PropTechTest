@@ -7,10 +7,10 @@ import {
 } from "./statusIndicator";
 
 const STATUS_PILL_CLASSES = [
-  "inline-flex min-h-[2.5rem] max-w-[5rem]",
-  "flex-col items-center justify-center rounded-full",
-  "px-2 py-2 text-center text-[10px] font-semibold uppercase",
-  "leading-tight tracking-tight shadow-sm break-words",
+  "inline-flex w-6 min-h-[3.25rem] max-h-[5rem]",
+  "items-center justify-center rounded-full border border-white/30",
+  "px-1 text-[9px] font-semibold uppercase tracking-[0.15em]",
+  "leading-none bg-opacity-90 text-center",
 ].join(" ");
 
 const getStatusPillForeground = (background: string): string => {
@@ -96,19 +96,24 @@ export default function TaskCard({
       onClick={onClick}
     >
       {statusInfo && (
-        <span className="absolute right-2 top-2 flex flex-col items-center">
+        <span className="absolute right-2 top-2 flex items-start">
           <span className="sr-only">Status: {pillLabel}</span>
           <span
             aria-hidden
             className={STATUS_PILL_CLASSES}
-            style={{ backgroundColor: pillBackground, color: pillTextColor }}
+            style={{
+              backgroundColor: pillBackground,
+              color: pillTextColor,
+              writingMode: "vertical-rl",
+              textOrientation: "upright",
+            }}
           >
             {pillLabel}
           </span>
         </span>
       )}
       <div className="flex items-start gap-2">
-        <div className={`font-medium ${statusInfo ? "pr-20" : ""}`}>
+        <div className={`font-medium ${statusInfo ? "pr-12" : ""}`}>
           {task.title}
         </div>
       </div>
