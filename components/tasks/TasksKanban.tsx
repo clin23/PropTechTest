@@ -18,6 +18,11 @@ import {
   listVendors,
   completeTask,
 } from "../../lib/api";
+import {
+  TASK_COMPLETION_PREFERENCE_OPTIONS,
+  type TaskCompletionPreference,
+  useTaskCompletionPreference,
+} from "../../hooks/useTaskCompletionPreference";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import TaskCard from "./TaskCard";
@@ -411,6 +416,8 @@ export default function TasksKanban({
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
   const [completionPrompt, setCompletionPrompt] =
     useState<CompletionPromptState | null>(null);
+  const { preference: completionPreference, setPreference: setCompletionPreference } =
+    useTaskCompletionPreference();
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
@@ -693,10 +700,34 @@ export default function TasksKanban({
     setCompletingTaskId(task.id);
     try {
       await completeMut.mutateAsync(task.id);
+      if (completionPreference === "archive") {
+        try {
+          await archiveMut.mutateAsync(task.id);
+        } catch (error) {
+          console.error("Failed to archive task", error);
+          setStatusOverrides((prev) => ({
+            ...prev,
+            [task.id]: previousStatus,
+          }));
+          setCompletionPrompt({
+            task,
+            previousStatus,
+            error:
+              "Failed to archive the task automatically. Please choose an option.",
+          });
+        }
+        return;
+      }
+
       setStatusOverrides((prev) => ({
         ...prev,
         [task.id]: previousStatus,
       }));
+
+      if (completionPreference === "keep") {
+        return;
+      }
+
       setCompletionPrompt({ task, previousStatus, error: null });
     } catch (error) {
       console.error("Failed to complete task", error);
@@ -977,6 +1008,8 @@ export default function TasksKanban({
           task={completionPrompt.task}
           error={completionPrompt.error}
           archiving={archiveMut.isPending}
+          preference={completionPreference}
+          onPreferenceChange={setCompletionPreference}
           onKeep={handleKeepCompletedTask}
           onArchive={handleArchiveCompletedTask}
           onDismiss={handleKeepCompletedTask}
@@ -990,6 +1023,8 @@ type TaskCompletionPromptProps = {
   task: TaskDto;
   archiving: boolean;
   error: string | null;
+  preference: TaskCompletionPreference;
+  onPreferenceChange: (preference: TaskCompletionPreference) => void;
   onKeep: () => void;
   onArchive: () => void;
   onDismiss: () => void;
@@ -999,6 +1034,8 @@ function TaskCompletionPrompt({
   task,
   archiving,
   error,
+  preference,
+  onPreferenceChange,
   onKeep,
   onArchive,
   onDismiss,
@@ -1040,6 +1077,34 @@ function TaskCompletionPrompt({
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
           {`Would you like to archive "${task.title}" or keep it in this list?`}
         </p>
+        <div className="mt-4 space-y-2">
+          <label
+            htmlFor={`task-completion-pref-${task.id}`}
+            className="block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Future preference
+          </label>
+          <select
+            id={`task-completion-pref-${task.id}`}
+            value={preference}
+            onChange={(event) =>
+              onPreferenceChange(
+                event.target.value as TaskCompletionPreference,
+              )
+            }
+            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-700"
+          >
+            {TASK_COMPLETION_PREFERENCE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            This preference applies to future completed tasks and can be updated in
+            Settings.
+          </p>
+        </div>
         {error ? (
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : null}
