@@ -7,9 +7,9 @@ import {
 } from "./statusIndicator";
 
 const STATUS_PILL_CLASSES = [
-  "inline-flex w-5 min-h-[2.75rem] max-h-[4.5rem]",
+  "inline-flex w-4 min-h-[2.5rem] max-h-[4.25rem]",
   "items-center justify-center rounded-full border border-white/30",
-  "px-0.5 text-[9px] font-semibold uppercase tracking-[0.15em]",
+  "px-0.5 text-[7px] font-semibold uppercase tracking-[0.08em]",
   "leading-none bg-opacity-90 text-center",
 ].join(" ");
 
