@@ -6,7 +6,7 @@ import Link from 'next/link';
 import PropertyOverviewCard from '../../components/PropertyOverviewCard';
 import PropertiesGridSkeleton from '../../components/skeletons/PropertiesGridSkeleton';
 import PropertyEditModal from '../../components/PropertyEditModal';
-import { listProperties } from '../../lib/api';
+import { getProperty, listProperties } from '../../lib/api';
 import type { PropertySummary } from '../../types/property';
 
 export default function PropertiesPage() {
@@ -21,10 +21,18 @@ export default function PropertiesPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
 
-  const selectedProperty = useMemo(() => {
+  const selectedPropertyFromList = useMemo(() => {
     if (!selectedPropertyId) return null;
     return data.find((property) => property.id === selectedPropertyId) ?? null;
   }, [data, selectedPropertyId]);
+
+  const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList;
 
   useEffect(() => {
     if (!isEditMode) {
@@ -115,10 +123,10 @@ export default function PropertiesPage() {
           ))}
         </div>
       </div>
-      {selectedProperty && (
+      {modalProperty && (
         <PropertyEditModal
-          open={isEditMode && !!selectedProperty}
-          property={selectedProperty}
+          open={isEditMode && !!modalProperty}
+          property={modalProperty}
           onClose={closeEditModal}
         />
       )}
