@@ -289,7 +289,7 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
               />
               <span
                 className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
-                  isConfirmed ? "text-white" : "text-white/80"
+                  isConfirmed ? "text-white" : "text-gray-900 dark:text-white/80"
                 }`}
               >
                 {isConfirmed ? "Confirmed" : "Slide right to confirm"}
