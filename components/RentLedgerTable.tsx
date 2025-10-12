@@ -112,20 +112,32 @@ export default function RentLedgerTable({
 }
 
 function StatusDot({ status }: { status: LedgerStatus }) {
-  const config: Record<LedgerStatus, { color: string; label: string }> = {
-    paid: { color: "bg-green-500", label: "Paid" },
-    unpaid: { color: "bg-red-500", label: "Unpaid" },
-    follow_up: { color: "bg-orange-400", label: "Follow up" },
+  const config: Record<
+    LedgerStatus,
+    { label: string; bg: string; text: string }
+  > = {
+    paid: {
+      label: "Paid",
+      bg: "bg-emerald-100 dark:bg-emerald-500/20",
+      text: "text-emerald-700 dark:text-emerald-200",
+    },
+    unpaid: {
+      label: "Unpaid",
+      bg: "bg-rose-100 dark:bg-rose-500/20",
+      text: "text-rose-700 dark:text-rose-200",
+    },
+    follow_up: {
+      label: "Follow up",
+      bg: "bg-amber-100 dark:bg-amber-500/20",
+      text: "text-amber-700 dark:text-amber-200",
+    },
   };
-  const { color, label } = config[status];
+  const { label, bg, text } = config[status];
   return (
-    <span className="inline-flex items-center">
-      <span
-        aria-label={label}
-        title={label}
-        className={`inline-flex h-3 w-3 rounded-full ${color}`}
-      />
-      <span className="sr-only">{label}</span>
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bg} ${text}`}
+    >
+      {label}
     </span>
   );
 }
