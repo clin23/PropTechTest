@@ -89,7 +89,7 @@ export default function TaskCard({
       onClick={onClick}
     >
       {statusInfo && (
-        <span className="absolute right-2 top-2 flex items-start">
+        <span className="absolute right-2 top-2 z-40 flex items-start">
           <span className="sr-only">Status: {pillLabel}</span>
           <span className="group/status relative flex">
             <span
@@ -101,7 +101,7 @@ export default function TaskCard({
             />
             <span
               aria-hidden
-              className="absolute left-full top-1/2 ml-2 flex origin-left -translate-y-1/2 translate-x-1 scale-90 items-center rounded-full border border-white/20 px-2 py-1 text-[11px] font-medium leading-tight opacity-0 shadow-sm transition-all duration-200 ease-out group-hover/status:translate-x-0 group-hover/status:scale-100 group-hover/status:opacity-100"
+              className="absolute top-1/2 right-full z-50 mr-2 flex origin-right -translate-y-1/2 -translate-x-1 scale-90 items-center rounded-full border border-white/20 px-2 py-1 text-[11px] font-medium leading-tight opacity-0 shadow-sm transition-all duration-200 ease-out group-hover/status:translate-x-0 group-hover/status:scale-100 group-hover/status:opacity-100"
               style={{
                 backgroundColor: pillBackground,
                 color: pillTextColor,
