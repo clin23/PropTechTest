@@ -100,7 +100,7 @@ export default function TaskCard({
           <span className="sr-only">Status: {pillLabel}</span>
           <span
             aria-hidden
-            className={statusPillClasses}
+            className={STATUS_PILL_CLASSES}
             style={{ backgroundColor: pillBackground, color: pillTextColor }}
           >
             {pillLabel}
