@@ -9,6 +9,7 @@ import Skeleton from "../../../../../components/Skeleton";
 import VendorCard from "../../../../../components/VendorCard";
 import VendorForm from "../../../../../components/VendorForm";
 import { listVendors, updateVendor, type Vendor } from "../../../../../lib/api";
+import { useScrollLockOnHover } from "../../../../../hooks/useScrollLockOnHover";
 
 interface VendorsProps {
   propertyId: string;
@@ -51,8 +52,10 @@ export default function Vendors({ propertyId: _propertyId }: VendorsProps) {
     };
   }, [drawerOpen]);
 
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
+
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Preferred Vendors</h2>
         <button
@@ -65,35 +68,37 @@ export default function Vendors({ propertyId: _propertyId }: VendorsProps) {
           New Vendor
         </button>
       </div>
-      {isPending ? (
-        <Skeleton className="h-24" />
-      ) : error ? (
-        <ErrorState message={error instanceof Error ? error.message : "Failed to load vendors"} />
-      ) : vendors.length === 0 ? (
-        <div className="rounded border border-dashed border-slate-300 p-6 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
-          No vendors available
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {vendors.map((vendor) => (
-            <VendorCard
-              key={vendor.id ?? vendor.name}
-              vendor={vendor}
-              onEdit={() => {
-                setEditing(vendor);
-                setDrawerOpen(true);
-              }}
-              onToggleFavourite={(fav) =>
-                vendor.id &&
-                update.mutate({
-                  id: vendor.id,
-                  data: { favourite: fav },
-                })
-              }
-            />
-          ))}
-        </div>
-      )}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        {isPending ? (
+          <Skeleton className="h-24" />
+        ) : error ? (
+          <ErrorState message={error instanceof Error ? error.message : "Failed to load vendors"} />
+        ) : vendors.length === 0 ? (
+          <div className="rounded border border-dashed border-slate-300 p-6 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            No vendors available
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {vendors.map((vendor) => (
+              <VendorCard
+                key={vendor.id ?? vendor.name}
+                vendor={vendor}
+                onEdit={() => {
+                  setEditing(vendor);
+                  setDrawerOpen(true);
+                }}
+                onToggleFavourite={(fav) =>
+                  vendor.id &&
+                  update.mutate({
+                    id: vendor.id,
+                    data: { favourite: fav },
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
+      </div>
       <AnimatePresence>
         {drawerOpen && (
           <motion.div
