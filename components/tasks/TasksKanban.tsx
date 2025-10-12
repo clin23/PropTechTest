@@ -26,6 +26,7 @@ import TaskEditModal from "./TaskEditModal";
 import ColumnRenameModal from "./ColumnRenameModal";
 import ColumnDeleteModal from "./ColumnDeleteModal";
 import ColumnCreateModal from "./ColumnCreateModal";
+import { useScrollLockOnHover } from "../../hooks/useScrollLockOnHover";
 
 const TAB_BASE_CLASSES =
   "rounded-full border px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600";
@@ -1096,6 +1097,7 @@ function PropertySelectModal({
 
   const reorderable =
     typeof onReorder === "function" && properties.length > 1;
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   const handleMove = (propertyId: string, direction: -1 | 1) => {
     if (!reorderable) return;
@@ -1154,7 +1156,7 @@ function PropertySelectModal({
             ×
           </button>
         </div>
-        <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
+        <div ref={scrollRef} className="max-h-[60vh] overflow-y-auto px-5 py-4">
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className="space-y-2">
               {allowAll && (
