@@ -14,6 +14,7 @@ import {
   updateReminder,
   type Reminder,
 } from "../../../../../lib/api";
+import { useScrollLockOnHover } from "../../../../../hooks/useScrollLockOnHover";
 
 interface KeyDatesProps {
   propertyId: string;
@@ -216,9 +217,10 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
   };
 
   const saving = createMutation.isPending || updateMutation.isPending;
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       {taskNotification && (
         <div
           className={`pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4 transition-all duration-300 ease-out ${
@@ -248,66 +250,68 @@ export default function KeyDates({ propertyId }: KeyDatesProps) {
           + Add key date
         </button>
       </div>
-      <div className="space-y-3" data-testid="key-dates-list">
-        {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-24" />
-            <Skeleton className="h-24" />
-          </div>
-        ) : sortedReminders.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-6 py-12 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-            No key dates yet. Create your first reminder to stay ahead of critical events.
-          </div>
-        ) : (
-          <ul className="space-y-3">
-            {sortedReminders.map((reminder) => (
-              <li key={reminder.id}>
-                <button
-                  type="button"
-                  className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:border-gray-700 dark:hover:bg-gray-800"
-                  onClick={() => handleItemClick(reminder)}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {reminder.title}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div className="space-y-3" data-testid="key-dates-list">
+          {isLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-24" />
+              <Skeleton className="h-24" />
+            </div>
+          ) : sortedReminders.length === 0 ? (
+            <div className="rounded-lg border border-dashed px-6 py-12 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              No key dates yet. Create your first reminder to stay ahead of critical events.
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {sortedReminders.map((reminder) => (
+                <li key={reminder.id}>
+                  <button
+                    type="button"
+                    className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:border-gray-700 dark:hover:bg-gray-800"
+                    onClick={() => handleItemClick(reminder)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {reminder.title}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(reminder.dueDate)}
+                          {reminder.dueTime ? ` · ${reminder.dueTime}` : ""}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(reminder.dueDate)}
-                        {reminder.dueTime ? ` · ${reminder.dueTime}` : ""}
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${severityStyle(
+                          reminder.severity,
+                        )}`}
+                      >
+                        {reminder.severity === "high"
+                          ? "High"
+                          : reminder.severity === "med"
+                          ? "Medium"
+                          : "Low"}
+                      </span>
+                    </div>
+                    {reminder.recurrence && (
+                      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Recurs: {reminder.recurrence}
                       </div>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                      {reminder.documents?.length ? (
+                        <span>📎 {reminder.documents.length} document{reminder.documents.length === 1 ? "" : "s"}</span>
+                      ) : null}
+                      {reminder.checklist?.length ? (
+                        <span>✔️ {reminder.checklist.length} checklist item{reminder.checklist.length === 1 ? "" : "s"}</span>
+                      ) : null}
+                      {hasLinkedTasks(reminder) ? <span>🔗 Linked to tasks</span> : null}
                     </div>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${severityStyle(
-                        reminder.severity,
-                      )}`}
-                    >
-                      {reminder.severity === "high"
-                        ? "High"
-                        : reminder.severity === "med"
-                        ? "Medium"
-                        : "Low"}
-                    </span>
-                  </div>
-                  {reminder.recurrence && (
-                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Recurs: {reminder.recurrence}
-                    </div>
-                  )}
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                    {reminder.documents?.length ? (
-                      <span>📎 {reminder.documents.length} document{reminder.documents.length === 1 ? "" : "s"}</span>
-                    ) : null}
-                    {reminder.checklist?.length ? (
-                      <span>✔️ {reminder.checklist.length} checklist item{reminder.checklist.length === 1 ? "" : "s"}</span>
-                    ) : null}
-                    {hasLinkedTasks(reminder) ? <span>🔗 Linked to tasks</span> : null}
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       <KeyDateFormModal

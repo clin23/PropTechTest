@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listPropertyDocuments } from "../lib/api";
 import { formatShortDate } from "../lib/format";
 import type { PropertyDocument } from "../types/property";
+import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
 
 export default function PropertyDocumentsTable({
   propertyId: propId,
@@ -18,9 +19,11 @@ export default function PropertyDocumentsTable({
     queryFn: () => listPropertyDocuments(propertyId),
   });
 
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="px-4 pb-4 pt-4 sm:px-6 lg:px-8">
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <table className="min-w-full">
