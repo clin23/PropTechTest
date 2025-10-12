@@ -6,6 +6,29 @@ import {
   getIndicatorPresentation,
 } from "./statusIndicator";
 
+const STATUS_PILL_CLASSES = [
+  "inline-flex min-h-[2.5rem] max-w-[5rem]",
+  "flex-col items-center justify-center rounded-full",
+  "px-2 py-2 text-center text-[10px] font-semibold uppercase",
+  "leading-tight tracking-tight shadow-sm break-words",
+].join(" ");
+
+const getStatusPillForeground = (background: string): string => {
+  const hexMatch = background.match(/^#([0-9a-f]{6})$/i);
+  if (!hexMatch) {
+    return "#ffffff";
+  }
+
+  const hex = hexMatch[1];
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+  return luminance > 0.6 ? "#111827" : "#ffffff";
+};
+
 export default function TaskCard({
   task,
   onClick,
@@ -61,6 +84,10 @@ export default function TaskCard({
   });
   const statusInfo = getIndicatorPresentation(indicatorValue);
 
+  const pillLabel = statusInfo?.label ?? "";
+  const pillBackground = statusInfo?.color ?? "";
+  const pillTextColor = getStatusPillForeground(pillBackground);
+
   return (
     <div
       className={`group relative flex flex-col rounded border p-2 ${
@@ -68,18 +95,22 @@ export default function TaskCard({
       } ${borderColorClass}`}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="font-medium">{task.title}</div>
-        {statusInfo && (
-          <span className="inline-flex h-2.5 w-2.5 items-center justify-center">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: statusInfo.color }}
-              aria-hidden
-            />
-            <span className="sr-only">{statusInfo.label}</span>
+      {statusInfo && (
+        <span className="absolute right-2 top-2 flex flex-col items-center">
+          <span className="sr-only">Status: {pillLabel}</span>
+          <span
+            aria-hidden
+            className={statusPillClasses}
+            style={{ backgroundColor: pillBackground, color: pillTextColor }}
+          >
+            {pillLabel}
           </span>
-        )}
+        </span>
+      )}
+      <div className="flex items-start gap-2">
+        <div className={`font-medium ${statusInfo ? "pr-20" : ""}`}>
+          {task.title}
+        </div>
       </div>
       <div className="mt-2 space-y-1 text-xs">
         {task.vendor && <div>Vendor: {task.vendor.name}</div>}
