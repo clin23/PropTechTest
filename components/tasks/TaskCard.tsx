@@ -6,6 +6,22 @@ import {
   getIndicatorPresentation,
 } from "./statusIndicator";
 
+const getStatusPillForeground = (background: string): string => {
+  const hexMatch = background.match(/^#([0-9a-f]{6})$/i);
+  if (!hexMatch) {
+    return "#ffffff";
+  }
+
+  const hex = hexMatch[1];
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+  return luminance > 0.6 ? "#111827" : "#ffffff";
+};
+
 export default function TaskCard({
   task,
   onClick,
@@ -61,6 +77,10 @@ export default function TaskCard({
   });
   const statusInfo = getIndicatorPresentation(indicatorValue);
 
+  const pillLabel = statusInfo?.label ?? "";
+  const pillBackground = statusInfo?.color ?? "";
+  const pillTextColor = getStatusPillForeground(pillBackground);
+
   return (
     <div
       className={`group relative flex flex-col rounded border p-2 ${
@@ -68,18 +88,34 @@ export default function TaskCard({
       } ${borderColorClass}`}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="font-medium">{task.title}</div>
-        {statusInfo && (
-          <span className="inline-flex h-2.5 w-2.5 items-center justify-center">
+      {statusInfo && (
+        <span className="absolute right-2 top-2 flex items-start">
+          <span className="sr-only">Status: {pillLabel}</span>
+          <span className="group/status relative flex">
             <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: statusInfo.color }}
               aria-hidden
+              className="h-3 w-3 rounded-full border border-white/40 shadow-sm transition-transform duration-200 ease-out group-hover/status:scale-105"
+              style={{
+                backgroundColor: pillBackground,
+              }}
             />
-            <span className="sr-only">{statusInfo.label}</span>
+            <span
+              aria-hidden
+              className="absolute left-full top-1/2 ml-2 flex origin-left -translate-y-1/2 translate-x-1 scale-90 items-center rounded-full border border-white/20 px-2 py-1 text-[11px] font-medium leading-tight opacity-0 shadow-sm transition-all duration-200 ease-out group-hover/status:translate-x-0 group-hover/status:scale-100 group-hover/status:opacity-100"
+              style={{
+                backgroundColor: pillBackground,
+                color: pillTextColor,
+              }}
+            >
+              <span className="whitespace-nowrap">{pillLabel}</span>
+            </span>
           </span>
-        )}
+        </span>
+      )}
+      <div className="flex items-start gap-2">
+        <div className={`font-medium ${statusInfo ? "pr-12" : ""}`}>
+          {task.title}
+        </div>
       </div>
       <div className="mt-2 space-y-1 text-xs">
         {task.vendor && <div>Vendor: {task.vendor.name}</div>}
