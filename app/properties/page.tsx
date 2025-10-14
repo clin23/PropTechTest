@@ -6,7 +6,7 @@ import Link from 'next/link';
 import PropertyOverviewCard from '../../components/PropertyOverviewCard';
 import PropertiesGridSkeleton from '../../components/skeletons/PropertiesGridSkeleton';
 import PropertyEditModal from '../../components/PropertyEditModal';
-import { listProperties } from '../../lib/api';
+import { getProperty, listProperties } from '../../lib/api';
 import type { PropertySummary } from '../../types/property';
 
 export default function PropertiesPage() {
@@ -19,26 +19,55 @@ export default function PropertiesPage() {
   });
 
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedPropertyState, setSelectedPropertyState] = useState<{
+    id: string;
+    snapshot: PropertySummary;
+  } | null>(null);
 
-  const selectedProperty = useMemo(() => {
+  const selectedPropertyId = selectedPropertyState?.id ?? null;
+  const selectedPropertySnapshot = selectedPropertyState?.snapshot ?? null;
+
+  const selectedPropertyFromList = useMemo(() => {
     if (!selectedPropertyId) return null;
     return data.find((property) => property.id === selectedPropertyId) ?? null;
   }, [data, selectedPropertyId]);
 
+  const {
+    data: selectedPropertyDetailData,
+    isFetching: isFetchingSelectedProperty,
+  } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertyState({
+      id: selectedPropertyDetailData.id,
+      snapshot: selectedPropertyDetailData,
+    });
+  }, [selectedPropertyDetailData]);
+
   useEffect(() => {
     if (!isEditMode) {
-      setSelectedPropertyId(null);
+      setSelectedPropertyState(null);
     }
   }, [isEditMode]);
 
   const handleSelectProperty = (property: PropertySummary) => {
     if (!isEditMode) return;
-    setSelectedPropertyId(property.id);
+    setSelectedPropertyState({
+      id: property.id,
+      snapshot: property,
+    });
   };
 
   const closeEditModal = () => {
-    setSelectedPropertyId(null);
+    setSelectedPropertyState(null);
   };
 
   return (
@@ -115,11 +144,12 @@ export default function PropertiesPage() {
           ))}
         </div>
       </div>
-      {selectedProperty && (
+      {modalProperty && (
         <PropertyEditModal
-          open={isEditMode && !!selectedProperty}
-          property={selectedProperty}
+          open={isEditMode && !!modalProperty}
+          property={modalProperty}
           onClose={closeEditModal}
+          isLoading={isFetchingSelectedProperty}
         />
       )}
     </div>
