@@ -19,12 +19,22 @@ export default function PropertiesPage() {
   });
 
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<PropertySummary | null>(null);
+
+  const selectedPropertyId = selectedProperty?.id ?? null;
 
   const selectedPropertyFromList = useMemo(() => {
     if (!selectedPropertyId) return null;
-    return data.find((property) => property.id === selectedPropertyId) ?? null;
-  }, [data, selectedPropertyId]);
+    return data.find((property) => property.id === selectedPropertyId) ?? selectedProperty;
+  }, [data, selectedProperty, selectedPropertyId]);
+
+  const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList ?? selectedProperty;
 
   const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
     queryKey: ['property', selectedPropertyId],
@@ -36,17 +46,17 @@ export default function PropertiesPage() {
 
   useEffect(() => {
     if (!isEditMode) {
-      setSelectedPropertyId(null);
+      setSelectedProperty(null);
     }
   }, [isEditMode]);
 
   const handleSelectProperty = (property: PropertySummary) => {
     if (!isEditMode) return;
-    setSelectedPropertyId(property.id);
+    setSelectedProperty(property);
   };
 
   const closeEditModal = () => {
-    setSelectedPropertyId(null);
+    setSelectedProperty(null);
   };
 
   return (
