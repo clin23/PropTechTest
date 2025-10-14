@@ -29,8 +29,24 @@ export default function PropertiesPage() {
 
   const selectedPropertyFromList = useMemo(() => {
     if (!selectedPropertyId) return null;
-    return data.find((property) => property.id === selectedPropertyId) ?? null;
-  }, [data, selectedPropertyId]);
+    return data.find((property) => property.id === selectedPropertyId) ?? selectedProperty;
+  }, [data, selectedProperty, selectedPropertyId]);
+
+  const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList ?? selectedProperty;
+
+  const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList;
 
   const {
     data: selectedPropertyDetailData,
