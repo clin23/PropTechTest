@@ -36,6 +36,14 @@ export default function PropertiesPage() {
 
   const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList ?? selectedProperty;
 
+  const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList;
+
   useEffect(() => {
     if (!isEditMode) {
       setSelectedProperty(null);
