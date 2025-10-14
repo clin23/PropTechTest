@@ -6,7 +6,7 @@ import Link from 'next/link';
 import PropertyOverviewCard from '../../components/PropertyOverviewCard';
 import PropertiesGridSkeleton from '../../components/skeletons/PropertiesGridSkeleton';
 import PropertyEditModal from '../../components/PropertyEditModal';
-import { listProperties } from '../../lib/api';
+import { getProperty, listProperties } from '../../lib/api';
 import type { PropertySummary } from '../../types/property';
 
 export default function PropertiesPage() {
@@ -19,26 +19,36 @@ export default function PropertiesPage() {
   });
 
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<PropertySummary | null>(null);
 
-  const selectedProperty = useMemo(() => {
+  const selectedPropertyId = selectedProperty?.id ?? null;
+
+  const selectedPropertyFromList = useMemo(() => {
     if (!selectedPropertyId) return null;
-    return data.find((property) => property.id === selectedPropertyId) ?? null;
-  }, [data, selectedPropertyId]);
+    return data.find((property) => property.id === selectedPropertyId) ?? selectedProperty;
+  }, [data, selectedProperty, selectedPropertyId]);
+
+  const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList ?? selectedProperty;
 
   useEffect(() => {
     if (!isEditMode) {
-      setSelectedPropertyId(null);
+      setSelectedProperty(null);
     }
   }, [isEditMode]);
 
   const handleSelectProperty = (property: PropertySummary) => {
     if (!isEditMode) return;
-    setSelectedPropertyId(property.id);
+    setSelectedProperty(property);
   };
 
   const closeEditModal = () => {
-    setSelectedPropertyId(null);
+    setSelectedProperty(null);
   };
 
   return (
@@ -115,10 +125,10 @@ export default function PropertiesPage() {
           ))}
         </div>
       </div>
-      {selectedProperty && (
+      {modalProperty && (
         <PropertyEditModal
-          open={isEditMode && !!selectedProperty}
-          property={selectedProperty}
+          open={isEditMode && !!modalProperty}
+          property={modalProperty}
           onClose={closeEditModal}
         />
       )}
