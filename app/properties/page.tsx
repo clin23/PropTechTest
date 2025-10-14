@@ -19,9 +19,13 @@ export default function PropertiesPage() {
   });
 
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState<PropertySummary | null>(null);
+  const [selectedPropertyState, setSelectedPropertyState] = useState<{
+    id: string;
+    snapshot: PropertySummary;
+  } | null>(null);
 
-  const selectedPropertyId = selectedProperty?.id ?? null;
+  const selectedPropertyId = selectedPropertyState?.id ?? null;
+  const selectedPropertySnapshot = selectedPropertyState?.snapshot ?? null;
 
   const selectedPropertyFromList = useMemo(() => {
     if (!selectedPropertyId) return null;
@@ -44,19 +48,42 @@ export default function PropertiesPage() {
 
   const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList;
 
+  const {
+    data: selectedPropertyDetailData,
+    isFetching: isFetchingSelectedProperty,
+  } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertyState({
+      id: selectedPropertyDetailData.id,
+      snapshot: selectedPropertyDetailData,
+    });
+  }, [selectedPropertyDetailData]);
+
   useEffect(() => {
     if (!isEditMode) {
-      setSelectedProperty(null);
+      setSelectedPropertyState(null);
     }
   }, [isEditMode]);
 
   const handleSelectProperty = (property: PropertySummary) => {
     if (!isEditMode) return;
-    setSelectedProperty(property);
+    setSelectedPropertyState({
+      id: property.id,
+      snapshot: property,
+    });
   };
 
   const closeEditModal = () => {
-    setSelectedProperty(null);
+    setSelectedPropertyState(null);
   };
 
   return (
@@ -138,6 +165,7 @@ export default function PropertiesPage() {
           open={isEditMode && !!modalProperty}
           property={modalProperty}
           onClose={closeEditModal}
+          isLoading={isFetchingSelectedProperty}
         />
       )}
     </div>
