@@ -97,6 +97,23 @@ export default function PropertiesPage() {
     setSelectedPropertySnapshot(selectedPropertyDetailData);
   }, [selectedPropertyDetailData]);
 
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const { data: selectedPropertyDetailData, isFetching: isFetchingSelectedProperty } =
+    selectedPropertyDetailQuery;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
   useEffect(() => {
     if (!isEditMode) {
       setSelectedPropertyId(null);
