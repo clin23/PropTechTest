@@ -68,9 +68,16 @@ export function exportExpensesPDF(
   exportPDF(filename, html);
 }
 
+const expenseCategoryParentLookup = Object.entries(EXPENSE_CATEGORIES).reduce(
+  (lookup, [parent, categories]) => {
+    for (const category of categories) {
+      lookup[category] = parent;
+    }
+    return lookup;
+  },
+  {} as Record<string, string>,
+);
+
 export function categoryParent(cat: string): string {
-  for (const [parent, list] of Object.entries(EXPENSE_CATEGORIES)) {
-    if (list.includes(cat)) return parent;
-  }
-  return "Other";
+  return expenseCategoryParentLookup[cat] ?? "Other";
 }
