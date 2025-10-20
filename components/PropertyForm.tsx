@@ -43,25 +43,34 @@ export default function PropertyForm({
   const [isDownloadingData, setIsDownloadingData] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const [confirmationProgress, setConfirmationProgress] = useState(0);
-  const previousPropertyIdRef = useRef<string | null>(property?.id ?? null);
+  const [isDirty, setIsDirty] = useState(false);
+  const lastPropertyRef = useRef<PropertySummary | undefined>(property);
+  const lastPropertyIdRef = useRef<string | null>(property?.id ?? null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const shouldRequireSlider = isEdit && requireSlideConfirmation;
-  const isDirty = useMemo(
-    () =>
-      (Object.keys(form) as (keyof FormState)[]).some(
-        (key) => form[key] !== baseSnapshotRef.current[key],
-      ),
-    [form],
-  );
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
   useEffect(() => {
     const nextPropertyId = property?.id ?? null;
-    if (previousPropertyIdRef.current === nextPropertyId) {
+    const propertyIdChanged = nextPropertyId !== lastPropertyIdRef.current;
+    const propertyRefChanged = property !== lastPropertyRef.current;
+
+    if (!propertyIdChanged && !propertyRefChanged) {
       return;
+    }
+
+    lastPropertyIdRef.current = nextPropertyId;
+    lastPropertyRef.current = property;
+
+    if (propertyIdChanged || !isDirty) {
+      setForm(createFormState(property));
+      setDeleteAddressInput("");
+      setDeleteModalOpen(false);
+      setConfirmationProgress(0);
+      setIsDirty(false);
     }
 
     previousPropertyIdRef.current = nextPropertyId;
@@ -126,9 +135,7 @@ export default function PropertyForm({
       } else {
         router.push(`/properties/${p.id}`);
       }
-      const nextSnapshot = createFormState(p);
-      baseSnapshotRef.current = nextSnapshot;
-      setForm(nextSnapshot);
+      setForm(createFormState(p));
       setConfirmationProgress(0);
     },
     onError: (e: any) =>
