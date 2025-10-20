@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -21,6 +21,15 @@ interface Props {
   requireSlideConfirmation?: boolean;
 }
 
+const buildInitialFormState = (current?: PropertySummary) => ({
+  address: current?.address ?? "",
+  imageUrl: current?.imageUrl ?? "",
+  tenant: current?.tenant ?? "",
+  leaseStart: current?.leaseStart ?? "",
+  leaseEnd: current?.leaseEnd ?? "",
+  rent: current ? String(current.rent) : "",
+});
+
 export default function PropertyForm({
   property,
   onSaved,
@@ -28,19 +37,13 @@ export default function PropertyForm({
   requireSlideConfirmation = false,
 }: Props) {
   const isEdit = !!property;
-  const [form, setForm] = useState({
-    address: property?.address ?? "",
-    imageUrl: property?.imageUrl ?? "",
-    tenant: property?.tenant ?? "",
-    leaseStart: property?.leaseStart ?? "",
-    leaseEnd: property?.leaseEnd ?? "",
-    rent: property ? String(property.rent) : "",
-  });
+  const [form, setForm] = useState(() => buildInitialFormState(property));
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAddressInput, setDeleteAddressInput] = useState("");
   const [isDownloadingData, setIsDownloadingData] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const [confirmationProgress, setConfirmationProgress] = useState(0);
+  const previousPropertyIdRef = useRef<string | null>(property?.id ?? null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -49,14 +52,14 @@ export default function PropertyForm({
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
   useEffect(() => {
-    setForm({
-      address: property?.address ?? "",
-      imageUrl: property?.imageUrl ?? "",
-      tenant: property?.tenant ?? "",
-      leaseStart: property?.leaseStart ?? "",
-      leaseEnd: property?.leaseEnd ?? "",
-      rent: property ? String(property.rent) : "",
-    });
+    const nextPropertyId = property?.id ?? null;
+    if (previousPropertyIdRef.current === nextPropertyId) {
+      return;
+    }
+
+    previousPropertyIdRef.current = nextPropertyId;
+
+    setForm(buildInitialFormState(property));
     setDeleteAddressInput("");
     setDeleteModalOpen(false);
     setConfirmationProgress(0);
