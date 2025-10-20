@@ -9,7 +9,7 @@ interface LedgerTableProps {
 
 export function LedgerTable({ entries, tenantName }: LedgerTableProps) {
   const sorted = [...entries].sort((a, b) => (a.date < b.date ? 1 : -1));
-  const balance = sorted.reduce((total, entry) => total + entry.amountCents, 0);
+  const balance = sorted.reduce((total, entry) => total + getSignedAmountCents(entry), 0);
 
   const handleExport = (format: 'csv' | 'pdf') => {
     if (format === 'csv') {
@@ -18,7 +18,7 @@ export function LedgerTable({ entries, tenantName }: LedgerTableProps) {
         rows.push([
           new Date(entry.date).toLocaleDateString(),
           entry.type,
-          (entry.amountCents / 100).toFixed(2),
+          (getSignedAmountCents(entry) / 100).toFixed(2),
           entry.note ?? '',
         ]);
       }
@@ -72,7 +72,9 @@ export function LedgerTable({ entries, tenantName }: LedgerTableProps) {
               <tr key={entry.id}>
                 <td className="px-4 py-2 text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString()}</td>
                 <td className="px-4 py-2 text-xs font-medium uppercase text-foreground">{entry.type}</td>
-                <td className="px-4 py-2 text-right text-xs font-semibold text-foreground">{formatCurrency(entry.amountCents)}</td>
+                <td className="px-4 py-2 text-right text-xs font-semibold text-foreground">
+                  {formatCurrency(getSignedAmountCents(entry))}
+                </td>
                 <td className="px-4 py-2 text-xs text-muted-foreground">{entry.note ?? '—'}</td>
               </tr>
             ))}
@@ -81,6 +83,18 @@ export function LedgerTable({ entries, tenantName }: LedgerTableProps) {
       </div>
     </div>
   );
+}
+
+function getSignedAmountCents(entry: LedgerEntry) {
+  if (entry.amountCents < 0) {
+    return entry.amountCents;
+  }
+
+  if (entry.type === 'PAYMENT') {
+    return -entry.amountCents;
+  }
+
+  return entry.amountCents;
 }
 
 function downloadFile(name: string, content: string, type: string) {
