@@ -150,17 +150,17 @@ export default function PropertyPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex flex-col lg:h-full lg:overflow-hidden">
       {!ready && (
         <div className="p-6">
           <PropertyPageSkeleton />
         </div>
       )}
       {property && (
-        <div className="flex flex-1 min-h-0 flex-col p-6">
-          <div className="flex flex-1 min-h-0 flex-col gap-6">
-            <section className="grid flex-1 min-h-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
-              <div className="flex min-h-0 flex-col lg:sticky lg:top-6 lg:self-start">
+        <div className="flex flex-col p-6 lg:flex-1 lg:min-h-0">
+          <div className="flex flex-col gap-6 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+            <section className="grid grid-cols-1 gap-6 lg:flex-1 lg:min-h-0 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
+              <div className="flex flex-col lg:min-h-0">
                 <PropertyHero
                   property={property}
                   onAddIncome={handleOpenIncome}
@@ -170,8 +170,8 @@ export default function PropertyPage() {
                   onEditProperty={() => setEditOpen(true)}
                 />
               </div>
-              <div className="flex min-h-0 flex-col">
-                <section className="flex h-full min-h-[32rem] flex-col overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex flex-col lg:min-h-0">
+                <section className="flex flex-col rounded-lg border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:h-full lg:min-h-[32rem] lg:overflow-hidden">
                   <div className="flex-shrink-0 border-b border-gray-100 px-4 pb-1 pt-4 sm:px-6 dark:border-gray-800">
                     <ScrollableSectionBar
                       tabs={PROPERTY_TABS}
@@ -186,9 +186,9 @@ export default function PropertyPage() {
                     id={`panel-${resolvedTab}`}
                     aria-labelledby={`tab-${resolvedTab}`}
                     tabIndex={0}
-                    className="flex flex-1 min-h-0 flex-col overflow-y-auto"
+                    className="flex flex-col lg:flex-1 lg:min-h-0 lg:overflow-hidden"
                   >
-                    <div className="flex flex-1 min-h-0 flex-col px-4 pb-6 pt-4 sm:px-6">
+                    <div className="flex flex-col px-4 pb-6 pt-4 sm:px-6 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
                       {renderSection(resolvedTab)}
                     </div>
                   </div>
