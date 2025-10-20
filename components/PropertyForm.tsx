@@ -59,6 +59,13 @@ export default function PropertyForm({
   const { toast } = useToast();
 
   const shouldRequireSlider = isEdit && requireSlideConfirmation;
+  const isDirty = useMemo(
+    () =>
+      (Object.keys(form) as (keyof FormState)[]).some(
+        (key) => form[key] !== baseSnapshotRef.current[key],
+      ),
+    [form],
+  );
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
   useEffect(() => {
