@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -21,22 +21,13 @@ interface Props {
   requireSlideConfirmation?: boolean;
 }
 
-type FormState = {
-  address: string;
-  imageUrl: string;
-  tenant: string;
-  leaseStart: string;
-  leaseEnd: string;
-  rent: string;
-};
-
-const createFormState = (property?: PropertySummary): FormState => ({
-  address: property?.address ?? "",
-  imageUrl: property?.imageUrl ?? "",
-  tenant: property?.tenant ?? "",
-  leaseStart: property?.leaseStart ?? "",
-  leaseEnd: property?.leaseEnd ?? "",
-  rent: property ? String(property.rent) : "",
+const buildInitialFormState = (current?: PropertySummary) => ({
+  address: current?.address ?? "",
+  imageUrl: current?.imageUrl ?? "",
+  tenant: current?.tenant ?? "",
+  leaseStart: current?.leaseStart ?? "",
+  leaseEnd: current?.leaseEnd ?? "",
+  rent: current ? String(current.rent) : "",
 });
 
 export default function PropertyForm({
@@ -46,14 +37,13 @@ export default function PropertyForm({
   requireSlideConfirmation = false,
 }: Props) {
   const isEdit = !!property;
-  const baseSnapshotRef = useRef<FormState>(createFormState(property));
-  const [form, setForm] = useState<FormState>(() => baseSnapshotRef.current);
+  const [form, setForm] = useState(() => buildInitialFormState(property));
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAddressInput, setDeleteAddressInput] = useState("");
   const [isDownloadingData, setIsDownloadingData] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const [confirmationProgress, setConfirmationProgress] = useState(0);
-  const lastPropertyIdRef = useRef<string | null>(property?.id ?? null);
+  const previousPropertyIdRef = useRef<string | null>(property?.id ?? null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -70,25 +60,17 @@ export default function PropertyForm({
 
   useEffect(() => {
     const nextPropertyId = property?.id ?? null;
-    const propertyIdChanged = nextPropertyId !== lastPropertyIdRef.current;
-
-    if (propertyIdChanged) {
-      const nextSnapshot = createFormState(property);
-      baseSnapshotRef.current = nextSnapshot;
-      setForm(nextSnapshot);
-      setDeleteAddressInput("");
-      setDeleteModalOpen(false);
-      setConfirmationProgress(0);
-      lastPropertyIdRef.current = nextPropertyId;
+    if (previousPropertyIdRef.current === nextPropertyId) {
       return;
     }
 
-    if (!isDirty) {
-      const nextSnapshot = createFormState(property);
-      baseSnapshotRef.current = nextSnapshot;
-      setForm(nextSnapshot);
-    }
-  }, [property, isDirty]);
+    previousPropertyIdRef.current = nextPropertyId;
+
+    setForm(buildInitialFormState(property));
+    setDeleteAddressInput("");
+    setDeleteModalOpen(false);
+    setConfirmationProgress(0);
+  }, [property]);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
