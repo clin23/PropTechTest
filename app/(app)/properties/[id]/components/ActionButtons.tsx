@@ -7,6 +7,7 @@ interface ActionButtonsProps {
   onAddIncome: () => void;
   onAddExpense: () => void;
   onUploadDocument: () => void;
+  onEditProperty?: () => void;
 }
 
 function ActionButton({
@@ -29,6 +30,7 @@ export default function ActionButtons({
   onAddIncome,
   onAddExpense,
   onUploadDocument,
+  onEditProperty,
 }: ActionButtonsProps) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
@@ -53,6 +55,15 @@ export default function ActionButtons({
       >
         Upload Document
       </ActionButton>
+      {onEditProperty && (
+        <ActionButton
+          onClick={onEditProperty}
+          aria-label="Edit Property"
+          className="border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+        >
+          Edit Property
+        </ActionButton>
+      )}
     </div>
   );
 }
