@@ -4,14 +4,33 @@ import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { createExpense, listProperties, uploadExpenseReceipt } from "../lib/api";
+import {
+  createExpense,
+  listProperties,
+  updateExpense,
+  uploadExpenseReceipt,
+} from "../lib/api";
 import { logEvent } from "../lib/log";
 import { useToast } from "./ui/use-toast";
 import ModalPortal from "./ModalPortal";
 import type { PropertySummary } from "../types/property";
+import type { ExpenseRow } from "../types/expense";
 import { EXPENSE_CATEGORIES } from "../lib/categories";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
+
+const calculateGSTFromAmount = (amount: string) => {
+  const parsed = parseFloat(amount);
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
+  const gstValue = parsed * 0.1;
+  if (!Number.isFinite(gstValue)) {
+    return "";
+  }
+  return (Math.round(gstValue * 100) / 100).toFixed(2);
+};
+
 type FormState = {
   propertyId: string;
   date: string;
@@ -20,6 +39,7 @@ type FormState = {
   vendor: string;
   amount: string;
   gst: string;
+  applyGST: boolean;
   notes: string;
   label: string;
   receipt: File | null;
@@ -29,7 +49,7 @@ type FormState = {
 interface Props {
   propertyId?: string;
   onCreated?: () => void;
-  onSaved?: () => void;
+  onSaved?: (expense: ExpenseRow) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaults?: Partial<FormState>;
@@ -99,14 +119,24 @@ export default function ExpenseForm({
       return "";
     })();
 
+    const defaultAmount = coerceString(typedDefaults.amount);
+    const defaultGST = coerceString(typedDefaults.gst);
+    const applyGST = (() => {
+      const parsed = parseFloat(defaultGST);
+      return Number.isFinite(parsed) && parsed > 0;
+    })();
+
     return {
       propertyId: coerceString(propertyId ?? typedDefaults.propertyId),
       date: coerceString(typedDefaults.date),
       group: derivedGroup,
       category: defaultCategory,
       vendor: coerceString(typedDefaults.vendor),
-      amount: coerceString(typedDefaults.amount),
-      gst: coerceString(typedDefaults.gst),
+      amount: defaultAmount,
+      gst: applyGST
+        ? defaultGST || calculateGSTFromAmount(defaultAmount)
+        : "",
+      applyGST,
       notes: coerceString(typedDefaults.notes),
       label: defaultLabel,
       receipt: null,
@@ -171,22 +201,34 @@ export default function ExpenseForm({
         receipt?: File | null;
       }
     ) => {
+      if (isEditMode && expenseId) {
+        const updated = await updateExpense(expenseId, payload.expense);
+        if (payload.receipt) {
+          const { url } = await uploadExpenseReceipt(expenseId, payload.receipt);
+          return { ...updated, receiptUrl: url } as ExpenseRow;
+        }
+        return updated as ExpenseRow;
+      }
+
       const created = await createExpense(payload.expense);
       if (payload.receipt) {
         const { url } = await uploadExpenseReceipt(created.id, payload.receipt);
-        return { ...created, receiptUrl: url };
+        return { ...created, receiptUrl: url } as ExpenseRow;
       }
-      return created;
+      return created as ExpenseRow;
     },
-    onSuccess: () => {
-      toast({ title: isEditMode ? "Expense updated" : "Expense saved" });
+    onSuccess: (savedExpense) => {
+      toast({
+        title: isEditMode ? "Expense updated" : "Expense saved",
+        variant: "success",
+      });
       setOpen(false);
       setForm(computeInitialForm());
       setError(null);
       setFileInputKey((key) => key + 1);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       onCreated?.();
-      onSaved?.();
+      onSaved?.(savedExpense as ExpenseRow);
       if (!isEditMode) {
         logEvent("expense_create", {
           propertyId: form.propertyId,
@@ -197,7 +239,11 @@ export default function ExpenseForm({
     onError: (err: any) => {
       const message = err instanceof Error ? err.message : "Failed to save expense";
       setError(message);
-      toast({ title: "Failed to save expense", description: message });
+      toast({
+        title: "Failed to save expense",
+        description: message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -207,6 +253,8 @@ export default function ExpenseForm({
     setError(null);
     setFileInputKey((key) => key + 1);
   };
+
+  const amountHasValue = form.amount.trim() !== "";
 
   return (
     <div>
@@ -233,7 +281,7 @@ export default function ExpenseForm({
                 transition={{ duration: 0.2 }}
               >
                 <motion.form
-                  className="h-full w-full max-w-2xl max-h-full space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
+                  className="h-full w-full max-w-[500px] max-h-[500px] space-y-3 overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
                   onClick={(e) => e.stopPropagation()}
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -261,12 +309,15 @@ export default function ExpenseForm({
                       expense: {
                         propertyId: form.propertyId,
                         date: form.date,
-                        category: form.category,
+                        category: form.category || form.group,
                         vendor: form.vendor,
                         amount: parseFloat(form.amount),
-                        gst: form.gst ? parseFloat(form.gst) : 0,
-                        notes: form.notes,
-                        label: form.label,
+                        gst:
+                          form.applyGST && form.gst
+                            ? parseFloat(form.gst)
+                            : 0,
+                        notes: form.notes || undefined,
+                        label: form.label || undefined,
                       },
                       receipt: form.receipt,
                     });
@@ -316,26 +367,31 @@ export default function ExpenseForm({
                       className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                       value={form.group}
                       onChange={(e) =>
-                        setForm({ ...form, group: e.target.value, category: "" })
+                        setForm({
+                          ...form,
+                          group: e.target.value,
+                          category: "",
+                          label: "",
+                        })
                       }
                     >
-                  <option value="">Select category</option>
-                  {recent.length > 0 && (
-                    <optgroup label="Recent">
-                      {recent.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {humanize(cat)}
+                      <option value="">Select category</option>
+                      {recent.length > 0 && (
+                        <optgroup label="Recent">
+                          {recent.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {humanize(cat)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {Object.keys(EXPENSE_CATEGORIES).map((group) => (
+                        <option key={group} value={group}>
+                          {humanize(group)}
                         </option>
                       ))}
-                    </optgroup>
-                  )}
-                  {Object.keys(EXPENSE_CATEGORIES).map((group) => (
-                    <option key={group} value={group}>
-                      {humanize(group)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                    </select>
+                  </label>
               {form.group && (
                 form.category === "" && form.label === "" ? (
                   <div className="flex items-start gap-2">
@@ -399,16 +455,6 @@ export default function ExpenseForm({
                   </label>
                 )
               )}
-              {!form.group && (
-                <label className="block text-gray-700 dark:text-gray-300">
-                  Custom label
-                  <input
-                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                    value={form.label}
-                    onChange={(e) => setForm({ ...form, label: e.target.value })}
-                  />
-                </label>
-              )}
               <label className="block text-gray-700 dark:text-gray-300">
                 Vendor
                 <input
@@ -417,24 +463,75 @@ export default function ExpenseForm({
                   onChange={(e) => setForm({ ...form, vendor: e.target.value })}
                 />
               </label>
-              <label className="block text-gray-700 dark:text-gray-300">
-                Amount
-                <input
-                  type="number"
-                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                />
-              </label>
-              <label className="block text-gray-700 dark:text-gray-300">
-                GST
-                <input
-                  type="number"
-                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                  value={form.gst}
-                  onChange={(e) => setForm({ ...form, gst: e.target.value })}
-                />
-              </label>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
+                <label className="block text-gray-700 dark:text-gray-300 sm:flex-1 sm:max-w-xs">
+                  Amount
+                  <input
+                    type="number"
+                    className="mt-1 h-10 w-full rounded border bg-white px-3 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                    value={form.amount}
+                    onChange={(e) => {
+                      const nextAmount = e.target.value;
+                      const hasAmount = nextAmount.trim() !== "";
+                      setForm((prev) => {
+                        const nextApplyGST = hasAmount ? prev.applyGST : false;
+                        return {
+                          ...prev,
+                          amount: nextAmount,
+                          applyGST: nextApplyGST,
+                          gst: nextApplyGST
+                            ? calculateGSTFromAmount(nextAmount)
+                            : "",
+                        };
+                      });
+                    }}
+                  />
+                </label>
+                <div className="sm:flex-1 sm:max-w-xs">
+                  <label
+                    htmlFor="gst-toggle"
+                    className="block text-gray-700 dark:text-gray-300"
+                  >
+                    GST
+                  </label>
+                  <div
+                    className={`mt-1 flex h-10 items-center justify-between gap-3 rounded border border-gray-300 bg-white px-3 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 ${
+                      amountHasValue ? "" : "opacity-70"
+                    }`}
+                  >
+                    <label
+                      htmlFor="gst-toggle"
+                      className={`flex items-center gap-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200 ${
+                        amountHasValue ? "" : "cursor-not-allowed text-gray-400 dark:text-gray-500"
+                      }`}
+                    >
+                      <input
+                        id="gst-toggle"
+                        type="checkbox"
+                        className="h-4 w-4 rounded border border-gray-500 bg-white text-gray-900 accent-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100 dark:border-gray-400 dark:bg-gray-900 dark:text-gray-100 dark:accent-gray-800 dark:focus-visible:ring-gray-400 disabled:dark:border-gray-600 disabled:dark:bg-gray-800"
+                        checked={form.applyGST}
+                        disabled={!amountHasValue}
+                        onChange={(e) => {
+                          const shouldApply = e.target.checked;
+                          setForm((prev) => ({
+                            ...prev,
+                            applyGST: shouldApply,
+                            gst: shouldApply
+                              ? calculateGSTFromAmount(prev.amount)
+                              : "",
+                          }));
+                        }}
+                      />
+                      {form.applyGST ? "GST applied" : "Apply GST"}
+                    </label>
+                    {form.applyGST && form.gst ? (
+                      <span className="whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                        {`$${form.gst}`}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
               <label className="block text-gray-700 dark:text-gray-300">
                 Notes
                 <textarea

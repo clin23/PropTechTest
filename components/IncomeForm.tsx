@@ -13,8 +13,13 @@ import {
 import { useToast } from "./ui/use-toast";
 import ModalPortal from "./ModalPortal";
 import { INCOME_CATEGORIES } from "../lib/categories";
+import {
+  isRentLedgerCategory,
+  RENT_LEDGER_CATEGORY_GROUP,
+  RENT_LEDGER_DEFAULT_CATEGORY,
+} from "../lib/income-ledger";
 import type { PropertySummary } from "../types/property";
-import type { IncomeRow } from "../types/income";
+import type { IncomeRow, IncomeListType } from "../types/income";
 
 const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").trim();
 
@@ -45,6 +50,8 @@ interface IncomeFormProps {
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
   initialIncome?: IncomeRow | null;
+  onSaved?: (income: IncomeRow) => void;
+  defaultListType?: IncomeListType;
 }
 
 export default function IncomeForm({
@@ -54,56 +61,87 @@ export default function IncomeForm({
   onOpenChange,
   showTrigger = true,
   initialIncome = null,
+  onSaved,
+  defaultListType = "otherIncome",
 }: IncomeFormProps) {
   const queryClient = useQueryClient();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
   const isEditing = Boolean(initialIncome);
-  const getInitialForm = useCallback((): FormState => {
+  const determineListType = useCallback((): IncomeListType => {
     if (initialIncome) {
-      const group = initialIncome.category
-        ? findGroupForCategory(initialIncome.category)
-        : initialIncome.label
-        ? "Other"
-        : "";
-      return {
-        propertyId: propertyId ?? initialIncome.propertyId,
-        date: initialIncome.date ?? "",
-        group,
-        category: initialIncome.category ?? "",
-        amount:
-          typeof initialIncome.amount === "number"
-            ? initialIncome.amount.toString()
-            : "",
-        notes: initialIncome.notes ?? "",
-        label: initialIncome.label ?? "",
-        evidenceUrl: initialIncome.evidenceUrl ?? "",
-        evidenceName: initialIncome.evidenceName ?? "",
-      };
+      const source = initialIncome.category || initialIncome.label || "";
+      return isRentLedgerCategory(source) ? "rentLedger" : "otherIncome";
     }
-    return {
-      propertyId: propertyId ?? "",
-      date: "",
-      group: "",
-      category: "",
-      amount: "",
-      notes: "",
-      label: "",
-      evidenceUrl: "",
-      evidenceName: "",
-    };
-  }, [initialIncome, propertyId]);
-  const [form, setForm] = useState<FormState>(getInitialForm());
+    return defaultListType;
+  }, [defaultListType, initialIncome]);
+
+  const getInitialForm = useCallback(
+    (targetListType?: IncomeListType): FormState => {
+      if (initialIncome) {
+        const group = initialIncome.category
+          ? findGroupForCategory(initialIncome.category)
+          : initialIncome.label
+          ? "Other"
+          : "";
+        return {
+          propertyId: propertyId ?? initialIncome.propertyId,
+          date: initialIncome.date ?? "",
+          group,
+          category: initialIncome.category ?? "",
+          amount:
+            typeof initialIncome.amount === "number"
+              ? initialIncome.amount.toString()
+              : "",
+          notes: initialIncome.notes ?? "",
+          label: initialIncome.label ?? "",
+          evidenceUrl: initialIncome.evidenceUrl ?? "",
+          evidenceName: initialIncome.evidenceName ?? "",
+        };
+      }
+
+      const resolvedListType = targetListType ?? determineListType();
+      const base: FormState = {
+        propertyId: propertyId ?? "",
+        date: "",
+        group: "",
+        category: "",
+        amount: "",
+        notes: "",
+        label: "",
+        evidenceUrl: "",
+        evidenceName: "",
+      };
+
+      if (resolvedListType === "rentLedger") {
+        return {
+          ...base,
+          group: RENT_LEDGER_CATEGORY_GROUP,
+          category: INCOME_CATEGORIES[RENT_LEDGER_CATEGORY_GROUP][0] ??
+            RENT_LEDGER_DEFAULT_CATEGORY,
+        };
+      }
+
+      return base;
+    },
+    [determineListType, initialIncome, propertyId]
+  );
+  const [listType, setListType] = useState<IncomeListType>(determineListType());
+  const [form, setForm] = useState<FormState>(() =>
+    getInitialForm(determineListType())
+  );
   const [error, setError] = useState<string | null>(null);
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    setForm(getInitialForm());
+    const nextType = determineListType();
+    setListType(nextType);
+    setForm(getInitialForm(nextType));
     setEvidenceFile(null);
-  }, [getInitialForm]);
+  }, [determineListType, getInitialForm]);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -113,11 +151,13 @@ export default function IncomeForm({
 
   useEffect(() => {
     if (!open) {
-      setForm(getInitialForm());
+      const nextType = determineListType();
+      setListType(nextType);
+      setForm(getInitialForm(nextType));
       setEvidenceFile(null);
       setError(null);
     }
-  }, [getInitialForm, open]);
+  }, [determineListType, getInitialForm, open]);
 
   const { data: properties = [] } = useQuery<PropertySummary[]>({
     queryKey: ["properties"],
@@ -129,15 +169,18 @@ export default function IncomeForm({
       isEditing && initialIncome
         ? updateIncome(propertyId, initialIncome.id, data)
         : createIncome(propertyId, data),
-    onSuccess: (_data, vars) => {
+    onSuccess: (savedIncome, vars) => {
       toast({ title: "Income saved" });
       setOpen(false);
-      setForm(getInitialForm());
+      const nextType = determineListType();
+      setListType(nextType);
+      setForm(getInitialForm(nextType));
       setEvidenceFile(null);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["income", vars.propertyId] });
       queryClient.invalidateQueries({ queryKey: ["pnl", vars.propertyId] });
       onCreated?.();
+      onSaved?.(savedIncome as IncomeRow);
     },
     onError: (err: any) => {
       const message = err instanceof Error ? err.message : "Failed to save income";
@@ -148,15 +191,61 @@ export default function IncomeForm({
 
   const handleClose = () => {
     setOpen(false);
-    setForm(getInitialForm());
+    const nextType = determineListType();
+    setListType(nextType);
+    setForm(getInitialForm(nextType));
     setEvidenceFile(null);
     setError(null);
   };
 
+  const handleListTypeChange = (next: IncomeListType) => {
+    if (next === listType) return;
+    setListType(next);
+    setError(null);
+    setForm((prev) => {
+      if (next === "rentLedger") {
+        const options =
+          INCOME_CATEGORIES[
+            RENT_LEDGER_CATEGORY_GROUP as keyof typeof INCOME_CATEGORIES
+          ];
+        const nextCategory = options.includes(prev.category)
+          ? prev.category
+          : options[0] ?? RENT_LEDGER_DEFAULT_CATEGORY;
+        return {
+          ...prev,
+          group: RENT_LEDGER_CATEGORY_GROUP,
+          category: nextCategory,
+          label: "",
+        };
+      }
+
+      const wasRentLedger =
+        prev.group === RENT_LEDGER_CATEGORY_GROUP ||
+        isRentLedgerCategory(prev.category) ||
+        isRentLedgerCategory(prev.label);
+
+      return {
+        ...prev,
+        group: wasRentLedger ? "" : prev.group,
+        category: wasRentLedger ? "" : prev.category,
+        label: "",
+      };
+    });
+  };
+
   const selectedIncomeOptions =
-    form.group && form.group in INCOME_CATEGORIES
+    listType === "rentLedger"
+      ? INCOME_CATEGORIES[
+          RENT_LEDGER_CATEGORY_GROUP as keyof typeof INCOME_CATEGORIES
+        ]
+      : form.group && form.group in INCOME_CATEGORIES
       ? INCOME_CATEGORIES[form.group as keyof typeof INCOME_CATEGORIES]
       : [];
+
+  const listTypeOptions: Array<{ value: IncomeListType; label: string }> = [
+    { value: "rentLedger", label: "Rent ledger" },
+    { value: "otherIncome", label: "Other income" },
+  ];
 
   return (
     <div>
@@ -194,10 +283,14 @@ export default function IncomeForm({
                         return;
                       }
                       if (!form.category && !form.label) {
-                        setError("Please select an income or enter a custom label");
+                        setError(
+                          listType === "rentLedger"
+                            ? "Please select a rent ledger income type"
+                            : "Please select an income or enter a custom label"
+                        );
                         return;
                       }
-                      if (form.category && form.label) {
+                      if (listType === "otherIncome" && form.category && form.label) {
                         setError("Please choose either an income or a custom label");
                         return;
                       }
@@ -247,9 +340,49 @@ export default function IncomeForm({
                   exit={{ opacity: 0, y: 16, scale: 0.96 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Log Income
-                  </h2>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {listType === "rentLedger"
+                          ? "Log rent ledger income"
+                          : "Log other income"}
+                      </h2>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {listType === "rentLedger"
+                          ? "This income will be added to the rent ledger."
+                          : "This income will be added to the other income list."}
+                      </p>
+                    </div>
+                    <div
+                      role="group"
+                      aria-label="Select income destination"
+                      className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-100 p-0.5 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                      {listTypeOptions.map((option) => {
+                        const isActive = option.value === listType;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            className={`rounded-md px-3 py-1 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                              isActive
+                                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100"
+                                : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+                            }`}
+                            onClick={() => handleListTypeChange(option.value)}
+                            aria-pressed={isActive}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="sr-only" aria-live="polite">
+                    {listType === "rentLedger"
+                      ? "Logging income to the rent ledger"
+                      : "Logging income to the other income list"}
+                  </div>
                   {!propertyId && (
                     <label className="block text-gray-700 dark:text-gray-300">
                       Property
@@ -276,91 +409,130 @@ export default function IncomeForm({
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
                 />
               </label>
-              <label className="block text-gray-700 dark:text-gray-300">
-                Category
-                <select
-                  className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 disabled:opacity-70"
-                  value={form.group}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      group: e.target.value,
-                      category: "",
-                      label: "",
-                    })
-                  }
-                  disabled={isEditing}
-                >
-                  <option value="">Select category</option>
-                  {Object.keys(INCOME_CATEGORIES).map((group) => (
-                    <option key={group} value={group}>
-                      {humanize(group)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {form.group && (
-                form.category === "" && form.label === "" ? (
-                  <div className="flex items-start gap-2">
-                    <label className="block flex-1 text-gray-700 dark:text-gray-300">
-                      Income
-                      <select
-                        className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                        value={form.category}
-                        onChange={(e) =>
-                          setForm({ ...form, category: e.target.value, label: "" })
-                        }
-                      >
-                        <option value="">Select income</option>
-                        {selectedIncomeOptions.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
+              {listType === "rentLedger" ? (
+                <label className="block text-gray-700 dark:text-gray-300">
+                  Rent ledger income
+                  <select
+                    className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    value={form.category}
+                    onChange={(e) =>
+                      setForm({ ...form, category: e.target.value, label: "" })
+                    }
+                  >
+                    <option value="">Select income</option>
+                    {selectedIncomeOptions.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <>
+                  <label className="block text-gray-700 dark:text-gray-300">
+                    Category
+                    <select
+                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 disabled:opacity-70"
+                      value={form.group}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          group: e.target.value,
+                          category: "",
+                          label: "",
+                        })
+                      }
+                      disabled={isEditing}
+                    >
+                      <option value="">Select category</option>
+                      {Object.keys(INCOME_CATEGORIES)
+                        .filter((group) => group !== RENT_LEDGER_CATEGORY_GROUP)
+                        .map((group) => (
+                          <option key={group} value={group}>
+                            {humanize(group)}
                           </option>
                         ))}
-                      </select>
-                    </label>
-                    <span className="self-center text-gray-500">OR</span>
-                    <label className="block flex-1 text-gray-700 dark:text-gray-300">
-                      Custom label
-                      <input
-                        className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                        value={form.label}
-                        onChange={(e) =>
-                          setForm({ ...form, label: e.target.value, category: "" })
-                        }
-                      />
-                    </label>
-                  </div>
-                ) : form.category !== "" ? (
-                  <label className="block text-gray-700 dark:text-gray-300">
-                    Income
-                    <select
-                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                      value={form.category}
-                      onChange={(e) =>
-                        setForm({ ...form, category: e.target.value, label: "" })
-                      }
-                    >
-                      <option value="">Select income</option>
-                      {selectedIncomeOptions.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
                     </select>
                   </label>
-                ) : (
-                  <label className="block text-gray-700 dark:text-gray-300">
-                    Custom label
-                    <input
-                      className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
-                      value={form.label}
-                      onChange={(e) =>
-                        setForm({ ...form, label: e.target.value, category: "" })
-                      }
-                    />
-                  </label>
-                )
+                  {form.group &&
+                    (form.category === "" && form.label === "" ? (
+                      <div className="flex items-start gap-2">
+                        <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                          Income
+                          <select
+                            className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                            value={form.category}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                category: e.target.value,
+                                label: "",
+                              })
+                            }
+                          >
+                            <option value="">Select income</option>
+                            {selectedIncomeOptions.map((item) => (
+                              <option key={item} value={item}>
+                                {item}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <span className="self-center text-gray-500">OR</span>
+                        <label className="block flex-1 text-gray-700 dark:text-gray-300">
+                          Custom label
+                          <input
+                            className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                            value={form.label}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                label: e.target.value,
+                                category: "",
+                              })
+                            }
+                          />
+                        </label>
+                      </div>
+                    ) : form.category !== "" ? (
+                      <label className="block text-gray-700 dark:text-gray-300">
+                        Income
+                        <select
+                          className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                          value={form.category}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              category: e.target.value,
+                              label: "",
+                            })
+                          }
+                        >
+                          <option value="">Select income</option>
+                          {selectedIncomeOptions.map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : (
+                      <label className="block text-gray-700 dark:text-gray-300">
+                        Custom label
+                        <input
+                          className="border p-1 w-full rounded bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                          value={form.label}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              label: e.target.value,
+                              category: "",
+                            })
+                          }
+                        />
+                      </label>
+                    ))}
+                </>
               )}
               <label className="block text-gray-700 dark:text-gray-300">
                 Amount
