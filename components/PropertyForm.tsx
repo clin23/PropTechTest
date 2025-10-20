@@ -58,6 +58,8 @@ export default function PropertyForm({
   );
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
+  const previousPropertyIdRef = useRef<string | null | undefined>(undefined);
+
   useEffect(() => {
     const nextPropertyId = property?.id ?? null;
     if (previousPropertyIdRef.current === nextPropertyId) {
@@ -66,7 +68,14 @@ export default function PropertyForm({
 
     previousPropertyIdRef.current = nextPropertyId;
 
-    setForm(buildInitialFormState(property));
+    setForm({
+      address: property?.address ?? "",
+      imageUrl: property?.imageUrl ?? "",
+      tenant: property?.tenant ?? "",
+      leaseStart: property?.leaseStart ?? "",
+      leaseEnd: property?.leaseEnd ?? "",
+      rent: property ? String(property.rent) : "",
+    });
     setDeleteAddressInput("");
     setDeleteModalOpen(false);
     setConfirmationProgress(0);
