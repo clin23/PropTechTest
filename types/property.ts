@@ -37,5 +37,6 @@ export interface PropertyDocument {
   notes?: string;
   links?: string[];
   uploadedAt?: string;
+  tag?: string;
 }
 

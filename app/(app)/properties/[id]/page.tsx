@@ -9,6 +9,7 @@ import ExpenseForm from "../../../../components/ExpenseForm";
 import DocumentUploadModal from "../../../../components/DocumentUploadModal";
 import { getProperty, listProperties } from "../../../../lib/api";
 import type { PropertySummary } from "../../../../types/property";
+import type { IncomeListType } from "../../../../types/income";
 import { useURLState } from "../../../../lib/useURLState";
 import PropertyHero from "./components/PropertyHero";
 import PropertyEditModal from "../../../../components/PropertyEditModal";
@@ -39,6 +40,7 @@ export default function PropertyPage() {
     defaultValue: DEFAULT_PROPERTY_TAB,
   });
   const [incomeOpen, setIncomeOpen] = useState(false);
+  const [incomeListType, setIncomeListType] = useState<IncomeListType>("rentLedger");
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [documentOpen, setDocumentOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -90,6 +92,13 @@ export default function PropertyPage() {
       ? activeTab
       : DEFAULT_PROPERTY_TAB;
   }, [activeTab]);
+
+  const handleOpenIncome = () => {
+    const nextListType: IncomeListType =
+      resolvedTab === "other-income" ? "otherIncome" : "rentLedger";
+    setIncomeListType(nextListType);
+    setIncomeOpen(true);
+  };
 
   if (isError && !isRedirecting) {
     return <div className="p-6">Failed to load property</div>;
@@ -154,7 +163,7 @@ export default function PropertyPage() {
               <div className="flex flex-col lg:min-h-0">
                 <PropertyHero
                   property={property}
-                  onAddIncome={() => setIncomeOpen(true)}
+                  onAddIncome={handleOpenIncome}
                   onAddExpense={() => setExpenseOpen(true)}
                   onUploadDocument={() => setDocumentOpen(true)}
                   onNavigateToTab={handleNavigateToTab}
@@ -186,7 +195,13 @@ export default function PropertyPage() {
                 </section>
               </div>
             </section>
-            <IncomeForm propertyId={id} open={incomeOpen} onOpenChange={setIncomeOpen} showTrigger={false} />
+            <IncomeForm
+              propertyId={id}
+              open={incomeOpen}
+              onOpenChange={setIncomeOpen}
+              showTrigger={false}
+              defaultListType={incomeListType}
+            />
             <ExpenseForm propertyId={id} open={expenseOpen} onOpenChange={setExpenseOpen} showTrigger={false} />
             <DocumentUploadModal propertyId={id} open={documentOpen} onClose={() => setDocumentOpen(false)} />
             <PropertyEditModal

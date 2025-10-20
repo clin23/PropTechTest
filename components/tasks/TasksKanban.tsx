@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  type FormEvent,
+  type TransitionEvent,
+} from "react";
 import Link from "next/link";
 import {
   DragDropContext,
@@ -18,6 +26,12 @@ import {
   listVendors,
   completeTask,
 } from "../../lib/api";
+import {
+  TASK_COMPLETION_PREFERENCE_OPTIONS,
+  type TaskCompletionPreference,
+  useTaskCompletionPreference,
+} from "../../hooks/useTaskCompletionPreference";
+import { useToast } from "../ui/use-toast";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import TaskCard from "./TaskCard";
@@ -26,6 +40,7 @@ import TaskEditModal from "./TaskEditModal";
 import ColumnRenameModal from "./ColumnRenameModal";
 import ColumnDeleteModal from "./ColumnDeleteModal";
 import ColumnCreateModal from "./ColumnCreateModal";
+import { useScrollLockOnHover } from "../../hooks/useScrollLockOnHover";
 
 const TAB_BASE_CLASSES =
   "rounded-full border px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 dark:focus:ring-gray-600";
@@ -65,6 +80,7 @@ type CompletionPromptState = {
   task: TaskDto;
   previousStatus: string;
   error: string | null;
+  closing: boolean;
 };
 
 const cloneColumns = (columns: Column[]): Column[] =>
@@ -388,24 +404,31 @@ export default function TasksKanban({
             ]
           : [],
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["tasks"], exact: false }),
   });
   const updateMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<TaskDto> }) =>
       updateTask(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["tasks"], exact: false }),
   });
   const archiveMut = useMutation({
     mutationFn: (id: string) => archiveTask(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["tasks"], exact: false }),
   });
   const completeMut = useMutation({
     mutationFn: (id: string) => completeTask(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["tasks"], exact: false }),
   });
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
   const [completionPrompt, setCompletionPrompt] =
     useState<CompletionPromptState | null>(null);
+  const { preference: completionPreference, setPreference: saveCompletionPreference } =
+    useTaskCompletionPreference();
+  const { toast } = useToast();
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
 
   const [menuColumn, setMenuColumn] = useState<string | null>(null);
@@ -687,12 +710,21 @@ export default function TasksKanban({
     const previousStatus = resolveDisplayStatus(task);
     setCompletingTaskId(task.id);
     try {
-      await completeMut.mutateAsync(task.id);
-      setStatusOverrides((prev) => ({
-        ...prev,
-        [task.id]: previousStatus,
-      }));
-      setCompletionPrompt({ task, previousStatus, error: null });
+      const updated = await completeMut.mutateAsync(task.id);
+      if (updated.completed) {
+        setStatusOverrides((prev) => ({
+          ...prev,
+          [task.id]: previousStatus,
+        }));
+        setCompletionPrompt({ task: updated, previousStatus, error: null });
+      } else {
+        setStatusOverrides((prev) => {
+          if (!prev[task.id]) return prev;
+          const { [task.id]: _removed, ...rest } = prev;
+          return rest;
+        });
+        setCompletionPrompt(null);
+      }
     } catch (error) {
       console.error("Failed to complete task", error);
     } finally {
@@ -700,45 +732,86 @@ export default function TasksKanban({
     }
   };
 
-  const handleKeepCompletedTask = () => {
+  const handleDismissCompletionPrompt = () => {
     if (archiveMut.isPending) return;
+    setCompletionPrompt((current) =>
+      current
+        ? {
+            ...current,
+            error: null,
+            closing: true,
+          }
+        : current
+    );
+  };
+
+  const handleCompletionPromptClosed = () => {
     setCompletionPrompt(null);
   };
 
-  const handleArchiveCompletedTask = async () => {
+  const showPreferenceSavedToast = (next: TaskCompletionPreference) => {
+    toast({
+      title: "Preference saved",
+      description:
+        next === "archive"
+          ? "Completed tasks will be archived automatically."
+          : "Completed tasks will stay in their list.",
+    });
+  };
+
+  const handleSaveCompletionPreference = async (
+    nextPreference: TaskCompletionPreference
+  ) => {
     if (!completionPrompt || archiveMut.isPending) return;
 
     const { task, previousStatus } = completionPrompt;
 
-    setCompletionPrompt((current) =>
-      current && current.task.id === task.id
-        ? { ...current, error: null }
-        : current
-    );
-
-    try {
-      await archiveMut.mutateAsync(task.id);
-      setStatusOverrides((prev) => {
-        if (!prev[task.id]) return prev;
-        const { [task.id]: _omit, ...rest } = prev;
-        return rest;
-      });
-      setCompletionPrompt(null);
-    } catch (error) {
-      console.error("Failed to archive task", error);
-      setStatusOverrides((prev) => ({
-        ...prev,
-        [task.id]: previousStatus,
-      }));
+    if (nextPreference === "archive") {
       setCompletionPrompt((current) =>
         current && current.task.id === task.id
-          ? {
-              ...current,
-              error: "Failed to archive the task. Please try again.",
-            }
+          ? { ...current, error: null }
           : current
       );
+
+      try {
+        await archiveMut.mutateAsync(task.id);
+        setStatusOverrides((prev) => {
+          if (!prev[task.id]) return prev;
+          const { [task.id]: _omit, ...rest } = prev;
+          return rest;
+        });
+        saveCompletionPreference(nextPreference);
+        showPreferenceSavedToast(nextPreference);
+        setCompletionPrompt((current) =>
+          current && current.task.id === task.id
+            ? { ...current, closing: true }
+            : current
+        );
+      } catch (error) {
+        console.error("Failed to archive task", error);
+        setStatusOverrides((prev) => ({
+          ...prev,
+          [task.id]: previousStatus,
+        }));
+        setCompletionPrompt((current) =>
+          current && current.task.id === task.id
+            ? {
+                ...current,
+                error: "Failed to archive the task. Please try again.",
+              }
+            : current
+        );
+      }
+      return;
     }
+
+    saveCompletionPreference(nextPreference);
+    showPreferenceSavedToast(nextPreference);
+    setCompletionPrompt((current) =>
+      current && current.task.id === task.id
+        ? { ...current, error: null, closing: true }
+        : current
+    );
   };
 
   return (
@@ -816,12 +889,8 @@ export default function TasksKanban({
                                 task={task}
                                 onClick={() => setEditingTask(task)}
                                 showProperties={showPropertiesOnCards}
-                                onComplete={
-                                  task.status !== "done"
-                                    ? () => handleCompleteTask(task)
-                                    : undefined
-                                }
-                                isCompleted={task.status === "done"}
+                                onComplete={() => handleCompleteTask(task)}
+                                isCompleted={Boolean(task.completed)}
                                 isCompleting={
                                   completingTaskId === task.id &&
                                   completeMut.isPending
@@ -972,9 +1041,11 @@ export default function TasksKanban({
           task={completionPrompt.task}
           error={completionPrompt.error}
           archiving={archiveMut.isPending}
-          onKeep={handleKeepCompletedTask}
-          onArchive={handleArchiveCompletedTask}
-          onDismiss={handleKeepCompletedTask}
+          closing={completionPrompt.closing}
+          initialPreference={completionPreference}
+          onSavePreference={handleSaveCompletionPreference}
+          onDismiss={handleDismissCompletionPrompt}
+          onClosed={handleCompletionPromptClosed}
         />
       )}
     </>
@@ -985,24 +1056,47 @@ type TaskCompletionPromptProps = {
   task: TaskDto;
   archiving: boolean;
   error: string | null;
-  onKeep: () => void;
-  onArchive: () => void;
+  closing: boolean;
+  initialPreference: TaskCompletionPreference | null;
+  onSavePreference: (preference: TaskCompletionPreference) => void;
   onDismiss: () => void;
+  onClosed: () => void;
 };
 
 function TaskCompletionPrompt({
   task,
   archiving,
   error,
-  onKeep,
-  onArchive,
+  closing,
+  initialPreference,
+  onSavePreference,
   onDismiss,
+  onClosed,
 }: TaskCompletionPromptProps) {
+  const [selectedPreference, setSelectedPreference] = useState<
+    TaskCompletionPreference
+  >(initialPreference ?? "keep");
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (closing) {
+      setVisible(false);
+    }
+  }, [closing]);
+
+  useEffect(() => {
+    setSelectedPreference(initialPreference ?? "keep");
+  }, [initialPreference]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        if (!archiving) {
+        if (!archiving && !closing) {
           onDismiss();
         }
       }
@@ -1010,53 +1104,91 @@ function TaskCompletionPrompt({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [archiving, onDismiss]);
+  }, [archiving, closing, onDismiss]);
 
   const handleBackdropClick = () => {
-    if (archiving) return;
+    if (archiving || closing) return;
     onDismiss();
+  };
+
+  const handleOverlayTransitionEnd = (
+    event: TransitionEvent<HTMLDivElement>
+  ) => {
+    if (event.target !== event.currentTarget) return;
+    if (!visible) {
+      onClosed();
+    }
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSavePreference(selectedPreference);
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 transition-opacity duration-200 ${
+        visible ? "opacity-100" : "opacity-0"
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={`task-complete-${task.id}`}
       onClick={handleBackdropClick}
+      onTransitionEnd={handleOverlayTransitionEnd}
     >
-      <div
-        className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900 dark:text-white"
+      <form
+        onSubmit={handleSubmit}
+        className={`w-full max-w-sm rounded-lg bg-white p-6 shadow-xl transition-all duration-200 ${
+          visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        } dark:bg-gray-900 dark:text-white`}
         onClick={(event) => event.stopPropagation()}
       >
         <h3 id={`task-complete-${task.id}`} className="text-lg font-semibold">
           Task completed
         </h3>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-          {`Would you like to archive "${task.title}" or keep it in this list?`}
+          {`Would you like to keep "${task.title}" in this list or archive it?`}
         </p>
+        <div className="mt-4 space-y-2">
+          <label
+            htmlFor={`task-completion-pref-${task.id}`}
+            className="block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Save this preference
+          </label>
+          <select
+            id={`task-completion-pref-${task.id}`}
+            value={selectedPreference}
+            onChange={(event) =>
+              setSelectedPreference(
+                event.target.value as TaskCompletionPreference
+              )
+            }
+            disabled={archiving}
+            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-700"
+          >
+            {TASK_COMPLETION_PREFERENCE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            We&apos;ll apply this choice to this task and all future completed tasks.
+            You can update it anytime from Settings.
+          </p>
+        </div>
         {error ? (
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : null}
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onKeep}
-            disabled={archiving}
-            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
-          >
-            Keep in list
-          </button>
-          <button
-            type="button"
-            onClick={onArchive}
-            disabled={archiving}
-            className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
-          >
-            {archiving ? "Archiving…" : "Archive task"}
-          </button>
-        </div>
-      </div>
+        <button
+          type="submit"
+          disabled={archiving || closing}
+          className="mt-6 w-full rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-500 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+        >
+          {archiving ? "Saving…" : "Save preference"}
+        </button>
+      </form>
     </div>
   );
 }
@@ -1092,6 +1224,7 @@ function PropertySelectModal({
 
   const reorderable =
     typeof onReorder === "function" && properties.length > 1;
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   const handleMove = (propertyId: string, direction: -1 | 1) => {
     if (!reorderable) return;
@@ -1150,7 +1283,7 @@ function PropertySelectModal({
             ×
           </button>
         </div>
-        <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
+        <div ref={scrollRef} className="max-h-[60vh] overflow-y-auto px-5 py-4">
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className="space-y-2">
               {allowAll && (

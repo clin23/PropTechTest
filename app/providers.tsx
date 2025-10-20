@@ -1,6 +1,7 @@
 'use client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, createContext, useState, useEffect } from 'react';
+import { ToastProvider } from '../components/ui/use-toast';
 
 const queryClient = new QueryClient();
 
@@ -43,7 +44,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeContext.Provider value={{ theme, toggleTheme }}>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </ThemeContext.Provider>
     </QueryClientProvider>
   );

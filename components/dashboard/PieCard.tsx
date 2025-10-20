@@ -66,7 +66,7 @@ export default function PieCard<T extends Record<string, any>>({ title, data, la
         </div>
       ) : (
         <div className="flex h-[320px] items-center justify-center px-4 text-center text-sm text-text-secondary sm:h-[360px] lg:h-[400px]">
-          log data to see visualisations!
+          Log data to see visualisations!
         </div>
       )}
     </div>

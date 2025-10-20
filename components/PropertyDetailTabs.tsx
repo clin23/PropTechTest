@@ -53,6 +53,9 @@ export default function PropertyDetailTabs({ propertyId }: Props) {
             {t.label}
           </button>
         ))}
+        <Link href="/vendors" className="pb-2" role="tab">
+          Vendors
+        </Link>
         <Link
           href={`/properties/${propertyId}/inspections`}
           className="pb-2"
@@ -66,9 +69,6 @@ export default function PropertyDetailTabs({ propertyId }: Props) {
           role="tab"
         >
           Create Listing
-        </Link>
-        <Link href="/vendors" className="pb-2" role="tab">
-          Vendors
         </Link>
       </div>
       {active === "rent-ledger" && <RentLedgerTable propertyId={propertyId} />}
