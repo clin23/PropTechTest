@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -48,7 +48,16 @@ export default function PropertyForm({
   const shouldRequireSlider = isEdit && requireSlideConfirmation;
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
+  const previousPropertyIdRef = useRef<string | null | undefined>(undefined);
+
   useEffect(() => {
+    const nextPropertyId = property?.id ?? null;
+    if (previousPropertyIdRef.current === nextPropertyId) {
+      return;
+    }
+
+    previousPropertyIdRef.current = nextPropertyId;
+
     setForm({
       address: property?.address ?? "",
       imageUrl: property?.imageUrl ?? "",
