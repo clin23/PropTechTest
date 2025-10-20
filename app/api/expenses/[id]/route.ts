@@ -36,6 +36,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       return new NextResponse('Not found', { status: 404 });
     }
 
+    if (row.type !== 'expense') {
+      return new NextResponse('Not found', { status: 404 });
+    }
+
     const parsed = zExpense.parse({ ...(row.data as any), ...body, id: params.id });
     await (prisma as any).mockData.update({
       where: { id: params.id },
