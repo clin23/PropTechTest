@@ -327,13 +327,26 @@ export default function IncomesTable({
                     <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                   )}
                 </td>
-                <td className="px-4 py-3">{r.amount}</td>
-                <td className="px-4 py-3">
+                <td className="p-2">{r.amount}</td>
+                <td className="p-2">
                   {r.notes ? (
                     <span
-                      className="inline-flex items-center text-gray-600 dark:text-gray-300"
+                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
                       title={r.notes}
-                      aria-label="View note"
+                    >
+                      {r.notes}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                  )}
+                </td>
+                <td className="p-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                      onClick={() => setEditingIncome(r)}
+                      aria-label="Edit income"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"

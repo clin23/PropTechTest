@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import { useEffect, useState } from "react";
 import type { TaskDto } from "../../types/tasks";
 import {
   deriveIndicatorForTask,
@@ -7,14 +7,54 @@ import {
 } from "./statusIndicator";
 
 const STATUS_PILL_CLASSES = [
-  "inline-flex w-6 min-h-[3.25rem] max-h-[5rem]",
+  "inline-flex w-4 min-h-[2.5rem] max-h-[4.25rem]",
   "items-center justify-center rounded-full border border-white/30",
-  "px-1 text-[9px] font-semibold uppercase tracking-[0.15em]",
+  "px-0.5 text-[7px] font-semibold uppercase tracking-[0.08em]",
   "leading-none bg-opacity-90 text-center",
 ].join(" ");
 
+const resolveColorFromValue = (value: string): string | null => {
+  const normalized = value.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const directHex = normalized.match(/^#([0-9a-f]{6})$/i);
+  if (directHex) {
+    return `#${directHex[1].toLowerCase()}`;
+  }
+
+  const variableMatch = normalized.match(/^var\((--[a-z0-9-]+)\)$/i);
+  if (!variableMatch) {
+    return null;
+  }
+
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const propertyName = variableMatch[1];
+  const root = document.documentElement;
+  const computedValue = getComputedStyle(root).getPropertyValue(propertyName);
+  if (computedValue.trim()) {
+    return computedValue.trim();
+  }
+
+  const inlineValue = root.style.getPropertyValue(propertyName);
+  if (inlineValue.trim()) {
+    return inlineValue.trim();
+  }
+
+  return null;
+};
+
 const getStatusPillForeground = (background: string): string => {
-  const hexMatch = background.match(/^#([0-9a-f]{6})$/i);
+  const resolvedColor = resolveColorFromValue(background);
+  if (!resolvedColor) {
+    return "#ffffff";
+  }
+
+  const hexMatch = resolvedColor.match(/^#([0-9a-f]{6})$/i);
   if (!hexMatch) {
     return "#ffffff";
   }
@@ -97,19 +137,26 @@ export default function TaskCard({
       onClick={onClick}
     >
       {statusInfo && (
-        <span className="absolute right-2 top-2 flex items-start">
+        <span className="absolute right-2 top-2 z-40 flex items-start">
           <span className="sr-only">Status: {pillLabel}</span>
-          <span
-            aria-hidden
-            className={STATUS_PILL_CLASSES}
-            style={{
-              backgroundColor: pillBackground,
-              color: pillTextColor,
-              writingMode: "vertical-rl",
-              textOrientation: "upright",
-            }}
-          >
-            {pillLabel}
+          <span className="group/status relative flex">
+            <span
+              aria-hidden
+              className="h-3 w-3 rounded-full border border-white/40 shadow-sm transition-transform duration-200 ease-out group-hover/status:scale-105"
+              style={{
+                backgroundColor: pillBackground,
+              }}
+            />
+            <span
+              aria-hidden
+              className="absolute top-1/2 right-full z-50 mr-2 flex origin-right -translate-y-1/2 -translate-x-1 scale-90 items-center rounded-full border border-white/20 px-2 py-1 text-[11px] font-medium leading-tight opacity-0 shadow-sm transition-all duration-200 ease-out group-hover/status:translate-x-0 group-hover/status:scale-100 group-hover/status:opacity-100"
+              style={{
+                backgroundColor: pillBackground,
+                color: pillTextColor,
+              }}
+            >
+              <span className="whitespace-nowrap">{pillLabel}</span>
+            </span>
           </span>
         </span>
       )}
