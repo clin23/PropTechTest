@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -21,6 +21,24 @@ interface Props {
   requireSlideConfirmation?: boolean;
 }
 
+type FormState = {
+  address: string;
+  imageUrl: string;
+  tenant: string;
+  leaseStart: string;
+  leaseEnd: string;
+  rent: string;
+};
+
+const buildFormState = (property?: PropertySummary): FormState => ({
+  address: property?.address ?? "",
+  imageUrl: property?.imageUrl ?? "",
+  tenant: property?.tenant ?? "",
+  leaseStart: property?.leaseStart ?? "",
+  leaseEnd: property?.leaseEnd ?? "",
+  rent: property ? String(property.rent) : "",
+});
+
 export default function PropertyForm({
   property,
   onSaved,
@@ -28,14 +46,9 @@ export default function PropertyForm({
   requireSlideConfirmation = false,
 }: Props) {
   const isEdit = !!property;
-  const [form, setForm] = useState({
-    address: property?.address ?? "",
-    imageUrl: property?.imageUrl ?? "",
-    tenant: property?.tenant ?? "",
-    leaseStart: property?.leaseStart ?? "",
-    leaseEnd: property?.leaseEnd ?? "",
-    rent: property ? String(property.rent) : "",
-  });
+  const [form, setForm] = useState<FormState>(() => buildFormState(property));
+  const baseSnapshotRef = useRef<FormState>(buildFormState(property));
+  const previousPropertyIdRef = useRef<string | null>(property?.id ?? null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAddressInput, setDeleteAddressInput] = useState("");
   const [isDownloadingData, setIsDownloadingData] = useState(false);
@@ -46,21 +59,31 @@ export default function PropertyForm({
   const { toast } = useToast();
 
   const shouldRequireSlider = isEdit && requireSlideConfirmation;
+  const isDirty = useMemo(
+    () =>
+      (Object.keys(form) as (keyof FormState)[]).some(
+        (key) => form[key] !== baseSnapshotRef.current[key],
+      ),
+    [form],
+  );
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
   useEffect(() => {
-    setForm({
-      address: property?.address ?? "",
-      imageUrl: property?.imageUrl ?? "",
-      tenant: property?.tenant ?? "",
-      leaseStart: property?.leaseStart ?? "",
-      leaseEnd: property?.leaseEnd ?? "",
-      rent: property ? String(property.rent) : "",
-    });
-    setDeleteAddressInput("");
-    setDeleteModalOpen(false);
-    setConfirmationProgress(0);
-  }, [property]);
+    const nextSnapshot = buildFormState(property);
+    const nextId = property?.id ?? null;
+    const previousId = previousPropertyIdRef.current;
+    const propertyChanged = nextId !== previousId;
+
+    previousPropertyIdRef.current = nextId;
+    baseSnapshotRef.current = nextSnapshot;
+
+    if (propertyChanged || !isDirty) {
+      setForm(nextSnapshot);
+      setDeleteAddressInput("");
+      setDeleteModalOpen(false);
+      setConfirmationProgress(0);
+    }
+  }, [property, isDirty]);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
