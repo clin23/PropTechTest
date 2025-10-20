@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { uploadTenantFile } from '../../../../lib/tenants/client';
 import { useToast } from '../../../../components/ui/use-toast';
@@ -11,21 +12,28 @@ interface UploadDropzoneProps {
 
 export function UploadDropzone({ tenantId }: UploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const handleFiles = useCallback(
     async (files: FileList | null) => {
       if (!files?.length) return;
+      let hasSuccessfulUpload = false;
       for (const file of Array.from(files)) {
         try {
           await uploadTenantFile(tenantId, file);
           toast({ title: 'Uploaded file', description: file.name });
+          hasSuccessfulUpload = true;
         } catch (error) {
           toast({ title: 'Upload failed', description: (error as Error).message });
         }
       }
+      if (hasSuccessfulUpload) {
+        queryClient.invalidateQueries({ queryKey: ['tenant-workspace', tenantId] });
+        queryClient.invalidateQueries({ queryKey: ['tenant-timeline', tenantId] });
+      }
     },
-    [tenantId, toast]
+    [tenantId, toast, queryClient]
   );
 
   return (
