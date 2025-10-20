@@ -186,9 +186,9 @@ export default function PropertyPage() {
                     id={`panel-${resolvedTab}`}
                     aria-labelledby={`tab-${resolvedTab}`}
                     tabIndex={0}
-                    className="flex flex-1 min-h-0 flex-col"
+                    className="flex flex-1 min-h-0 flex-col overflow-y-auto"
                   >
-                    <div className="flex flex-1 min-h-0 flex-col overflow-y-auto px-4 pb-6 pt-4 sm:px-6">
+                    <div className="flex flex-1 min-h-0 flex-col px-4 pb-6 pt-4 sm:px-6">
                       {renderSection(resolvedTab)}
                     </div>
                   </div>
