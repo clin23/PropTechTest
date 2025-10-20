@@ -174,20 +174,26 @@ export default function TaskCard({
       onClick={onClick}
     >
       {statusInfo && (
-        <span className="absolute right-2 top-2 flex items-start">
+        <span className="absolute right-2 top-2 z-40 flex items-start">
           <span className="sr-only">Status: {pillLabel}</span>
-          <span
-            aria-hidden
-            className={STATUS_PILL_CLASSES}
-            style={{
-              backgroundColor: pillBackground,
-              color: pillTextColor,
-              writingMode: "vertical-rl",
-              textOrientation: "upright",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {pillLabel}
+          <span className="group/status relative flex">
+            <span
+              aria-hidden
+              className="h-3 w-3 rounded-full border border-white/40 shadow-sm transition-transform duration-200 ease-out group-hover/status:scale-105"
+              style={{
+                backgroundColor: pillBackground,
+              }}
+            />
+            <span
+              aria-hidden
+              className="absolute top-1/2 right-full z-50 mr-2 flex origin-right -translate-y-1/2 -translate-x-1 scale-90 items-center rounded-full border border-white/20 px-2 py-1 text-[11px] font-medium leading-tight opacity-0 shadow-sm transition-all duration-200 ease-out group-hover/status:translate-x-0 group-hover/status:scale-100 group-hover/status:opacity-100"
+              style={{
+                backgroundColor: pillBackground,
+                color: pillTextColor,
+              }}
+            >
+              <span className="whitespace-nowrap">{pillLabel}</span>
+            </span>
           </span>
         </span>
       )}
