@@ -49,6 +49,13 @@ export default function PropertyForm({
   const { toast } = useToast();
 
   const shouldRequireSlider = isEdit && requireSlideConfirmation;
+  const isDirty = useMemo(
+    () =>
+      (Object.keys(form) as (keyof FormState)[]).some(
+        (key) => form[key] !== baseSnapshotRef.current[key],
+      ),
+    [form],
+  );
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
   useEffect(() => {
@@ -70,6 +77,18 @@ export default function PropertyForm({
       setPortalTarget(document.body);
     }
   }, []);
+
+  const handleFormFieldChange = <K extends keyof FormState>(
+    field: K,
+    value: FormState[K],
+  ) => {
+    setForm((prev) => {
+      if (prev[field] === value) {
+        return prev;
+      }
+      return { ...prev, [field]: value };
+    });
+  };
 
   const openDeleteModal = () => {
     setDeleteModalOpen(true);
@@ -100,6 +119,9 @@ export default function PropertyForm({
       } else {
         router.push(`/properties/${p.id}`);
       }
+      const nextSnapshot = createFormState(p);
+      baseSnapshotRef.current = nextSnapshot;
+      setForm(nextSnapshot);
       setConfirmationProgress(0);
     },
     onError: (e: any) =>
@@ -148,7 +170,7 @@ export default function PropertyForm({
 
   const handleImageUpload = (file: File | null) => {
     if (!file) {
-      setForm((prev) => ({ ...prev, imageUrl: "" }));
+      handleFormFieldChange("imageUrl", "");
       return;
     }
 
@@ -156,7 +178,7 @@ export default function PropertyForm({
     reader.onload = () => {
       const result = reader.result;
       if (typeof result === "string") {
-        setForm((prev) => ({ ...prev, imageUrl: result }));
+        handleFormFieldChange("imageUrl", result);
       }
     };
     reader.readAsDataURL(file);
@@ -199,7 +221,7 @@ export default function PropertyForm({
           <input
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            onChange={(e) => handleFormFieldChange("address", e.target.value)}
           />
         </label>
         <label className="block">
@@ -247,7 +269,7 @@ export default function PropertyForm({
           <input
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             value={form.tenant}
-            onChange={(e) => setForm({ ...form, tenant: e.target.value })}
+            onChange={(e) => handleFormFieldChange("tenant", e.target.value)}
           />
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -257,7 +279,7 @@ export default function PropertyForm({
               type="date"
               className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               value={form.leaseStart}
-              onChange={(e) => setForm({ ...form, leaseStart: e.target.value })}
+              onChange={(e) => handleFormFieldChange("leaseStart", e.target.value)}
             />
           </label>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -266,7 +288,7 @@ export default function PropertyForm({
               type="date"
               className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               value={form.leaseEnd}
-              onChange={(e) => setForm({ ...form, leaseEnd: e.target.value })}
+              onChange={(e) => handleFormFieldChange("leaseEnd", e.target.value)}
             />
           </label>
         </div>
@@ -276,7 +298,7 @@ export default function PropertyForm({
             type="number"
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             value={form.rent}
-            onChange={(e) => setForm({ ...form, rent: e.target.value })}
+            onChange={(e) => handleFormFieldChange("rent", e.target.value)}
           />
         </label>
       </form>

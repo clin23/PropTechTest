@@ -22,10 +22,68 @@ export default function PropertiesPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [selectedPropertySnapshot, setSelectedPropertySnapshot] = useState<PropertySummary | null>(null);
 
-  const selectedPropertyFromList = useMemo(() => {
-    if (!selectedPropertyId) return null;
-    return data.find((property) => property.id === selectedPropertyId) ?? null;
-  }, [data, selectedPropertyId]);
+  const {
+    data: selectedPropertyDetail,
+    isFetching: isFetchingSelectedProperty,
+  } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty = useMemo(() => {
+    if (!selectedPropertyId) {
+      return selectedPropertySnapshot;
+    }
+
+    const propertyFromList = data.find((property) => property.id === selectedPropertyId);
+
+    return selectedPropertyDetail ?? propertyFromList ?? selectedPropertySnapshot;
+  }, [
+    data,
+    selectedPropertyDetail,
+    selectedPropertyId,
+    selectedPropertySnapshot,
+  ]);
+
+  useEffect(() => {
+    if (!selectedPropertyId || !selectedPropertyDetail) return;
+    setSelectedPropertySnapshot(selectedPropertyDetail);
+  }, [selectedPropertyDetail, selectedPropertyId]);
+
+  const {
+    data: selectedPropertyDetailData,
+    isFetching: isFetchingSelectedProperty,
+  } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const { data: selectedPropertyDetailData, isFetching: isFetchingSelectedProperty } =
+    selectedPropertyDetailQuery;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
 
   const selectedPropertyDetailQuery = useQuery<PropertySummary>({
     queryKey: ['property', selectedPropertyId],
@@ -38,6 +96,43 @@ export default function PropertiesPage() {
 
   const modalProperty =
     selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const selectedPropertyDetailData = selectedPropertyDetailQuery.data;
+  const isFetchingSelectedProperty = selectedPropertyDetailQuery.isFetching;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const selectedPropertyDetailData = selectedPropertyDetailQuery.data;
+  const isFetchingSelectedProperty = selectedPropertyDetailQuery.isFetching;
+
+  const modalProperty = useMemo(() => {
+    if (selectedPropertyDetailData) return selectedPropertyDetailData;
+    if (selectedPropertyFromList) return selectedPropertyFromList;
+    return selectedPropertySnapshot;
+  }, [selectedPropertyDetailData, selectedPropertyFromList, selectedPropertySnapshot]);
 
   useEffect(() => {
     if (!selectedPropertyDetailData) return;
