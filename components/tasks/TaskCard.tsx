@@ -60,6 +60,14 @@ export default function TaskCard({
   });
   const statusInfo = getIndicatorPresentation(indicatorValue);
 
+  const completionButtonLabel = isCompleting
+    ? completed
+      ? "Updating…"
+      : "Completing…"
+    : completed
+      ? "Mark incomplete"
+      : "Complete Task";
+
   return (
     <div
       className={`group relative flex flex-col rounded border p-2 ${
@@ -98,7 +106,7 @@ export default function TaskCard({
           </div>
         )}
       </div>
-      {!completed && onComplete && (
+      {onComplete && (
         <div
           className="max-h-0 overflow-hidden pt-0 transition-all duration-300 ease-in-out group-focus-within:max-h-16 group-focus-within:pt-2 group-hover:max-h-16 group-hover:pt-2"
         >
@@ -114,7 +122,7 @@ export default function TaskCard({
             }}
             disabled={isCompleting}
           >
-            {isCompleting ? "Completing…" : "Complete Task"}
+            {completionButtonLabel}
           </button>
         </div>
       )}
