@@ -27,6 +27,10 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
   const [isVisible, setIsVisible] = useState(false);
   const [confirmationProgress, setConfirmationProgress] = useState(0);
   const isConfirmed = confirmationProgress >= 100;
+  const sliderPromptTone =
+    isConfirmed || confirmationProgress >= 56
+      ? "text-white"
+      : "text-gray-900 dark:text-white/80";
 
   useEffect(() => {
     setIsMounted(true);
@@ -261,7 +265,7 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
             Confirm changes
           </label>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-            <div className="relative flex h-10 w-full items-center overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700/80 sm:flex-1">
+            <div className="relative flex h-10 w-full items-center overflow-hidden rounded-full bg-gray-100 shadow-inner transition-colors dark:bg-black sm:flex-1">
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 rounded-full bg-blue-500/90 transition-all"
@@ -285,11 +289,7 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
                 className="confirm-slider"
               />
               <span
-                className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
-                  isConfirmed
-                    ? "text-gray-900 dark:text-white"
-                    : "text-white/80"
-                }`}
+                className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${sliderPromptTone}`}
               >
                 {isConfirmed ? "Confirmed" : "Slide right to confirm"}
               </span>
