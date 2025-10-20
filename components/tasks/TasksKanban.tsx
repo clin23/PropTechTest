@@ -710,40 +710,20 @@ export default function TasksKanban({
     const previousStatus = resolveDisplayStatus(task);
     setCompletingTaskId(task.id);
     try {
-      await completeMut.mutateAsync(task.id);
-      if (completionPreference === "archive") {
-        try {
-          await archiveMut.mutateAsync(task.id);
-        } catch (error) {
-          console.error("Failed to archive task", error);
-          setStatusOverrides((prev) => ({
-            ...prev,
-            [task.id]: previousStatus,
-          }));
-          setCompletionPrompt({
-            task,
-            previousStatus,
-            error:
-              "Failed to archive the task automatically. Please choose an option.",
-            closing: false,
-          });
-        }
-        return;
-      }
-
-      setStatusOverrides((prev) => ({
-        ...prev,
-        [task.id]: previousStatus,
-      }));
-
-      if (!completionPreference) {
-        setCompletionPrompt({
-          task,
-          previousStatus,
-          error: null,
-          closing: false,
+      const updated = await completeMut.mutateAsync(task.id);
+      if (updated.completed) {
+        setStatusOverrides((prev) => ({
+          ...prev,
+          [task.id]: previousStatus,
+        }));
+        setCompletionPrompt({ task: updated, previousStatus, error: null });
+      } else {
+        setStatusOverrides((prev) => {
+          if (!prev[task.id]) return prev;
+          const { [task.id]: _removed, ...rest } = prev;
+          return rest;
         });
-        return;
+        setCompletionPrompt(null);
       }
     } catch (error) {
       console.error("Failed to complete task", error);
@@ -909,11 +889,7 @@ export default function TasksKanban({
                                 task={task}
                                 onClick={() => setEditingTask(task)}
                                 showProperties={showPropertiesOnCards}
-                                onComplete={
-                                  !task.completed
-                                    ? () => handleCompleteTask(task)
-                                    : undefined
-                                }
+                                onComplete={() => handleCompleteTask(task)}
                                 isCompleted={Boolean(task.completed)}
                                 isCompleting={
                                   completingTaskId === task.id &&
