@@ -24,44 +24,10 @@ export default function PropertiesPage() {
 
   const selectedPropertyFromList = useMemo(() => {
     if (!selectedPropertyId) return null;
-    return data.find((property) => property.id === selectedPropertyId) ?? selectedProperty;
-  }, [data, selectedProperty, selectedPropertyId]);
-
-  const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
-    queryKey: ['property', selectedPropertyId],
-    queryFn: () => getProperty(selectedPropertyId!),
-    enabled: !!selectedPropertyId,
-  });
-
-  const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList ?? selectedProperty;
-
-  const { data: selectedPropertyDetail } = useQuery<PropertySummary>({
-    queryKey: ['property', selectedPropertyId],
-    queryFn: () => getProperty(selectedPropertyId!),
-    enabled: !!selectedPropertyId,
-  });
-
-  const modalProperty = selectedPropertyDetail ?? selectedPropertyFromList;
-
-  const {
-    data: selectedPropertyDetailData,
-    isFetching: isFetchingSelectedProperty,
-  } = useQuery<PropertySummary>({
-    queryKey: ['property', selectedPropertyId],
-    queryFn: () => getProperty(selectedPropertyId!),
-    enabled: !!selectedPropertyId,
-  });
-
-  const modalProperty =
-    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
-
-  useEffect(() => {
-    if (!selectedPropertyDetailData) return;
-    setSelectedPropertyState({
-      id: selectedPropertyDetailData.id,
-      snapshot: selectedPropertyDetailData,
-    });
-  }, [selectedPropertyDetailData]);
+    return (
+      data.find((property) => property.id === selectedPropertyId) ?? selectedPropertySnapshot
+    );
+  }, [data, selectedPropertyId, selectedPropertySnapshot]);
 
   const {
     data: selectedPropertyDetail,
