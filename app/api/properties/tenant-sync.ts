@@ -9,6 +9,36 @@ const normalizeName = (value: unknown): string => {
   return value.trim();
 };
 
+type SyncTenantTarget =
+  | string
+  | null
+  | undefined
+  | {
+      id?: unknown;
+      fullName?: unknown;
+      name?: unknown;
+    };
+
+const resolveTenantId = (value: SyncTenantTarget): string | undefined => {
+  if (!value || typeof value !== 'object') return undefined;
+  if ('id' in value && typeof value.id === 'string') {
+    return value.id;
+  }
+  return undefined;
+};
+
+const resolveTenantName = (value: SyncTenantTarget): unknown => {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object') return undefined;
+  if ('fullName' in value) {
+    return (value as { fullName?: unknown }).fullName;
+  }
+  if ('name' in value) {
+    return (value as { name?: unknown }).name;
+  }
+  return undefined;
+};
+
 const ensureTag = (tags: NullableString[] | undefined, tag: string, present: boolean) => {
   const existing = Array.isArray(tags) ? tags.filter((value): value is string => typeof value === 'string') : [];
   const normalized = new Set(existing.map((value) => value.trim()).filter(Boolean));
@@ -42,11 +72,19 @@ export function unlinkTenantFromProperty(propertyId: string) {
   }
 }
 
-export function syncTenantForProperty(propertyId: string, tenantName: unknown) {
-  const normalized = normalizeName(tenantName);
+export function syncTenantForProperty(propertyId: string, tenant: SyncTenantTarget) {
+  const tenantId = resolveTenantId(tenant);
+  const normalized = normalizeName(resolveTenantName(tenant));
   if (!normalized) {
     unlinkTenantFromProperty(propertyId);
     return;
+  }
+
+  const existingLinkedTenant = tenantDirectory.find(
+    (item) => item.currentPropertyId === propertyId
+  );
+  if (existingLinkedTenant && tenantId && existingLinkedTenant.id !== tenantId) {
+    unlinkTenantFromProperty(propertyId);
   }
 
   const timestamp = new Date().toISOString();
@@ -56,10 +94,16 @@ export function syncTenantForProperty(propertyId: string, tenantName: unknown) {
     property.tenant = normalized;
   }
 
-  let crmTenant = tenantDirectory.find((tenant) => tenant.currentPropertyId === propertyId);
+  let crmTenant = tenantId
+    ? tenantDirectory.find((item) => item.id === tenantId)
+    : undefined;
+  if (!crmTenant) {
+    crmTenant = tenantDirectory.find((item) => item.currentPropertyId === propertyId);
+  }
   if (!crmTenant) {
     crmTenant = tenantDirectory.find(
-      (tenant) => !tenant.currentPropertyId && tenant.fullName.trim().toLowerCase() === normalized.toLowerCase()
+      (item) =>
+        !item.currentPropertyId && item.fullName.trim().toLowerCase() === normalized.toLowerCase()
     );
   }
 
@@ -71,7 +115,7 @@ export function syncTenantForProperty(propertyId: string, tenantName: unknown) {
     crmTenant.tags = ensureTag(crmTenant.tags, 'A-grade', true);
   } else {
     const created = zTenant.parse({
-      id: nextId('tenant'),
+      id: tenantId ?? nextId('tenant'),
       fullName: normalized,
       email: undefined,
       phone: undefined,

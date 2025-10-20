@@ -68,7 +68,7 @@ export async function PATCH(
   }
 
   if (updated.currentPropertyId) {
-    syncTenantForProperty(updated.currentPropertyId, updated.fullName);
+    syncTenantForProperty(updated.currentPropertyId, updated);
   }
 
   logEvent('tenant_updated', { tenantId: updated.id });
