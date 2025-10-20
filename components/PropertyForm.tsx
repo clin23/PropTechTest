@@ -21,6 +21,15 @@ interface Props {
   requireSlideConfirmation?: boolean;
 }
 
+const buildInitialFormState = (current?: PropertySummary) => ({
+  address: current?.address ?? "",
+  imageUrl: current?.imageUrl ?? "",
+  tenant: current?.tenant ?? "",
+  leaseStart: current?.leaseStart ?? "",
+  leaseEnd: current?.leaseEnd ?? "",
+  rent: current ? String(current.rent) : "",
+});
+
 export default function PropertyForm({
   property,
   onSaved,
@@ -28,24 +37,25 @@ export default function PropertyForm({
   requireSlideConfirmation = false,
 }: Props) {
   const isEdit = !!property;
-  const [form, setForm] = useState({
-    address: property?.address ?? "",
-    imageUrl: property?.imageUrl ?? "",
-    tenant: property?.tenant ?? "",
-    leaseStart: property?.leaseStart ?? "",
-    leaseEnd: property?.leaseEnd ?? "",
-    rent: property ? String(property.rent) : "",
-  });
+  const [form, setForm] = useState(() => buildInitialFormState(property));
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAddressInput, setDeleteAddressInput] = useState("");
   const [isDownloadingData, setIsDownloadingData] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const [confirmationProgress, setConfirmationProgress] = useState(0);
+  const previousPropertyIdRef = useRef<string | null>(property?.id ?? null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const shouldRequireSlider = isEdit && requireSlideConfirmation;
+  const isDirty = useMemo(
+    () =>
+      (Object.keys(form) as (keyof FormState)[]).some(
+        (key) => form[key] !== baseSnapshotRef.current[key],
+      ),
+    [form],
+  );
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
   const previousPropertyIdRef = useRef<string | null | undefined>(undefined);
@@ -77,6 +87,18 @@ export default function PropertyForm({
     }
   }, []);
 
+  const handleFormFieldChange = <K extends keyof FormState>(
+    field: K,
+    value: FormState[K],
+  ) => {
+    setForm((prev) => {
+      if (prev[field] === value) {
+        return prev;
+      }
+      return { ...prev, [field]: value };
+    });
+  };
+
   const openDeleteModal = () => {
     setDeleteModalOpen(true);
     setDeleteAddressInput("");
@@ -106,6 +128,9 @@ export default function PropertyForm({
       } else {
         router.push(`/properties/${p.id}`);
       }
+      const nextSnapshot = createFormState(p);
+      baseSnapshotRef.current = nextSnapshot;
+      setForm(nextSnapshot);
       setConfirmationProgress(0);
     },
     onError: (e: any) =>
@@ -154,7 +179,7 @@ export default function PropertyForm({
 
   const handleImageUpload = (file: File | null) => {
     if (!file) {
-      setForm((prev) => ({ ...prev, imageUrl: "" }));
+      handleFormFieldChange("imageUrl", "");
       return;
     }
 
@@ -162,7 +187,7 @@ export default function PropertyForm({
     reader.onload = () => {
       const result = reader.result;
       if (typeof result === "string") {
-        setForm((prev) => ({ ...prev, imageUrl: result }));
+        handleFormFieldChange("imageUrl", result);
       }
     };
     reader.readAsDataURL(file);
@@ -205,7 +230,7 @@ export default function PropertyForm({
           <input
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            onChange={(e) => handleFormFieldChange("address", e.target.value)}
           />
         </label>
         <label className="block">
@@ -253,7 +278,7 @@ export default function PropertyForm({
           <input
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             value={form.tenant}
-            onChange={(e) => setForm({ ...form, tenant: e.target.value })}
+            onChange={(e) => handleFormFieldChange("tenant", e.target.value)}
           />
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -263,7 +288,7 @@ export default function PropertyForm({
               type="date"
               className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               value={form.leaseStart}
-              onChange={(e) => setForm({ ...form, leaseStart: e.target.value })}
+              onChange={(e) => handleFormFieldChange("leaseStart", e.target.value)}
             />
           </label>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -272,7 +297,7 @@ export default function PropertyForm({
               type="date"
               className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               value={form.leaseEnd}
-              onChange={(e) => setForm({ ...form, leaseEnd: e.target.value })}
+              onChange={(e) => handleFormFieldChange("leaseEnd", e.target.value)}
             />
           </label>
         </div>
@@ -282,116 +307,116 @@ export default function PropertyForm({
             type="number"
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             value={form.rent}
-            onChange={(e) => setForm({ ...form, rent: e.target.value })}
+            onChange={(e) => handleFormFieldChange("rent", e.target.value)}
           />
         </label>
-      </form>
-      {shouldRequireSlider ? (
-        <div className="mt-8 space-y-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Confirm changes
-            </label>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-              <div className="relative flex h-12 w-full items-center overflow-hidden rounded-full bg-black text-white shadow-inner dark:bg-gray-900 sm:flex-1">
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 rounded-full transition-all duration-200 ease-out"
-                  style={{
-                    transformOrigin: "left center",
-                    transform: `scaleX(${Math.min(Math.max(confirmationProgress, 0), 100) / 100})`,
-                    background: isConfirmed
-                      ? "#16a34a"
-                      : "linear-gradient(90deg, #1e293b 0%, #16a34a 100%)",
-                    opacity: confirmationProgress > 0 ? 1 : 0,
-                    willChange: "transform, background",
-                  }}
-                />
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={confirmationProgress}
-                  onChange={(e) => {
-                    const nextValue = Number(e.target.value);
-                    setConfirmationProgress(nextValue >= 96 ? 100 : nextValue);
-                  }}
-                  className="confirm-slider"
-                  disabled={saveMutation.isPending}
-                />
-                <span
-                  className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
-                    isConfirmed
-                      ? "text-gray-900 dark:text-white"
-                      : "text-white/80"
-                  }`}
-                >
-                  {isConfirmed ? "Confirmed" : "Slide right to confirm"}
-                </span>
-              </div>
-              <div className="flex shrink-0 justify-end gap-3">
-                {onCancel && (
+        {shouldRequireSlider ? (
+          <div className="mt-8 space-y-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                Confirm changes
+              </label>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                <div className="relative flex h-12 w-full items-center overflow-hidden rounded-full bg-black text-white shadow-inner dark:bg-gray-900 sm:flex-1">
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 rounded-full transition-all duration-200 ease-out"
+                    style={{
+                      transformOrigin: "left center",
+                      transform: `scaleX(${Math.min(Math.max(confirmationProgress, 0), 100) / 100})`,
+                      background: isConfirmed
+                        ? "#16a34a"
+                        : "linear-gradient(90deg, #1e293b 0%, #16a34a 100%)",
+                      opacity: confirmationProgress > 0 ? 1 : 0,
+                      willChange: "transform, background",
+                    }}
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={confirmationProgress}
+                    onChange={(e) => {
+                      const nextValue = Number(e.target.value);
+                      setConfirmationProgress(nextValue >= 96 ? 100 : nextValue);
+                    }}
+                    className="confirm-slider"
+                    disabled={saveMutation.isPending}
+                  />
+                  <span
+                    className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
+                      isConfirmed
+                        ? "text-gray-900 dark:text-white"
+                        : "text-white/80"
+                    }`}
+                  >
+                    {isConfirmed ? "Confirmed" : "Slide right to confirm"}
+                  </span>
+                </div>
+                <div className="flex shrink-0 justify-end gap-3">
+                  {onCancel && (
+                    <button
+                      type="button"
+                      className="h-12 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => {
+                        setConfirmationProgress(0);
+                        onCancel();
+                      }}
+                      disabled={saveMutation.isPending}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="h-12 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-                    onClick={() => {
-                      setConfirmationProgress(0);
-                      onCancel();
-                    }}
-                    disabled={saveMutation.isPending}
+                    className="h-12 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-400"
+                    onClick={handleSave}
+                    disabled={saveMutation.isPending || !isConfirmed}
                   >
-                    Cancel
+                    {saveMutation.isPending ? "Saving..." : "Save changes"}
                   </button>
-                )}
-                <button
-                  type="button"
-                  className="h-12 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-400"
-                  onClick={handleSave}
-                  disabled={saveMutation.isPending || !isConfirmed}
-                >
-                  {saveMutation.isPending ? "Saving..." : "Save changes"}
-                </button>
+                </div>
               </div>
             </div>
+            {isEdit && (
+              <div className="flex justify-between gap-3">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200"
+                  onClick={openDeleteModal}
+                  disabled={deleteMutation.isPending || saveMutation.isPending}
+                >
+                  Delete property
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Saving will immediately update this property for all users.
+                </p>
+              </div>
+            )}
           </div>
-          {isEdit && (
-            <div className="flex justify-between gap-3">
+        ) : (
+          <div className="mt-6 flex justify-end gap-3">
+            {onCancel && (
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200"
-                onClick={openDeleteModal}
-                disabled={deleteMutation.isPending || saveMutation.isPending}
+                className="inline-flex h-10 items-center rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                onClick={onCancel}
+                disabled={saveMutation.isPending}
               >
-                Delete property
+                Cancel
               </button>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Saving will immediately update this property for all users.
-              </p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="mt-6 flex justify-end gap-3">
-          {onCancel && (
+            )}
             <button
-              type="button"
-              className="inline-flex h-10 items-center rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-              onClick={onCancel}
+              type="submit"
+              className="inline-flex h-10 items-center rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-400"
               disabled={saveMutation.isPending}
             >
-              Cancel
+              {saveMutation.isPending ? "Saving..." : isEdit ? "Save" : "Create"}
             </button>
-          )}
-          <button
-            type="submit"
-            className="inline-flex h-10 items-center rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-400"
-            disabled={saveMutation.isPending}
-          >
-            {saveMutation.isPending ? "Saving..." : isEdit ? "Save" : "Create"}
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </form>
       {isEdit && deleteModalOpen &&
         portalTarget &&
         createPortal(

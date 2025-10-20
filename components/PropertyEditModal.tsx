@@ -10,9 +10,10 @@ interface Props {
   open: boolean;
   property: PropertySummary;
   onClose: () => void;
+  isLoading?: boolean;
 }
 
-export default function PropertyEditModal({ open, property, onClose }: Props) {
+export default function PropertyEditModal({ open, property, onClose, isLoading = false }: Props) {
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
 
   useEffect(() => {
@@ -89,7 +90,32 @@ export default function PropertyEditModal({ open, property, onClose }: Props) {
                   </button>
                 </div>
               </div>
-              <div className="max-h-[75vh] overflow-y-auto px-6 py-6 sm:px-8">
+              <div className="relative max-h-[75vh] overflow-y-auto px-6 py-6 sm:px-8">
+                {isLoading && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl bg-white/80 p-6 text-sm font-medium text-slate-600 backdrop-blur-sm dark:bg-slate-950/80 dark:text-slate-200">
+                    <svg
+                      className="h-6 w-6 animate-spin text-indigo-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"
+                      />
+                    </svg>
+                    Refreshing latest property details…
+                  </div>
+                )}
                 <PropertyForm
                   key={property.id}
                   property={property}
