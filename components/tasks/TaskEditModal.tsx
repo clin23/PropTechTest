@@ -1,5 +1,13 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+  type ChangeEvent,
+} from "react";
+import { createPortal } from "react-dom";
 import type { TaskDto } from "../../types/tasks";
 import type { PropertySummary } from "../../types/property";
 import type { Vendor } from "../../lib/api";
@@ -8,8 +16,12 @@ import {
   normalizeStatusIndicatorValue,
   deriveIndicatorForTask,
   mergeIndicatorIntoTags,
+  extractIndicatorFromTags,
+  COMPLETED_STATUS_INDICATOR,
   type StatusIndicatorValue,
 } from "./statusIndicator";
+
+const MODAL_TRANSITION_DURATION = 300;
 
 const createHex = (value: string) => `#${value.toLowerCase()}`;
 
@@ -31,6 +43,8 @@ const resolveColorInputValue = (color: string) =>
 const PRESET_COLOR_LABELS = new Map(
   STATUS_INDICATOR_PRESETS.map((preset) => [preset.color, preset.label] as const)
 );
+
+const CUSTOM_STATUS_INDICATORS_STORAGE_KEY = "task-status-custom-tags";
 
 export default function TaskEditModal({
   task,
@@ -55,12 +69,23 @@ export default function TaskEditModal({
     task.properties.map((p) => p.id)
   );
   const [statusIndicator, setStatusIndicator] = useState<StatusIndicatorValue>(
-    deriveIndicatorForTask({ status: task.status, tags: task.tags })
+    deriveIndicatorForTask({
+      status: task.status,
+      tags: task.tags,
+      completed: task.completed,
+    })
   );
+  const [statusIndicatorTab, setStatusIndicatorTab] = useState<
+    "presets" | "custom"
+  >("presets");
+  const [customIndicators, setCustomIndicators] = useState<
+    StatusIndicatorValue[]
+  >([]);
   const [vendorId, setVendorId] = useState<string>(task.vendor?.id ?? "");
   const [attachments, setAttachments] = useState<
     TaskDto["attachments"]
   >(task.attachments ?? []);
+  const [completed, setCompleted] = useState<boolean>(Boolean(task.completed));
 
   const resolvedColorValue = resolveColorInputValue(statusIndicator.color);
   const presetLabel = PRESET_COLOR_LABELS.get(statusIndicator.color);
@@ -70,16 +95,96 @@ export default function TaskEditModal({
       ? statusIndicator.color.toUpperCase()
       : statusIndicator.color;
 
-  const updateStatusIndicator = useCallback(
-    (value: Partial<StatusIndicatorValue>) => {
-      setStatusIndicator((prev) =>
-        normalizeStatusIndicatorValue({ ...prev, ...value })
-      );
-    },
+  const normalizedCurrentIndicator = useMemo(
+    () => normalizeStatusIndicatorValue(statusIndicator),
+    [statusIndicator]
+  );
+
+  const isCurrentIndicatorSaved = customIndicators.some(
+    (indicator) =>
+      indicator.color === normalizedCurrentIndicator.color &&
+      indicator.label === normalizedCurrentIndicator.label
+  );
+
+  const isCompletedIndicator = useCallback(
+    (value: StatusIndicatorValue) =>
+      value.label === COMPLETED_STATUS_INDICATOR.label &&
+      value.color === COMPLETED_STATUS_INDICATOR.color,
     []
   );
 
+  const updateStatusIndicator = useCallback(
+    (value: Partial<StatusIndicatorValue>) => {
+      setStatusIndicator((previous) => {
+        const next = normalizeStatusIndicatorValue({ ...previous, ...value });
+        const matchesCompleted = isCompletedIndicator(next);
+
+        setCompleted(matchesCompleted);
+
+        return matchesCompleted ? COMPLETED_STATUS_INDICATOR : next;
+      });
+    },
+    [isCompletedIndicator]
+  );
+
   const initialPayloadRef = useRef<string>();
+  const lastNonCompletedIndicatorRef = useRef<StatusIndicatorValue | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(
+        CUSTOM_STATUS_INDICATORS_STORAGE_KEY
+      );
+      if (!stored) {
+        return;
+      }
+
+      const parsed = JSON.parse(stored) as unknown;
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      const sanitized = parsed
+        .map((value) => normalizeStatusIndicatorValue(value as StatusIndicatorValue))
+        .filter(
+          (value, index, self) =>
+            self.findIndex(
+              (other) =>
+                other.color === value.color && other.label === value.label
+            ) === index
+        );
+
+      if (sanitized.length) {
+        setCustomIndicators(sanitized);
+      }
+    } catch (error) {
+      console.warn("Failed to load custom status indicators", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      if (!customIndicators.length) {
+        window.localStorage.removeItem(CUSTOM_STATUS_INDICATORS_STORAGE_KEY);
+        return;
+      }
+
+      window.localStorage.setItem(
+        CUSTOM_STATUS_INDICATORS_STORAGE_KEY,
+        JSON.stringify(customIndicators)
+      );
+    } catch (error) {
+      console.warn("Failed to persist custom status indicators", error);
+    }
+  }, [customIndicators]);
 
   const createPayload = useCallback(
     ({
@@ -91,6 +196,7 @@ export default function TaskEditModal({
       vendorId: draftVendorId,
       attachments: draftAttachments,
       statusIndicator: draftIndicator,
+      completed: draftCompleted,
     }: {
       title: string;
       description: string;
@@ -100,6 +206,7 @@ export default function TaskEditModal({
       vendorId: string;
       attachments: TaskDto["attachments"];
       statusIndicator: StatusIndicatorValue;
+      completed: boolean;
     }) => {
       const resolvedProperties = draftSelectedProps
         .map((id) => {
@@ -136,18 +243,29 @@ export default function TaskEditModal({
         vendor: resolvedVendor,
         attachments: draftAttachments,
         tags: mergeIndicatorIntoTags(task.tags, sanitizedIndicator),
+        completed: draftCompleted,
       } satisfies Partial<TaskDto>;
     },
     [properties, vendors, task]
   );
 
   useEffect(() => {
-    const indicator = normalizeStatusIndicatorValue(
-      deriveIndicatorForTask({
-        status: task.status,
-        tags: task.tags,
-      })
+    const indicatorFromTags = extractIndicatorFromTags(task.tags);
+    const fallbackIndicator = normalizeStatusIndicatorValue(
+      indicatorFromTags ??
+        deriveIndicatorForTask({
+          status: task.status,
+          tags: task.tags,
+          completed: false,
+        })
     );
+    lastNonCompletedIndicatorRef.current = fallbackIndicator;
+
+    const isCompleted = Boolean(task.completed);
+    const indicatorForState = isCompleted
+      ? COMPLETED_STATUS_INDICATOR
+      : fallbackIndicator;
+
     const baseState = {
       title: task.title,
       description: task.description ?? "",
@@ -156,7 +274,8 @@ export default function TaskEditModal({
       selectedProps: task.properties.map((p) => p.id),
       vendorId: task.vendor?.id ?? "",
       attachments: task.attachments ?? [],
-      statusIndicator: indicator,
+      statusIndicator: indicatorForState,
+      completed: isCompleted,
     } as const;
 
     initialPayloadRef.current = JSON.stringify(createPayload(baseState));
@@ -169,7 +288,16 @@ export default function TaskEditModal({
     setVendorId(baseState.vendorId);
     setAttachments(baseState.attachments);
     setStatusIndicator(baseState.statusIndicator);
+    setCompleted(baseState.completed);
   }, [task, createPayload]);
+
+  useEffect(() => {
+    if (!completed) {
+      lastNonCompletedIndicatorRef.current = normalizeStatusIndicatorValue(
+        statusIndicator
+      );
+    }
+  }, [completed, statusIndicator]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -180,6 +308,36 @@ export default function TaskEditModal({
     setAttachments((a) => [...(a ?? []), ...arr]);
   };
 
+  const handleSaveCustomIndicator = useCallback(() => {
+    setCustomIndicators((previous) => {
+      const normalized = normalizeStatusIndicatorValue(statusIndicator);
+      if (
+        previous.some(
+          (indicator) =>
+            indicator.color === normalized.color &&
+            indicator.label === normalized.label
+        )
+      ) {
+        return previous;
+      }
+      return [...previous, normalized];
+    });
+    setStatusIndicatorTab("custom");
+  }, [statusIndicator]);
+
+  const handleRemoveCustomIndicator = useCallback(
+    (indicatorToRemove: StatusIndicatorValue) => {
+      setCustomIndicators((previous) =>
+        previous.filter(
+          (indicator) =>
+            indicator.color !== indicatorToRemove.color ||
+            indicator.label !== indicatorToRemove.label
+        )
+      );
+    },
+    []
+  );
+
   const persistChanges = useCallback(
     (force = false) => {
       const payload = createPayload({
@@ -187,11 +345,12 @@ export default function TaskEditModal({
         description,
         dueDate,
         dueTime,
-      selectedProps,
-      vendorId,
-      attachments,
-      statusIndicator: normalizeStatusIndicatorValue(statusIndicator),
-    });
+        selectedProps,
+        vendorId,
+        attachments,
+        statusIndicator: normalizeStatusIndicatorValue(statusIndicator),
+        completed,
+      });
 
       const serialized = JSON.stringify(payload);
       if (!force && serialized === initialPayloadRef.current) {
@@ -212,21 +371,72 @@ export default function TaskEditModal({
       statusIndicator,
       title,
       vendorId,
+      completed,
     ]
   );
+
+  const handleCompletionChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextCompleted = event.target.checked;
+    setCompleted(nextCompleted);
+    if (nextCompleted) {
+      setStatusIndicator(COMPLETED_STATUS_INDICATOR);
+      return;
+    }
+
+    const fallback = lastNonCompletedIndicatorRef.current;
+    if (fallback) {
+      setStatusIndicator(normalizeStatusIndicatorValue(fallback));
+      return;
+    }
+
+    setStatusIndicator(
+      normalizeStatusIndicatorValue(
+        deriveIndicatorForTask({
+          status: task.status,
+          tags: task.tags,
+          completed: false,
+        })
+      )
+    );
+  };
 
   const handleSave = () => {
     persistChanges(true);
   };
 
-  const handleClose = () => {
-    persistChanges();
-    onClose();
-  };
-
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
+    null
+  );
+
+  useEffect(() => {
+    setPortalContainer(document.body);
+    setIsVisible(true);
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+      setPortalContainer(null);
+    };
+  }, []);
+
+  const handleClose = () => {
+    if (isClosing) {
+      return;
+    }
+
+    persistChanges();
+    setIsClosing(true);
+    setIsVisible(false);
+    closeTimeoutRef.current = setTimeout(() => {
+      onClose();
+    }, MODAL_TRANSITION_DURATION);
+  };
 
   useEffect(() => {
     if (!menuOpen) {
@@ -259,13 +469,34 @@ export default function TaskEditModal({
     };
   }, [menuOpen]);
 
-  return (
+  if (!portalContainer) {
+    return null;
+  }
+
+  const modalContainerClasses = completed
+    ? "border-2 border-green-500 shadow-lg dark:border-green-400"
+    : "border border-transparent";
+
+  const completionSectionClasses = completed
+    ? "border-green-300 bg-green-50 dark:border-green-500 dark:bg-green-900/40"
+    : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/60";
+  const completionLabel = completed ? "Task completed" : "Complete task";
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity transition-[backdrop-filter] duration-300 ${
+        isVisible
+          ? "opacity-100 backdrop-blur-sm"
+          : "opacity-0 backdrop-blur-none"
+      }`}
       onClick={handleClose}
     >
       <div
-        className="relative w-[32rem] rounded-xl bg-white p-6 shadow space-y-4 dark:bg-gray-800 dark:text-white"
+        className={`relative mx-4 w-full max-w-3xl transform space-y-4 overflow-y-auto rounded-xl bg-white p-6 shadow transition-transform transition-opacity duration-300 max-h-[90vh] ${
+          isVisible
+            ? "translate-y-0 scale-100 opacity-100 ease-out"
+            : "translate-y-4 scale-95 opacity-0 ease-in"
+        } ${modalContainerClasses} dark:bg-gray-800 dark:text-white`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -323,101 +554,36 @@ export default function TaskEditModal({
             />
           </label>
         </div>
-        <div>
-          <label className="mb-1 block text-sm dark:text-gray-200">Property</label>
-          <select
-            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            value={selectedProps[0] ?? ""}
-            onChange={(e) => setSelectedProps(e.target.value ? [e.target.value] : [])}
-          >
-            <option value="">Select property</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.address}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm dark:text-gray-200">Vendor</label>
-          <select
-            className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            value={vendorId}
-            onChange={(e) => setVendorId(e.target.value)}
-          >
-            <option value="">None</option>
-            {vendors.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm dark:text-gray-200">
-              Status label
-            </label>
-            <input
+            <label className="mb-1 block text-sm dark:text-gray-200">Property</label>
+            <select
               className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              value={statusIndicator.label}
-              onChange={(e) =>
-                updateStatusIndicator({ label: e.target.value })
-              }
-            />
+              value={selectedProps[0] ?? ""}
+              onChange={(e) => setSelectedProps(e.target.value ? [e.target.value] : [])}
+            >
+              <option value="">Select property</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.address}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm dark:text-gray-200">
-              Status colour
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                className="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-transparent p-1 dark:border-gray-600"
-                value={resolvedColorValue}
-                onChange={(event) =>
-                  updateStatusIndicator({ color: event.target.value })
-                }
-                aria-label="Choose status colour"
-              />
-              <span className="rounded border border-gray-200 px-2 py-1 font-mono text-xs uppercase tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
-                {displayedColorValue}
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Use the colour picker or choose a preset below.
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {STATUS_INDICATOR_PRESETS.map((preset) => {
-                const isActive =
-                  preset.color === statusIndicator.color &&
-                  preset.label === statusIndicator.label;
-                return (
-                  <button
-                    key={`${preset.label}-${preset.color}`}
-                    type="button"
-                    className={`flex items-center gap-2 rounded border px-2 py-1 text-xs transition ${
-                      isActive
-                        ? "border-gray-900 bg-gray-100 dark:border-gray-100 dark:bg-gray-800"
-                        : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
-                    }`}
-                    onClick={() =>
-                      updateStatusIndicator({
-                        label: preset.label,
-                        color: preset.color,
-                      })
-                    }
-                  >
-                    <span
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: preset.color }}
-                      aria-hidden
-                    />
-                    <span>{preset.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <label className="mb-1 block text-sm dark:text-gray-200">Vendor</label>
+            <select
+              className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              value={vendorId}
+              onChange={(e) => setVendorId(e.target.value)}
+            >
+              <option value="">None</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         <div>
@@ -456,7 +622,199 @@ export default function TaskEditModal({
             </ul>
           ) : null}
         </div>
+        <div
+          className={`rounded-lg border p-4 transition-colors ${completionSectionClasses}`}
+        >
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
+              checked={completed}
+              onChange={handleCompletionChange}
+            />
+            <span>{completionLabel}</span>
+          </label>
+          <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start">
+            <div className="flex-1 space-y-3">
+              <div>
+                <label className="mb-1 block text-sm dark:text-gray-200">
+                  Status label
+                </label>
+                <input
+                  className="w-full rounded-md border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  value={statusIndicator.label}
+                  onChange={(e) =>
+                    updateStatusIndicator({ label: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm dark:text-gray-200">
+                  Status colour
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    className="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-transparent p-1 dark:border-gray-600"
+                    value={resolvedColorValue}
+                    onChange={(event) =>
+                      updateStatusIndicator({ color: event.target.value })
+                    }
+                    aria-label="Choose status colour"
+                  />
+                  <span className="rounded border border-gray-200 px-2 py-1 font-mono text-xs uppercase tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
+                    {displayedColorValue}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Use the colour picker or choose a preset.
+                </p>
+              </div>
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Status tags
+                </span>
+                <div
+                  role="group"
+                  aria-label="Select status tag source"
+                  className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-100 p-0.5 dark:border-gray-700 dark:bg-gray-800"
+                >
+                  {[
+                    { value: "presets" as const, label: "Presets" },
+                    { value: "custom" as const, label: "Custom" },
+                  ].map((option) => {
+                    const isActive = statusIndicatorTab === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`rounded-md px-3 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                          isActive
+                            ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100"
+                            : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+                        }`}
+                        onClick={() => setStatusIndicatorTab(option.value)}
+                        aria-pressed={isActive}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {statusIndicatorTab === "presets" ? (
+                <div className="flex flex-wrap gap-2">
+                  {STATUS_INDICATOR_PRESETS.map((preset) => {
+                    const isActive =
+                      preset.color === statusIndicator.color &&
+                      preset.label === statusIndicator.label;
+                    return (
+                      <button
+                        key={`${preset.label}-${preset.color}`}
+                        type="button"
+                        className={`flex items-center gap-2 rounded border px-2 py-1 text-xs transition ${
+                          isActive
+                            ? "border-gray-900 bg-gray-100 dark:border-gray-100 dark:bg-gray-800"
+                            : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
+                        }`}
+                        onClick={() =>
+                          updateStatusIndicator(
+                            {
+                              label: preset.label,
+                              color: preset.color,
+                            },
+                            { fromPreset: true }
+                          )
+                        }
+                      >
+                        <span
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: preset.color }}
+                          aria-hidden
+                        />
+                        <span>{preset.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {customIndicators.length ? (
+                      customIndicators.map((indicator) => {
+                        const isActive =
+                          indicator.color === statusIndicator.color &&
+                          indicator.label === statusIndicator.label;
+                        return (
+                          <div
+                            key={`${indicator.label}-${indicator.color}`}
+                            className={`inline-flex items-center gap-1 rounded border text-xs transition ${
+                              isActive
+                                ? "border-gray-900 bg-gray-100 dark:border-gray-100 dark:bg-gray-800"
+                                : "border-gray-200 dark:border-gray-700"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              className="flex items-center gap-2 px-2 py-1"
+                              onClick={() => updateStatusIndicator(indicator)}
+                            >
+                              <span
+                                className="h-3 w-3 rounded-full"
+                                style={{ backgroundColor: indicator.color }}
+                                aria-hidden
+                              />
+                              <span>{indicator.label}</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="mr-1 rounded p-1 text-gray-400 transition hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                              aria-label={`Remove ${indicator.label} status tag`}
+                              onClick={() => handleRemoveCustomIndicator(indicator)}
+                            >
+                              <span aria-hidden>&times;</span>
+                            </button>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        No custom status tags saved yet.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                      onClick={handleSaveCustomIndicator}
+                      disabled={
+                        isCurrentIndicatorSaved ||
+                        isCompletedIndicator(normalizedCurrentIndicator)
+                      }
+                    >
+                      Save current status
+                    </button>
+                    {isCurrentIndicatorSaved ? (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        This status is already saved.
+                      </span>
+                    ) : isCompletedIndicator(normalizedCurrentIndicator) ? (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Completed status can&apos;t be saved as custom.
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </div>,
+    portalContainer
   );
 }

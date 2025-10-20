@@ -76,6 +76,7 @@ export type Reminder = {
   documents?: ReminderDocument[];
   checklist?: ReminderChecklistItem[];
   taskId?: string | null;
+  checklistTaskIds?: Record<string, string> | null;
 };
 export type RentEntry = {
   id: string;
@@ -1500,6 +1501,7 @@ const initialReminders: Reminder[] = [
       { id: 'rem1-check1', text: 'Confirm renewal intentions' },
       { id: 'rem1-check2', text: 'Send renewal paperwork' },
     ],
+    checklistTaskIds: {},
   },
   {
     id: 'rem2',
@@ -1512,6 +1514,7 @@ const initialReminders: Reminder[] = [
     severity: 'med',
     documents: [],
     checklist: [{ id: 'rem2-check1', text: 'Compare local market rents' }],
+    checklistTaskIds: {},
   },
   {
     id: 'rem3',
@@ -1524,6 +1527,7 @@ const initialReminders: Reminder[] = [
     severity: 'low',
     documents: [],
     checklist: [],
+    checklistTaskIds: {},
   },
   {
     id: 'rem4',
@@ -1536,6 +1540,7 @@ const initialReminders: Reminder[] = [
     severity: 'low',
     documents: [],
     checklist: [{ id: 'rem4-check1', text: 'Notify tenants of inspection' }],
+    checklistTaskIds: {},
   },
   {
     id: 'rem5',
@@ -1556,6 +1561,7 @@ const initialReminders: Reminder[] = [
       { id: 'rem5-check1', text: 'Book technician' },
       { id: 'rem5-check2', text: 'Record compliance certificate' },
     ],
+    checklistTaskIds: {},
   },
 ];
 
@@ -1567,6 +1573,7 @@ const initialTasks: TaskDto[] = [
     dueDate: '2025-07-10',
     properties: [{ id: '1', address: '123 Main St' }],
     status: 'todo',
+    completed: false,
     priority: 'normal',
     createdAt: '2025-06-01',
     updatedAt: '2025-06-01',
@@ -1582,6 +1589,7 @@ const initialTasks: TaskDto[] = [
       { id: '2', address: '456 Oak Ave' },
     ],
     status: 'in_progress',
+    completed: false,
     priority: 'low',
     createdAt: '2025-06-01',
     updatedAt: '2025-06-15',
@@ -1593,6 +1601,7 @@ const initialTasks: TaskDto[] = [
     dueDate: '2025-12-01',
     properties: [{ id: '2', address: '456 Oak Ave' }],
     status: 'todo',
+    completed: false,
     priority: 'normal',
     createdAt: '2025-06-01',
     updatedAt: '2025-06-01',
@@ -1604,6 +1613,7 @@ const initialTasks: TaskDto[] = [
     dueDate: '2025-05-05',
     properties: [{ id: '1', address: '123 Main St' }],
     status: 'blocked',
+    completed: false,
     priority: 'high',
     createdAt: '2025-06-01',
     updatedAt: '2025-06-20',
@@ -1615,6 +1625,7 @@ const initialTasks: TaskDto[] = [
     dueDate: '2025-08-01',
     properties: [{ id: '1', address: '123 Main St' }],
     status: 'todo',
+    completed: false,
     priority: 'normal',
     createdAt: '2025-06-01',
     updatedAt: '2025-06-01',
@@ -1626,6 +1637,7 @@ const initialTasks: TaskDto[] = [
     dueDate: '2025-07-20',
     properties: [{ id: '2', address: '456 Oak Ave' }],
     status: 'done',
+    completed: true,
     priority: 'high',
     createdAt: '2025-06-01',
     updatedAt: '2025-07-01',
@@ -1637,6 +1649,7 @@ const initialTasks: TaskDto[] = [
     dueDate: '2025-07-12',
     properties: [{ id: '1', address: '123 Main St' }],
     status: 'todo',
+    completed: false,
     priority: 'normal',
     createdAt: '2025-06-01',
     updatedAt: '2025-06-01',
@@ -1649,6 +1662,7 @@ const initialTasks: TaskDto[] = [
     endDate: '2025-07-03',
     properties: [{ id: '1', address: '123 Main St' }],
     status: 'todo',
+    completed: false,
     priority: 'low',
     createdAt: '2025-06-01',
     updatedAt: '2025-06-01',
@@ -1951,6 +1965,15 @@ const cloneReminderDocuments = (docs?: ReminderDocument[]) =>
 const cloneReminderChecklist = (items?: ReminderChecklistItem[]) =>
   items?.map((item) => ({ ...item })) ?? [];
 
+const cloneChecklistTaskIds = (map?: Record<string, string> | null) => {
+  if (!map) return {};
+  return Object.fromEntries(
+    Object.entries(map).filter((entry): entry is [string, string] =>
+      typeof entry[0] === 'string' && typeof entry[1] === 'string'
+    ),
+  );
+};
+
 export const createReminder = (
   data: Omit<Reminder, 'id'> & Partial<Pick<Reminder, 'id'>>,
 ): Reminder => {
@@ -1961,6 +1984,7 @@ export const createReminder = (
     documents: cloneReminderDocuments(data.documents),
     checklist: cloneReminderChecklist(data.checklist),
     taskId: data.taskId ?? null,
+    checklistTaskIds: cloneChecklistTaskIds(data.checklistTaskIds),
   };
   reminders.push(reminder);
   return reminder;
@@ -1986,6 +2010,10 @@ export const updateReminder = (
       data.checklist !== undefined
         ? cloneReminderChecklist(data.checklist)
         : current.checklist,
+    checklistTaskIds:
+      data.checklistTaskIds !== undefined
+        ? cloneChecklistTaskIds(data.checklistTaskIds)
+        : current.checklistTaskIds ?? {},
   };
   reminders[idx] = updated;
   return updated;
@@ -1998,6 +2026,12 @@ export const deleteReminder = (id: string): Reminder | null => {
   return removed ?? null;
 };
 
+const statusIndicatesCompletion = (status?: TaskDto['status']) => {
+  if (!status) return false;
+  const normalized = status.trim().toLowerCase();
+  return normalized === 'done' || normalized === 'completed' || normalized === 'complete';
+};
+
 export const createTask = (
   data: Omit<TaskDto, 'id' | 'createdAt' | 'updatedAt'> &
     Partial<Pick<TaskDto, 'id' | 'createdAt' | 'updatedAt'>>
@@ -2008,16 +2042,47 @@ export const createTask = (
     id: data.id ?? crypto.randomUUID(),
     createdAt: data.createdAt ?? now,
     updatedAt: data.updatedAt ?? now,
+    completed: data.completed ?? statusIndicatesCompletion(data.status),
     archived: data.archived ?? false,
   } as TaskDto;
   tasks.push(task);
   return task;
 };
 
+const normalizeStatusValue = (value?: string | null) =>
+  (value ?? "").trim().toLowerCase();
+
+const isDoneStatus = (status?: string | null) => {
+  const normalized = normalizeStatusValue(status);
+  return (
+    normalized === "done" ||
+    normalized === "complete" ||
+    normalized === "completed"
+  );
+};
+
 export const updateTask = (id: string, data: Partial<TaskDto>): TaskDto | null => {
   const idx = tasks.findIndex((t) => t.id === id);
   if (idx === -1) return null;
-  const updated = { ...tasks[idx], ...data, updatedAt: new Date().toISOString() } as TaskDto;
+  const current = tasks[idx];
+  const statusChanged =
+    data.status !== undefined && data.status !== current.status;
+  const nextStatus = data.status ?? current.status;
+  const nextCompleted =
+    data.completed !== undefined
+      ? data.completed
+      : isDoneStatus(nextStatus)
+        ? true
+        : statusChanged
+          ? false
+          : current.completed ?? false;
+
+  const updated = {
+    ...current,
+    ...data,
+    completed: nextCompleted,
+    updatedAt: new Date().toISOString(),
+  } as TaskDto;
   tasks[idx] = updated;
   return updated;
 };
@@ -2046,7 +2111,13 @@ export const deleteTask = (id: string): boolean => {
 export const completeTask = (id: string): TaskDto | null => {
   const task = tasks.find((t) => t.id === id);
   if (!task) return null;
-  task.status = task.status === 'done' ? 'todo' : 'done';
+  const nextCompleted = !task.completed;
+  task.completed = nextCompleted;
+  if (nextCompleted) {
+    task.status = 'done';
+  } else if (task.status === 'done') {
+    task.status = 'todo';
+  }
   task.updatedAt = new Date().toISOString();
   return task;
 };
