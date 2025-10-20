@@ -15,8 +15,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
     const body = await req.json();
+    const isMockMode = process.env.MOCK_MODE === 'true';
 
-    if (process.env.MOCK_MODE === 'true') {
+    if (isMockMode) {
       const idx = expenses.findIndex((expense) => expense.id === params.id);
       if (idx === -1) {
         return new NextResponse('Not found', { status: 404 });
@@ -28,13 +29,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       return NextResponse.json(parsed);
     }
 
-    const record = await (prisma as any).mockData.findUnique({ where: { id: params.id } });
-    if (!record || record.type !== 'expense') {
+    const row = await (prisma as any).mockData.findUnique({
+      where: { id: params.id },
+    });
+    if (!row) {
       return new NextResponse('Not found', { status: 404 });
     }
 
-    const current = record.data;
-    const parsed = zExpense.parse({ ...current, ...body, id: params.id });
+    const parsed = zExpense.parse({ ...(row.data as any), ...body, id: params.id });
     await (prisma as any).mockData.update({
       where: { id: params.id },
       data: { data: parsed },
