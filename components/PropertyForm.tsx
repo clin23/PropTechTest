@@ -58,8 +58,6 @@ export default function PropertyForm({
   );
   const isConfirmed = !shouldRequireSlider || confirmationProgress >= 100;
 
-  const previousPropertyIdRef = useRef<string | null | undefined>(undefined);
-
   useEffect(() => {
     const nextPropertyId = property?.id ?? null;
     if (previousPropertyIdRef.current === nextPropertyId) {
