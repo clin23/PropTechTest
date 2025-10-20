@@ -2043,18 +2043,33 @@ export const createTask = (
   return task;
 };
 
+const normalizeStatusValue = (value?: string | null) =>
+  (value ?? "").trim().toLowerCase();
+
+const isDoneStatus = (status?: string | null) => {
+  const normalized = normalizeStatusValue(status);
+  return (
+    normalized === "done" ||
+    normalized === "complete" ||
+    normalized === "completed"
+  );
+};
+
 export const updateTask = (id: string, data: Partial<TaskDto>): TaskDto | null => {
   const idx = tasks.findIndex((t) => t.id === id);
   if (idx === -1) return null;
   const current = tasks[idx];
   const statusChanged =
     data.status !== undefined && data.status !== current.status;
+  const nextStatus = data.status ?? current.status;
   const nextCompleted =
     data.completed !== undefined
       ? data.completed
-      : statusChanged && current.completed
-        ? false
-        : current.completed ?? false;
+      : isDoneStatus(nextStatus)
+        ? true
+        : statusChanged
+          ? false
+          : current.completed ?? false;
 
   const updated = {
     ...current,
