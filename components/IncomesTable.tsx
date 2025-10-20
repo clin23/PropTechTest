@@ -14,6 +14,7 @@ import type { IncomeRow } from "../types/income";
 import EmptyState from "./EmptyState";
 import EvidenceLink from "./EvidenceLink";
 import IncomeForm from "./IncomeForm";
+import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
 
 interface IncomesTableProps {
   propertyId: string;
@@ -80,6 +81,7 @@ export default function IncomesTable({
   const notificationIdRef = useRef(0);
   const editingSnapshotRef = useRef<IncomeRow | null>(null);
   const sortMenuRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   const excludedCategories = useMemo(
     () => excludeCategories.map((value) => value.trim().toLowerCase()),
@@ -285,15 +287,15 @@ export default function IncomesTable({
     content = <EmptyState message="No income records found." />;
   } else if (hasMatches) {
     content = (
-      <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <table className="min-w-full">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-700">
-              <th className="p-2 text-left">Date</th>
-              <th className="p-2 text-left">Category</th>
-              <th className="p-2 text-center">Evidence</th>
-              <th className="p-2 text-left">Amount</th>
-              <th className="p-2 text-left">Notes</th>
+              <th className="px-4 py-3 text-left">Date</th>
+              <th className="px-4 py-3 text-left">Category</th>
+              <th className="px-4 py-3 text-center">Evidence</th>
+              <th className="px-4 py-3 text-left">Amount</th>
+              <th className="px-4 py-3 text-left">Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -312,9 +314,9 @@ export default function IncomesTable({
                 tabIndex={0}
                 aria-label={`View income entry for ${formatShortDate(r.date)}`}
               >
-                <td className="p-2">{formatShortDate(r.date)}</td>
-                <td className="p-2">{r.category || r.label || "—"}</td>
-                <td className="p-2 text-center">
+                <td className="px-4 py-3">{formatShortDate(r.date)}</td>
+                <td className="px-4 py-3">{r.category || r.label || "—"}</td>
+                <td className="px-4 py-3 text-center">
                   {r.evidenceUrl ? (
                     <EvidenceLink
                       href={r.evidenceUrl}
@@ -329,9 +331,22 @@ export default function IncomesTable({
                 <td className="p-2">
                   {r.notes ? (
                     <span
-                      className="inline-flex items-center text-gray-600 dark:text-gray-300"
+                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
                       title={r.notes}
-                      aria-label="View note"
+                    >
+                      {r.notes}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                  )}
+                </td>
+                <td className="p-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                      onClick={() => setEditingIncome(r)}
+                      aria-label="Edit income"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -360,164 +375,172 @@ export default function IncomesTable({
   const filterControlClass =
     "h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 
+  const dateFilterClass = `${filterControlClass} w-32`;
+
   const confirmReady = detailConfirm.trim().toLowerCase() === "confirm";
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div
-        className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 dark:border-gray-800 dark:bg-gray-900"
-      >
-        <input
-          type="date"
-          className={filterControlClass}
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          placeholder={fromPlaceholder}
-          onFocus={() => setFromPlaceholder(datePlaceholder)}
-          onBlur={() => {
-            if (!from) {
-              setFromPlaceholder("From (field 1)");
-            }
-          }}
-        />
-        <input
-          type="date"
-          className={filterControlClass}
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          placeholder={toPlaceholder}
-          onFocus={() => setToPlaceholder(datePlaceholder)}
-          onBlur={() => {
-            if (!to) {
-              setToPlaceholder("To (field 2)");
-            }
-          }}
-        />
-        <div className="relative" ref={sortMenuRef}>
-          <button
-            type="button"
-            className={`${filterControlClass} flex h-10 w-10 items-center justify-center px-0`}
-            onClick={() => setSortMenuOpen((open) => !open)}
-            aria-haspopup="menu"
-            aria-expanded={sortMenuOpen}
-            aria-label="Toggle date sort order"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-5 w-5"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8.25 7.5h7.5m-7.5 4.5h5.25M12 3v18m0 0 3-3m-3 3-3-3"
+      <div className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="px-4 pb-3 pt-2 sm:px-6 lg:px-8">
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:gap-3">
+            <div className="flex flex-1 basis-0 flex-wrap items-center gap-2 sm:basis-auto sm:flex-none sm:items-stretch">
+              <input
+                type="date"
+                className={dateFilterClass}
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                placeholder={fromPlaceholder}
+                onFocus={() => setFromPlaceholder(datePlaceholder)}
+                onBlur={() => {
+                  if (!from) {
+                    setFromPlaceholder("From (field 1)");
+                  }
+                }}
               />
-            </svg>
-          </button>
-          <div
-            className={`absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg transition-all duration-150 ease-out dark:border-gray-700 dark:bg-gray-800 ${
-              sortMenuOpen ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
-            }`}
-            role="menu"
-          >
-            <button
-              type="button"
-              className={`flex w-full items-center justify-between px-4 py-2 text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                sortOrder === "asc" ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
-              }`}
-              onClick={() => {
-                setSortOrder("asc");
-                setSortMenuOpen(false);
-              }}
-              role="menuitem"
-            >
-              <span>Date ascending</span>
-              {sortOrder === "asc" && (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="h-4 w-4"
-                  aria-hidden="true"
+              <input
+                type="date"
+                className={dateFilterClass}
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                placeholder={toPlaceholder}
+                onFocus={() => setToPlaceholder(datePlaceholder)}
+                onBlur={() => {
+                  if (!to) {
+                    setToPlaceholder("To (field 2)");
+                  }
+                }}
+              />
+              <div className="relative" ref={sortMenuRef}>
+                <button
+                  type="button"
+                  className={`${filterControlClass} flex h-10 w-10 items-center justify-center px-0`}
+                  onClick={() => setSortMenuOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={sortMenuOpen}
+                  aria-label="Toggle date sort order"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.704 5.29a1 1 0 0 1 0 1.42l-7.004 7a1 1 0 0 1-1.42 0l-3.002-3a1 1 0 1 1 1.42-1.42L9 11.59l6.294-6.3a1 1 0 0 1 1.41 0Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
-            </button>
-            <button
-              type="button"
-              className={`flex w-full items-center justify-between px-4 py-2 text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                sortOrder === "desc" ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
-              }`}
-              onClick={() => {
-                setSortOrder("desc");
-                setSortMenuOpen(false);
-              }}
-              role="menuitem"
-            >
-              <span>Date descending</span>
-              {sortOrder === "desc" && (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="h-4 w-4"
-                  aria-hidden="true"
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="h-5 w-5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.25 7.5h7.5m-7.5 4.5h5.25M12 3v18m0 0 3-3m-3 3-3-3"
+                    />
+                  </svg>
+                </button>
+                <div
+                  className={`absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg transition-all duration-150 ease-out dark:border-gray-700 dark:bg-gray-800 ${
+                    sortMenuOpen ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
+                  }`}
+                  role="menu"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.704 5.29a1 1 0 0 1 0 1.42l-7.004 7a1 1 0 0 1-1.42 0l-3.002-3a1 1 0 1 1 1.42-1.42L9 11.59l6.294-6.3a1 1 0 0 1 1.41 0Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-4 w-4"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M9 3.5a5.5 5.5 0 1 0 3.356 9.86l3.641 3.642a.75.75 0 1 0 1.06-1.061l-3.64-3.642A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"
-                  clipRule="evenodd"
+                  <button
+                    type="button"
+                    className={`flex w-full items-center justify-between px-4 py-2 text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                      sortOrder === "asc" ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
+                    }`}
+                    onClick={() => {
+                      setSortOrder("asc");
+                      setSortMenuOpen(false);
+                    }}
+                    role="menuitem"
+                  >
+                    <span>Date ascending</span>
+                    {sortOrder === "asc" && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.704 5.29a1 1 0 0 1 0 1.42l-7.004 7a1 1 0 0 1-1.42 0l-3.002-3a1 1 0 1 1 1.42-1.42L9 11.59l6.294-6.3a1 1 0 0 1 1.41 0Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex w-full items-center justify-between px-4 py-2 text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                      sortOrder === "desc" ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
+                    }`}
+                    onClick={() => {
+                      setSortOrder("desc");
+                      setSortMenuOpen(false);
+                    }}
+                    role="menuitem"
+                  >
+                    <span>Date descending</span>
+                    {sortOrder === "desc" && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.704 5.29a1 1 0 0 1 0 1.42l-7.004 7a1 1 0 0 1-1.42 0l-3.002-3a1 1 0 1 1 1.42-1.42L9 11.59l6.294-6.3a1 1 0 0 1 1.41 0Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-1 basis-full flex-wrap items-center justify-end gap-2 sm:basis-auto sm:flex-1">
+              <div className="relative flex-1 min-w-[14rem] sm:min-w-[18rem]">
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9 3.5a5.5 5.5 0 1 0 3.356 9.86l3.641 3.642a.75.75 0 1 0 1.06-1.061l-3.64-3.642A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </span>
+                <input
+                  type="search"
+                  className={`${filterControlClass} w-full pl-10`}
+                  placeholder="Search for other income"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-label="Search for other income"
                 />
-              </svg>
-            </span>
-            <input
-              type="search"
-              className={`${filterControlClass} w-full min-w-[18rem] pl-10`}
-              placeholder="Search for other income"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              aria-label="Search for other income"
-            />
+              </div>
+              <button
+                type="button"
+                className="h-10 rounded-full border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            className="h-10 rounded-full border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-700"
-            onClick={clearFilters}
-          >
-            Clear filters
-          </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto pt-4">{content}</div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div className="space-y-2 px-4 pt-4 sm:px-6 lg:px-8">{content}</div>
+      </div>
       <IncomeForm
         propertyId={propertyId}
         open={Boolean(editingIncome)}

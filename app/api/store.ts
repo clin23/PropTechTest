@@ -2026,6 +2026,12 @@ export const deleteReminder = (id: string): Reminder | null => {
   return removed ?? null;
 };
 
+const statusIndicatesCompletion = (status?: TaskDto['status']) => {
+  if (!status) return false;
+  const normalized = status.trim().toLowerCase();
+  return normalized === 'done' || normalized === 'completed' || normalized === 'complete';
+};
+
 export const createTask = (
   data: Omit<TaskDto, 'id' | 'createdAt' | 'updatedAt'> &
     Partial<Pick<TaskDto, 'id' | 'createdAt' | 'updatedAt'>>
@@ -2036,17 +2042,47 @@ export const createTask = (
     id: data.id ?? crypto.randomUUID(),
     createdAt: data.createdAt ?? now,
     updatedAt: data.updatedAt ?? now,
-    completed: data.completed ?? false,
+    completed: data.completed ?? statusIndicatesCompletion(data.status),
     archived: data.archived ?? false,
   } as TaskDto;
   tasks.push(task);
   return task;
 };
 
+const normalizeStatusValue = (value?: string | null) =>
+  (value ?? "").trim().toLowerCase();
+
+const isDoneStatus = (status?: string | null) => {
+  const normalized = normalizeStatusValue(status);
+  return (
+    normalized === "done" ||
+    normalized === "complete" ||
+    normalized === "completed"
+  );
+};
+
 export const updateTask = (id: string, data: Partial<TaskDto>): TaskDto | null => {
   const idx = tasks.findIndex((t) => t.id === id);
   if (idx === -1) return null;
-  const updated = { ...tasks[idx], ...data, updatedAt: new Date().toISOString() } as TaskDto;
+  const current = tasks[idx];
+  const statusChanged =
+    data.status !== undefined && data.status !== current.status;
+  const nextStatus = data.status ?? current.status;
+  const nextCompleted =
+    data.completed !== undefined
+      ? data.completed
+      : isDoneStatus(nextStatus)
+        ? true
+        : statusChanged
+          ? false
+          : current.completed ?? false;
+
+  const updated = {
+    ...current,
+    ...data,
+    completed: nextCompleted,
+    updatedAt: new Date().toISOString(),
+  } as TaskDto;
   tasks[idx] = updated;
   return updated;
 };
