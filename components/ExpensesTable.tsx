@@ -225,6 +225,7 @@ export default function ExpensesTable({
             gst: deletedEntry.gst,
             notes: deletedEntry.notes,
             label: deletedEntry.label,
+            receiptUrl: deletedEntry.receiptUrl,
           });
           await queryClient.invalidateQueries({ queryKey });
         });
