@@ -15,6 +15,7 @@ import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
 import ExpenseForm from "./ExpenseForm";
+import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
 
 function ReceiptLink({ url }: { url?: string | null }) {
   if (!url) {
@@ -69,6 +70,7 @@ export default function ExpensesTable({
   const notificationIdRef = useRef(0);
   const editingSnapshotRef = useRef<ExpenseRow | null>(null);
   const sortMenuRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -349,69 +351,71 @@ export default function ExpensesTable({
                   }
                 }}
               />
-              <input
-                type="date"
-                className={dateFilterClass}
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                placeholder={toPlaceholder}
-                onFocus={() => setToPlaceholder(datePlaceholder)}
-                onBlur={() => {
-                  if (!to) {
-                    setToPlaceholder("To (field 2)");
-                  }
-                }}
-              />
-              <div className="relative" ref={sortMenuRef}>
-                <button
-                  type="button"
-                  className={`${filterControlClass} flex h-10 w-10 items-center justify-center px-0`}
-                  onClick={() => setSortMenuOpen((open) => !open)}
-                  aria-haspopup="menu"
-                  aria-expanded={sortMenuOpen}
-                  aria-label="Toggle date sort order"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-5 w-5"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8.25 7.5h7.5m-7.5 4.5h5.25M12 3v18m0 0 3-3m-3 3-3-3"
-                    />
-                  </svg>
-                </button>
-                <div
-                  className={`absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg transition-all duration-150 ease-out dark:border-gray-700 dark:bg-gray-800 ${
-                    sortMenuOpen ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
-                  }`}
-                  role="menu"
-                >
-                  <button
-                    type="button"
-                    className={`flex w-full items-center justify-between px-4 py-2 text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                      sortOrder === "asc" ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
-                    }`}
-                    onClick={() => {
-                      setSortOrder("asc");
-                      setSortMenuOpen(false);
-                    }}
-                    role="menuitem"
-                  >
-                    <span>Date ascending</span>
-                    {sortOrder === "asc" && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="h-4 w-4"
-                        aria-hidden="true"
+            </svg>
+          </span>
+          <input
+            type="search"
+            className={`${filterControlClass} w-full min-w-[18rem] pl-10`}
+            placeholder="Search for an expense"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search expenses"
+          />
+        </div>
+      </div>
+      {data.length === 0 ? (
+        <EmptyState message="No expenses found." />
+      ) : filteredData.length === 0 ? (
+        <EmptyState message="No expenses match your search." />
+      ) : (
+        <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700">
+                {!propertyId && <th className="p-2 text-left">Property</th>}
+                <th className="p-2 text-left">Date</th>
+                <th className="p-2 text-left">Category</th>
+                <th className="p-2 text-left">Vendor</th>
+                <th className="p-2 text-left">Amount</th>
+                <th className="p-2 text-left">GST</th>
+                <th className="p-2 text-left">Notes</th>
+                <th className="p-2 text-left">Receipt</th>
+                <th className="p-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((r) => (
+                <tr key={r.id} className="border-t dark:border-gray-700">
+                  {!propertyId && (
+                    <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
+                  )}
+                  <td className="p-2">{formatShortDate(r.date)}</td>
+                  <td className="p-2">{r.category}</td>
+                  <td className="p-2">{r.vendor}</td>
+                  <td className="p-2">{r.amount}</td>
+                  <td className="p-2">{r.gst}</td>
+                  <td className="p-2">
+                    {r.notes ? (
+                      <span
+                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
+                        title={r.notes}
+                      >
+                        {r.notes}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                    )}
+                  </td>
+                  <td className="p-2">
+                    <ReceiptLink url={r.receiptUrl} />
+                  </td>
+                  <td className="p-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className={iconButtonClass}
+                        onClick={() => handleEdit(r)}
+                        aria-label="Edit expense"
                       >
                         <path
                           fillRule="evenodd"
@@ -489,7 +493,7 @@ export default function ExpensesTable({
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="space-y-2 px-4 pt-4 sm:px-6 lg:px-8">
           {data.length === 0 ? (
             <EmptyState message="No expenses found." />

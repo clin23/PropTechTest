@@ -14,6 +14,7 @@ import type { IncomeRow } from "../types/income";
 import EmptyState from "./EmptyState";
 import EvidenceLink from "./EvidenceLink";
 import IncomeForm from "./IncomeForm";
+import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
 
 interface IncomesTableProps {
   propertyId: string;
@@ -80,6 +81,7 @@ export default function IncomesTable({
   const notificationIdRef = useRef(0);
   const editingSnapshotRef = useRef<IncomeRow | null>(null);
   const sortMenuRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   const excludedCategories = useMemo(
     () => excludeCategories.map((value) => value.trim().toLowerCase()),
@@ -325,13 +327,26 @@ export default function IncomesTable({
                     <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                   )}
                 </td>
-                <td className="px-4 py-3">{r.amount}</td>
-                <td className="px-4 py-3">
+                <td className="p-2">{r.amount}</td>
+                <td className="p-2">
                   {r.notes ? (
                     <span
-                      className="inline-flex items-center text-gray-600 dark:text-gray-300"
+                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
                       title={r.notes}
-                      aria-label="View note"
+                    >
+                      {r.notes}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                  )}
+                </td>
+                <td className="p-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                      onClick={() => setEditingIncome(r)}
+                      aria-label="Edit income"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -523,7 +538,7 @@ export default function IncomesTable({
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="space-y-2 px-4 pt-4 sm:px-6 lg:px-8">{content}</div>
       </div>
       <IncomeForm
