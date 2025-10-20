@@ -87,6 +87,7 @@ export function QuickActionsBar({ tenantId, tenantName }: QuickActionsBarProps) 
     mutationFn: ({ channel, summary, body }: { channel: 'CALL' | 'EMAIL' | 'SMS'; summary: string; body?: string }) =>
       logCommunication(tenantId, { channel, summary, body }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant-workspace', tenantId] });
       queryClient.invalidateQueries({ queryKey: ['tenant-timeline', tenantId] });
       toast({ title: 'Communication logged', description: 'The next action is recorded.' });
     },
@@ -96,6 +97,7 @@ export function QuickActionsBar({ tenantId, tenantName }: QuickActionsBarProps) 
     mutationFn: (payload: { basis: 'CPI' | 'PERCENT'; amount: number; effectiveDate: string }) =>
       triggerRentReview(tenantId, payload),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant-workspace', tenantId] });
       queryClient.invalidateQueries({ queryKey: ['tenant-timeline', tenantId] });
       toast({ title: 'Rent review drafted', description: 'Timeline updated with the proposal.' });
     },

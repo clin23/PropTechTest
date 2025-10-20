@@ -13,24 +13,34 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const idx = expenses.findIndex((expense) => expense.id === params.id);
-  if (idx === -1) {
-    return new NextResponse('Not found', { status: 404 });
-  }
-
   try {
     const body = await req.json();
-    const current = expenses[idx];
-    const parsed = zExpense.parse({ ...current, ...body, id: params.id });
+    const isMockMode = process.env.MOCK_MODE === 'true';
 
-    if (process.env.MOCK_MODE === 'true') {
+    if (isMockMode) {
+      const idx = expenses.findIndex((expense) => expense.id === params.id);
+      if (idx === -1) {
+        return new NextResponse('Not found', { status: 404 });
+      }
+
+      const current = expenses[idx];
+      const parsed = zExpense.parse({ ...current, ...body, id: params.id });
       expenses[idx] = parsed;
-    } else {
-      await (prisma as any).mockData.update({
-        where: { id: params.id },
-        data: { data: parsed },
-      });
+      return NextResponse.json(parsed);
     }
+
+    const row = await (prisma as any).mockData.findUnique({
+      where: { id: params.id },
+    });
+    if (!row) {
+      return new NextResponse('Not found', { status: 404 });
+    }
+
+    const parsed = zExpense.parse({ ...(row.data as any), ...body, id: params.id });
+    await (prisma as any).mockData.update({
+      where: { id: params.id },
+      data: { data: parsed },
+    });
 
     return NextResponse.json(parsed);
   } catch (err: any) {
