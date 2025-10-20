@@ -1,15 +1,21 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { listExpenses, deleteExpense, listProperties } from "../lib/api";
+import {
+  createExpense,
+  deleteExpense,
+  listExpenses,
+  listProperties,
+  updateExpense,
+} from "../lib/api";
 import { formatShortDate } from "../lib/format";
 import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
 import ExpenseForm from "./ExpenseForm";
-import ModalPortal from "./ModalPortal";
+import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
 
 function ReceiptLink({ url }: { url?: string | null }) {
   if (!url) {
@@ -44,15 +50,102 @@ export default function ExpensesTable({
   const [to, setTo] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseRow | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ExpenseRow | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseRow | null>(null);
+  const [detailConfirm, setDetailConfirm] = useState("");
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [notification, setNotification] = useState<{
+    id: number;
+    message: string;
+    undo?: () => Promise<void> | void;
+  } | null>(null);
+  const [notificationVisible, setNotificationVisible] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const [search, setSearch] = useState("");
+  const [fromPlaceholder, setFromPlaceholder] = useState("From (field 1)");
+  const [toPlaceholder, setToPlaceholder] = useState("To (field 2)");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const removeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const notificationIdRef = useRef(0);
+  const editingSnapshotRef = useRef<ExpenseRow | null>(null);
+  const sortMenuRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useScrollLockOnHover<HTMLDivElement>();
 
   useEffect(() => {
     if (typeof document !== "undefined") {
       setPortalTarget(document.body);
     }
   }, []);
+
+  useEffect(() => {
+    if (selectedExpense) {
+      requestAnimationFrame(() => setDetailVisible(true));
+    }
+  }, [selectedExpense]);
+
+  useEffect(() => {
+    if (!notification) {
+      return () => {
+        if (hideTimeoutRef.current) {
+          clearTimeout(hideTimeoutRef.current);
+          hideTimeoutRef.current = null;
+        }
+        if (removeTimeoutRef.current) {
+          clearTimeout(removeTimeoutRef.current);
+          removeTimeoutRef.current = null;
+        }
+      };
+    }
+
+    setNotificationVisible(true);
+
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+    if (removeTimeoutRef.current) {
+      clearTimeout(removeTimeoutRef.current);
+    }
+
+    hideTimeoutRef.current = setTimeout(() => {
+      setNotificationVisible(false);
+      removeTimeoutRef.current = setTimeout(() => {
+        setNotification(null);
+      }, 200);
+    }, 5000);
+
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      if (removeTimeoutRef.current) {
+        clearTimeout(removeTimeoutRef.current);
+        removeTimeoutRef.current = null;
+      }
+    };
+  }, [notification]);
+
+  useEffect(() => {
+    if (!sortMenuOpen) {
+      return;
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      if (!sortMenuRef.current) {
+        return;
+      }
+      if (event.target instanceof Node && !sortMenuRef.current.contains(event.target)) {
+        setSortMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [sortMenuOpen]);
 
   const params = {
     propertyId: propertyId ?? (property || undefined),
@@ -69,6 +162,16 @@ export default function ExpensesTable({
     queryKey,
     queryFn: () => listExpenses(params),
   });
+
+  const sortedData = useMemo(() => {
+    const sorted = [...data];
+    sorted.sort((a, b) =>
+      sortOrder === "asc"
+        ? (a.date || "").localeCompare(b.date || "")
+        : (b.date || "").localeCompare(a.date || "")
+    );
+    return sorted;
+  }, [data, sortOrder]);
 
   const deleteMutation = useMutation<
     unknown,
@@ -100,9 +203,6 @@ export default function ExpensesTable({
     [properties]
   );
 
-  const iconButtonClass =
-    "rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100";
-
   const editDefaults = useMemo(() => {
     if (!editingExpense) return undefined;
     return {
@@ -117,18 +217,68 @@ export default function ExpensesTable({
     };
   }, [editingExpense]);
 
+  const openDetail = (expense: ExpenseRow) => {
+    setSelectedExpense(expense);
+    setDetailConfirm("");
+  };
+
+  const closeDetail = () => {
+    setDetailVisible(false);
+    setDetailConfirm("");
+    setTimeout(() => {
+      setSelectedExpense(null);
+    }, 180);
+  };
+
+  const showNotification = (
+    message: string,
+    undo?: () => Promise<void> | void
+  ) => {
+    notificationIdRef.current += 1;
+    setNotification({ id: notificationIdRef.current, message, undo });
+  };
+
   const handleEdit = (expense: ExpenseRow) => {
+    editingSnapshotRef.current = expense;
+    closeDetail();
     setEditingExpense(expense);
     setEditOpen(true);
+  };
+
+  const handleDelete = (expense: ExpenseRow) => {
+    const expenseId = expense.id;
+    deleteMutation.mutate(expenseId, {
+      onSuccess: async (_data, _variables, context) => {
+        closeDetail();
+        const previousEntries = context?.previous ?? [];
+        const deletedEntry =
+          previousEntries.find((entry) => entry.id === expenseId) ?? expense;
+        showNotification("Expense deleted", async () => {
+          await createExpense({
+            propertyId: deletedEntry.propertyId,
+            date: deletedEntry.date,
+            category: deletedEntry.category,
+            vendor: deletedEntry.vendor,
+            amount: deletedEntry.amount,
+            gst: deletedEntry.gst,
+            notes: deletedEntry.notes,
+            label: deletedEntry.label,
+            receiptUrl: deletedEntry.receiptUrl,
+          });
+          await queryClient.invalidateQueries({ queryKey });
+        });
+      },
+    });
   };
 
   const filteredData = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) {
-      return data;
+      return sortedData;
     }
 
-    return data.filter((expense) => {
+    return sortedData.filter((expense) => {
+      const total = expense.amount + expense.gst;
       const haystack = [
         expense.category,
         expense.vendor,
@@ -137,6 +287,7 @@ export default function ExpensesTable({
         expense.date,
         expense.amount ? String(expense.amount) : undefined,
         expense.gst ? String(expense.gst) : undefined,
+        total ? String(total) : undefined,
         !propertyId ? propertyMap[expense.propertyId] : undefined,
       ];
 
@@ -144,57 +295,62 @@ export default function ExpensesTable({
         .filter((value): value is string => Boolean(value))
         .some((value) => value.toLowerCase().includes(term));
     });
-  }, [data, propertyId, propertyMap, search]);
+  }, [propertyId, propertyMap, search, sortedData]);
 
   const filterControlClass =
     "h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 
+  const dateFilterClass = `${filterControlClass} w-32`;
+
+  const datePlaceholder = "dd/mm/yyyy";
+
+  const clearFilters = () => {
+    if (!propertyId) {
+      setProperty("");
+    }
+    setFrom("");
+    setTo("");
+    setSearch("");
+    setFromPlaceholder("From (field 1)");
+    setToPlaceholder("To (field 2)");
+    setSortOrder("desc");
+    setSortMenuOpen(false);
+  };
+
+  const confirmReady = detailConfirm.trim().toLowerCase() === "confirm";
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div
-        className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-4 pb-3 pt-2 shadow-sm sm:-mx-6 sm:px-6 dark:border-gray-800 dark:bg-gray-900"
-      >
-        {!propertyId && (
-          <select
-            className={`${filterControlClass} pr-10`}
-            value={property}
-            onChange={(e) => setProperty(e.target.value)}
-          >
-            <option value="">All properties</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.address}
-              </option>
-            ))}
-          </select>
-        )}
-        <input
-          type="date"
-          className={filterControlClass}
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          placeholder="From"
-        />
-        <input
-          type="date"
-          className={filterControlClass}
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          placeholder="To"
-        />
-        <div className="relative">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M9 3.5a5.5 5.5 0 1 0 3.356 9.86l3.641 3.642a.75.75 0 1 0 1.06-1.061l-3.64-3.642A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"
-                clipRule="evenodd"
+      <div className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="px-4 pb-3 pt-2 sm:px-6 lg:px-8">
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:gap-3">
+            <div className="flex flex-1 basis-0 flex-wrap items-center gap-2 sm:basis-auto sm:flex-none sm:items-stretch">
+              {!propertyId && (
+                <select
+                  className={`${filterControlClass} pr-10`}
+                  value={property}
+                  onChange={(e) => setProperty(e.target.value)}
+                >
+                  <option value="">All properties</option>
+                  {properties.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.address}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <input
+                type="date"
+                className={dateFilterClass}
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                placeholder={fromPlaceholder}
+                onFocus={() => setFromPlaceholder(datePlaceholder)}
+                onBlur={() => {
+                  if (!from) {
+                    setFromPlaceholder("From (field 1)");
+                  }
+                }}
               />
             </svg>
           </span>
@@ -208,40 +364,180 @@ export default function ExpensesTable({
           />
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
-        <div className="space-y-2 pt-4">
+      {data.length === 0 ? (
+        <EmptyState message="No expenses found." />
+      ) : filteredData.length === 0 ? (
+        <EmptyState message="No expenses match your search." />
+      ) : (
+        <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700">
+                {!propertyId && <th className="p-2 text-left">Property</th>}
+                <th className="p-2 text-left">Date</th>
+                <th className="p-2 text-left">Category</th>
+                <th className="p-2 text-left">Vendor</th>
+                <th className="p-2 text-left">Amount</th>
+                <th className="p-2 text-left">GST</th>
+                <th className="p-2 text-left">Notes</th>
+                <th className="p-2 text-left">Receipt</th>
+                <th className="p-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((r) => (
+                <tr key={r.id} className="border-t dark:border-gray-700">
+                  {!propertyId && (
+                    <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
+                  )}
+                  <td className="p-2">{formatShortDate(r.date)}</td>
+                  <td className="p-2">{r.category}</td>
+                  <td className="p-2">{r.vendor}</td>
+                  <td className="p-2">{r.amount}</td>
+                  <td className="p-2">{r.gst}</td>
+                  <td className="p-2">
+                    {r.notes ? (
+                      <span
+                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
+                        title={r.notes}
+                      >
+                        {r.notes}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
+                    )}
+                  </td>
+                  <td className="p-2">
+                    <ReceiptLink url={r.receiptUrl} />
+                  </td>
+                  <td className="p-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className={iconButtonClass}
+                        onClick={() => handleEdit(r)}
+                        aria-label="Edit expense"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.704 5.29a1 1 0 0 1 0 1.42l-7.004 7a1 1 0 0 1-1.42 0l-3.002-3a1 1 0 1 1 1.42-1.42L9 11.59l6.294-6.3a1 1 0 0 1 1.41 0Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex w-full items-center justify-between px-4 py-2 text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                      sortOrder === "desc" ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
+                    }`}
+                    onClick={() => {
+                      setSortOrder("desc");
+                      setSortMenuOpen(false);
+                    }}
+                    role="menuitem"
+                  >
+                    <span>Date descending</span>
+                    {sortOrder === "desc" && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.704 5.29a1 1 0 0 1 0 1.42l-7.004 7a1 1 0 0 1-1.42 0l-3.002-3a1 1 0 1 1 1.42-1.42L9 11.59l6.294-6.3a1 1 0 0 1 1.41 0Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-1 basis-full flex-wrap items-center justify-end gap-2 sm:basis-auto sm:flex-1">
+              <div className="relative flex-1 min-w-[14rem] sm:min-w-[18rem]">
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9 3.5a5.5 5.5 0 1 0 3.356 9.86l3.641 3.642a.75.75 0 1 0 1.06-1.061l-3.64-3.642A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </span>
+                <input
+                  type="search"
+                  className={`${filterControlClass} w-full pl-10`}
+                  placeholder="Search for an expense"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-label="Search expenses"
+                />
+              </div>
+              <button
+                type="button"
+                className="h-10 rounded-full border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div className="space-y-2 px-4 pt-4 sm:px-6 lg:px-8">
           {data.length === 0 ? (
             <EmptyState message="No expenses found." />
           ) : filteredData.length === 0 ? (
             <EmptyState message="No expenses match your search." />
           ) : (
-            <div className="mx-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <table className="min-w-full">
                 <thead>
                   <tr className="bg-gray-100 dark:bg-gray-700">
-                    {!propertyId && <th className="p-2 text-left">Property</th>}
-                    <th className="p-2 text-left">Date</th>
-                    <th className="p-2 text-left">Category</th>
-                    <th className="p-2 text-left">Vendor</th>
-                    <th className="p-2 text-left">Amount</th>
-                    <th className="p-2 text-left">GST</th>
-                    <th className="p-2 text-left">Notes</th>
-                    <th className="p-2 text-left">Receipt</th>
-                    <th className="p-2 text-left">Actions</th>
+                    {!propertyId && <th className="px-4 py-3 text-left">Property</th>}
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-left">Category</th>
+                    <th className="px-4 py-3 text-left">Vendor</th>
+                    <th className="px-4 py-3 text-left">Total</th>
+                    <th className="px-4 py-3 text-left">Notes</th>
+                    <th className="px-4 py-3 text-left">Receipt</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredData.map((r) => (
-                    <tr key={r.id} className="border-t dark:border-gray-700">
+                    <tr
+                      key={r.id}
+                      className="border-t transition dark:border-gray-700 hover:bg-gray-50 focus-within:bg-gray-50 dark:hover:bg-gray-700/60 dark:focus-within:bg-gray-700/60"
+                      onClick={() => openDetail(r)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openDetail(r);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`View expense ${r.vendor ? `from ${r.vendor}` : ""} dated ${formatShortDate(r.date)}`.trim()}
+                    >
                       {!propertyId && (
-                        <td className="p-2">{propertyMap[r.propertyId] || r.propertyId}</td>
+                        <td className="px-4 py-3">{propertyMap[r.propertyId] || r.propertyId}</td>
                       )}
-                      <td className="p-2">{formatShortDate(r.date)}</td>
-                      <td className="p-2">{r.category}</td>
-                      <td className="p-2">{r.vendor}</td>
-                      <td className="p-2">{r.amount}</td>
-                      <td className="p-2">{r.gst}</td>
-                      <td className="p-2">
+                      <td className="px-4 py-3">{formatShortDate(r.date)}</td>
+                      <td className="px-4 py-3">{r.category}</td>
+                      <td className="px-4 py-3">{r.vendor}</td>
+                      <td className="px-4 py-3">{r.amount + r.gst}</td>
+                      <td className="px-4 py-3">
                         {r.notes ? (
                           <span
                             className="inline-flex items-center text-gray-600 dark:text-gray-300"
@@ -264,48 +560,8 @@ export default function ExpensesTable({
                           <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                         )}
                       </td>
-                      <td className="p-2">
+                      <td className="px-4 py-3">
                         <ReceiptLink url={r.receiptUrl} />
-                      </td>
-                      <td className="p-2">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className={iconButtonClass}
-                            onClick={() => handleEdit(r)}
-                            aria-label="Edit expense"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              className="h-5 w-5"
-                            >
-                              <path d="M17.414 2.586a2 2 0 0 0-2.828 0l-1.086 1.086 2.828 2.828 1.086-1.086a2 2 0 0 0 0-2.828ZM14.57 7.5 11.672 4.672 4 12.343V15.5h3.157L14.5 7.5Z" />
-                              <path d="M2 6a2 2 0 0 1 2-2h4a1 1 0 1 1 0 2H4v10h10v-4a1 1 0 1 1 2 0v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z" />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            className={`${iconButtonClass} text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300`}
-                            onClick={() => setDeleteTarget(r)}
-                            aria-label="Delete expense"
-                            disabled={deleteMutation.isPending}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              className="h-5 w-5"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M8.75 3a1.75 1.75 0 0 0-1.744 1.602l-.035.348H4a.75.75 0 0 0 0 1.5h.532l.634 9.182A2.25 2.25 0 0 0 7.41 17.75h5.18a2.25 2.25 0 0 0 2.244-2.118L15.468 6.45H16a.75.75 0 0 0 0-1.5h-2.97l-.035-.348A1.75 1.75 0 0 0 11.25 3h-2.5ZM9.75 7a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0V7Zm2.75-.75a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V7a.75.75 0 0 1 .75-.75Z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -328,58 +584,191 @@ export default function ExpensesTable({
         defaults={editDefaults}
         mode="edit"
         expenseId={editingExpense?.id}
-        onSaved={() => {
+        onSaved={(updated) => {
           queryClient.invalidateQueries({ queryKey });
+          showNotification("Expense updated", async () => {
+            const previous = editingSnapshotRef.current;
+            if (!previous) {
+              return;
+            }
+            await updateExpense(updated.id, {
+              propertyId: previous.propertyId,
+              date: previous.date,
+              category: previous.category,
+              vendor: previous.vendor,
+              amount: previous.amount,
+              gst: previous.gst,
+              notes: previous.notes,
+              label: previous.label,
+            });
+            await queryClient.invalidateQueries({ queryKey });
+          });
+          editingSnapshotRef.current = null;
         }}
       />
-      {deleteTarget &&
+      {selectedExpense &&
         portalTarget &&
         createPortal(
           <div
-            key="expense-delete-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            onClick={() => {
-              if (!deleteMutation.isPending) {
-                setDeleteTarget(null);
-              }
-            }}
+            className={`fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6 pt-10 sm:items-center sm:pb-10 ${
+              detailVisible ? "opacity-100" : "opacity-0"
+            } transition-opacity duration-150`}
+            onClick={closeDetail}
           >
             <div
-              className="w-full max-w-sm rounded-lg bg-white p-5 text-gray-900 shadow-lg dark:bg-gray-800 dark:text-gray-100"
+              className={`w-full max-w-lg transform rounded-xl bg-white p-5 text-gray-900 shadow-xl transition-all duration-200 dark:bg-gray-900 dark:text-gray-100 ${
+                detailVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
               onClick={(event) => event.stopPropagation()}
             >
-              <h2 className="text-lg font-semibold">Delete expense</h2>
-              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                are you sure?
-              </p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                This will permanently remove the entry for {deleteTarget.vendor || "this expense"} dated {deleteTarget.date}.
-              </p>
-              <div className="mt-4 flex justify-end gap-2">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">Expense details</h2>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                    Click edit or delete after typing <span className="font-medium">confirm</span> below.
+                  </p>
+                </div>
                 <button
                   type="button"
-                  className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-                  onClick={() => setDeleteTarget(null)}
-                  disabled={deleteMutation.isPending}
+                  className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                  onClick={closeDetail}
+                  aria-label="Close details"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="h-5 w-5"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.22 4.22a.75.75 0 0 1 1.06 0L10 8.94l4.72-4.72a.75.75 0 1 1 1.06 1.06L11.06 10l4.72 4.72a.75.75 0 1 1-1.06 1.06L10 11.06l-4.72 4.72a.75.75 0 0 1-1.06-1.06L8.94 10 4.22 5.28a.75.75 0 0 1 0-1.06Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                {!propertyId && (
+                  <div>
+                    <dt className="text-gray-500 dark:text-gray-400">Property</dt>
+                    <dd>{propertyMap[selectedExpense.propertyId] || selectedExpense.propertyId}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">Date</dt>
+                  <dd>{formatShortDate(selectedExpense.date)}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">Category</dt>
+                  <dd>{selectedExpense.category}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">Vendor</dt>
+                  <dd>{selectedExpense.vendor || "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">Total</dt>
+                  <dd>{selectedExpense.amount + selectedExpense.gst}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">Amount</dt>
+                  <dd>{selectedExpense.amount}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">GST</dt>
+                  <dd>{selectedExpense.gst}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-gray-500 dark:text-gray-400">Notes</dt>
+                  <dd className="break-words">
+                    {selectedExpense.notes ? (
+                      <span>{selectedExpense.notes}</span>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-400">—</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">Receipt</dt>
+                  <dd>
+                    <ReceiptLink url={selectedExpense.receiptUrl} />
+                  </dd>
+                </div>
+              </dl>
+              <div className="mt-4">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Type <span className="uppercase">confirm</span> to edit or delete
+                </label>
+                <input
+                  className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  value={detailConfirm}
+                  onChange={(event) => setDetailConfirm(event.target.value)}
+                  placeholder="confirm"
+                />
+              </div>
+              <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  onClick={closeDetail}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => {
-                    if (!deleteTarget) return;
-                    deleteMutation.mutate(deleteTarget.id, {
-                      onSettled: () => {
-                        setDeleteTarget(null);
-                      },
-                    });
-                  }}
-                  disabled={deleteMutation.isPending}
+                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
+                  onClick={() => selectedExpense && handleEdit(selectedExpense)}
+                  disabled={!confirmReady}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-red-300"
+                  onClick={() => selectedExpense && handleDelete(selectedExpense)}
+                  disabled={!confirmReady || deleteMutation.isPending}
                 >
                   {deleteMutation.isPending ? "Deleting..." : "Delete"}
                 </button>
               </div>
+            </div>
+          </div>,
+          portalTarget,
+        )}
+      {notification &&
+        portalTarget &&
+        createPortal(
+          <div className="fixed bottom-6 right-6 z-[60] flex w-full max-w-sm justify-end text-sm">
+            <div
+              className={`flex w-full items-center justify-between gap-4 rounded-lg bg-gray-900/90 px-4 py-3 text-white shadow-lg backdrop-blur transition-all duration-200 ${
+                notificationVisible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-2 opacity-0"
+              }`}
+            >
+              <span>{notification.message}</span>
+              {notification.undo && (
+                <button
+                  type="button"
+                  className="rounded-md border border-white/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white transition hover:border-white hover:bg-white/10"
+                  onClick={async () => {
+                    if (hideTimeoutRef.current) {
+                      clearTimeout(hideTimeoutRef.current);
+                      hideTimeoutRef.current = null;
+                    }
+                    if (removeTimeoutRef.current) {
+                      clearTimeout(removeTimeoutRef.current);
+                      removeTimeoutRef.current = null;
+                    }
+                    await notification.undo?.();
+                    setNotificationVisible(false);
+                    setNotification(null);
+                  }}
+                >
+                  Undo
+                </button>
+              )}
             </div>
           </div>,
           portalTarget,

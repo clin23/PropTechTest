@@ -10,7 +10,7 @@ test('user can add and delete an expense', async ({ page }) => {
   await page.getByLabel('Category').selectOption('General repairs');
   await page.getByLabel('Vendor').fill('Acme Corp');
   await page.getByLabel('Amount').fill('100');
-  await page.getByLabel('GST').fill('10');
+  await page.getByLabel('GST').check();
   await page.getByLabel('Notes').fill('Test expense');
   await page.getByRole('button', { name: 'Save' }).click();
 

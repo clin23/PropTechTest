@@ -8,6 +8,7 @@ export type TaskDto = {
   title: string;
   description?: string;
   status: TaskStatus;            // checkbox maps todo/done
+  completed?: boolean;
   priority: TaskPriority;
   cadence: TaskCadence;          // bucket for later Kanban
   dueDate?: string;              // ISO

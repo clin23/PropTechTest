@@ -5,6 +5,7 @@ import {
   properties,
   isActiveProperty,
 } from '../../../store';
+import { mapExpenseCategory } from '../../../../../lib/expenses/categories';
 
 function parseRange(search: URLSearchParams) {
   const now = new Date();
@@ -45,7 +46,8 @@ export async function GET(req: Request) {
     if (!propertyIds.has(entry.propertyId)) return;
     if (!withinRange(entry.date)) return;
     total += entry.amount;
-    itemsMap.set(entry.category, (itemsMap.get(entry.category) || 0) + entry.amount);
+    const category = mapExpenseCategory(entry.category);
+    itemsMap.set(category, (itemsMap.get(category) || 0) + entry.amount);
   });
 
   const items = Array.from(itemsMap.entries()).map(([category, value]) => ({
