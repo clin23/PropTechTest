@@ -52,7 +52,7 @@ export default function PropertyHero({
   onAddExpense,
   onUploadDocument,
   onNavigateToTab,
-  onEditProperty: _onEditProperty,
+  onEditProperty,
 }: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
   const sortedEvents = sortPropertyEvents(property.events);
@@ -139,6 +139,7 @@ export default function PropertyHero({
           onAddIncome={onAddIncome}
           onAddExpense={onAddExpense}
           onUploadDocument={onUploadDocument}
+          onEditProperty={onEditProperty}
         />
       </div>
     </section>
