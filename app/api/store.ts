@@ -2026,6 +2026,12 @@ export const deleteReminder = (id: string): Reminder | null => {
   return removed ?? null;
 };
 
+const statusIndicatesCompletion = (status?: TaskDto['status']) => {
+  if (!status) return false;
+  const normalized = status.trim().toLowerCase();
+  return normalized === 'done' || normalized === 'completed' || normalized === 'complete';
+};
+
 export const createTask = (
   data: Omit<TaskDto, 'id' | 'createdAt' | 'updatedAt'> &
     Partial<Pick<TaskDto, 'id' | 'createdAt' | 'updatedAt'>>
@@ -2036,7 +2042,7 @@ export const createTask = (
     id: data.id ?? crypto.randomUUID(),
     createdAt: data.createdAt ?? now,
     updatedAt: data.updatedAt ?? now,
-    completed: data.completed ?? false,
+    completed: data.completed ?? statusIndicatesCompletion(data.status),
     archived: data.archived ?? false,
   } as TaskDto;
   tasks.push(task);
@@ -2049,12 +2055,23 @@ export const updateTask = (id: string, data: Partial<TaskDto>): TaskDto | null =
   const current = tasks[idx];
   const statusChanged =
     data.status !== undefined && data.status !== current.status;
-  const nextCompleted =
-    data.completed !== undefined
-      ? data.completed
-      : statusChanged && current.completed
-        ? false
-        : current.completed ?? false;
+  const currentCompleted =
+    current.completed ?? statusIndicatesCompletion(current.status);
+  let nextCompleted: boolean;
+
+  if (data.completed !== undefined) {
+    nextCompleted = data.completed;
+  } else if (statusChanged) {
+    if (statusIndicatesCompletion(data.status)) {
+      nextCompleted = true;
+    } else if (statusIndicatesCompletion(current.status)) {
+      nextCompleted = false;
+    } else {
+      nextCompleted = currentCompleted;
+    }
+  } else {
+    nextCompleted = currentCompleted;
+  }
 
   const updated = {
     ...current,
