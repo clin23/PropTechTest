@@ -81,7 +81,7 @@ export async function POST(req: Request) {
   logEvent('tenant_created', { tenantId: id, propertyId: tenant.currentPropertyId });
 
   if (tenant.currentPropertyId) {
-    syncTenantForProperty(tenant.currentPropertyId, tenant.fullName);
+    syncTenantForProperty(tenant.currentPropertyId, tenant);
   }
 
   return new Response(JSON.stringify(tenant), { status: 201 });
