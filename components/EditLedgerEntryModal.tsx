@@ -256,65 +256,58 @@ export default function EditLedgerEntryModal({ entry, onSave, onClose }: Props) 
             evidence.
           </p>
         </div>
-        <div className="mt-6 space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="mt-6">
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             Confirm changes
           </label>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-            <div className="relative flex h-10 w-full items-center overflow-hidden rounded-full bg-black shadow-inner sm:flex-1">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-full transition-all duration-200 ease-out"
-                style={{
-                  transformOrigin: "left center",
-                  transform: `scaleX(${Math.min(Math.max(confirmationProgress, 0), 100) / 100})`,
-                  background: isConfirmed
-                    ? "#16a34a"
-                    : "linear-gradient(90deg, #000000 0%, #16a34a 100%)",
-                  opacity: confirmationProgress > 0 ? 1 : 0,
-                  willChange: "transform, background",
-                }}
-              />
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={confirmationProgress}
-                onChange={(e) => {
-                  const nextValue = Number(e.target.value);
-                  setConfirmationProgress(nextValue >= 96 ? 100 : nextValue);
-                }}
-                className="confirm-slider"
-              />
-              <span
-                className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
-                  isConfirmed
-                    ? "text-gray-900 dark:text-white"
-                    : "text-gray-900 dark:text-white/80"
-                }`}
-              >
-                {isConfirmed ? "Confirmed" : "Slide right to confirm"}
-              </span>
-            </div>
-            <div className="flex shrink-0 justify-end gap-3">
-              <button
-                className="h-10 rounded-lg bg-gray-200 px-4 text-sm font-medium transition hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
-                onClick={handleRequestClose}
-                disabled={isSaving}
-              >
-                Cancel
-              </button>
-              <button
-                className="h-10 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-400"
-                onClick={handleSave}
-                disabled={isSaving || !isConfirmed}
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-            </div>
+          <div className="relative flex h-12 items-center overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-full bg-blue-500 transition-all"
+              style={{
+                width:
+                  confirmationProgress === 0
+                    ? 0
+                    : `${Math.min(100, confirmationProgress + 8)}%`,
+              }}
+            />
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={confirmationProgress}
+              onChange={(e) => {
+                const nextValue = Number(e.target.value);
+                setConfirmationProgress(nextValue >= 96 ? 100 : nextValue);
+              }}
+              className="confirm-slider"
+            />
+            <span
+              className={`pointer-events-none absolute inset-0 flex items-center justify-center text-xs font-semibold uppercase tracking-wide transition-colors ${
+                isConfirmed ? "text-white" : "text-gray-600 dark:text-gray-200"
+              }`}
+            >
+              {isConfirmed ? "Confirmed" : "Slide right to confirm"}
+            </span>
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
+        {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button
+            className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium transition hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+            onClick={handleRequestClose}
+            disabled={isSaving}
+          >
+            Cancel
+          </button>
+          <button
+            className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-400"
+            onClick={handleSave}
+            disabled={isSaving || !isConfirmed}
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </button>
         </div>
       </div>
     </div>
