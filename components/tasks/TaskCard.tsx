@@ -1,13 +1,60 @@
 "use client";
-import React from "react";
+import { useEffect, useState } from "react";
 import type { TaskDto } from "../../types/tasks";
 import {
   deriveIndicatorForTask,
   getIndicatorPresentation,
 } from "./statusIndicator";
 
+const STATUS_PILL_CLASSES = [
+  "inline-flex w-4 min-h-[2.5rem] max-h-[4.25rem]",
+  "items-center justify-center rounded-full border border-white/30",
+  "px-0.5 text-[7px] font-semibold uppercase tracking-[0.08em]",
+  "leading-none bg-opacity-90 text-center",
+].join(" ");
+
+const resolveColorFromValue = (value: string): string | null => {
+  const normalized = value.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const directHex = normalized.match(/^#([0-9a-f]{6})$/i);
+  if (directHex) {
+    return `#${directHex[1].toLowerCase()}`;
+  }
+
+  const variableMatch = normalized.match(/^var\((--[a-z0-9-]+)\)$/i);
+  if (!variableMatch) {
+    return null;
+  }
+
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const propertyName = variableMatch[1];
+  const root = document.documentElement;
+  const computedValue = getComputedStyle(root).getPropertyValue(propertyName);
+  if (computedValue.trim()) {
+    return computedValue.trim();
+  }
+
+  const inlineValue = root.style.getPropertyValue(propertyName);
+  if (inlineValue.trim()) {
+    return inlineValue.trim();
+  }
+
+  return null;
+};
+
 const getStatusPillForeground = (background: string): string => {
-  const hexMatch = background.match(/^#([0-9a-f]{6})$/i);
+  const resolvedColor = resolveColorFromValue(background);
+  if (!resolvedColor) {
+    return "#ffffff";
+  }
+
+  const hexMatch = resolvedColor.match(/^#([0-9a-f]{6})$/i);
   if (!hexMatch) {
     return "#ffffff";
   }
@@ -79,7 +126,45 @@ export default function TaskCard({
 
   const pillLabel = statusInfo?.label ?? "";
   const pillBackground = statusInfo?.color ?? "";
-  const pillTextColor = getStatusPillForeground(pillBackground);
+  const [pillTextColor, setPillTextColor] = useState(() =>
+    getStatusPillForeground(pillBackground)
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const updateColor = () => {
+      const nextColor = getStatusPillForeground(pillBackground);
+      setPillTextColor((previous) =>
+        previous === nextColor ? previous : nextColor
+      );
+    };
+
+    updateColor();
+
+    const root = document.documentElement;
+    const observer = new MutationObserver((mutations) => {
+      if (
+        mutations.some(
+          (mutation) =>
+            mutation.type === "attributes" && mutation.attributeName === "data-theme"
+        )
+      ) {
+        updateColor();
+      }
+    });
+
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [pillBackground]);
 
   return (
     <div
