@@ -112,53 +112,57 @@
 }
 
 .confirm-slider{
-  position: relative;
-  z-index: 20;
-  height: 48px;
+  position: absolute;
+  inset: 0;
+  height: 100%;
   width: 100%;
   cursor: pointer;
   padding: 0;
-  margin: 0 24px;
+  margin: 0;
   background: transparent;
   border: none;
   outline: none;
   color: transparent;
   -webkit-appearance: none;
   appearance: none;
+  z-index: 10;
 }
 
 .confirm-slider::-webkit-slider-thumb{
   -webkit-appearance: none;
   appearance: none;
-  height: 28px;
-  width: 28px;
+  height: 30px;
+  width: 30px;
   border-radius: 9999px;
   background: #2563eb;
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
   border: 2px solid #ffffff;
+  margin-top: -5px;
 }
 
 .confirm-slider::-moz-range-thumb{
-  height: 28px;
-  width: 28px;
+  height: 30px;
+  width: 30px;
   border-radius: 9999px;
   background: #2563eb;
   border: 2px solid #ffffff;
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+  transform: translateY(-5px);
 }
 
 .confirm-slider::-ms-thumb{
-  height: 28px;
-  width: 28px;
+  height: 30px;
+  width: 30px;
   border-radius: 9999px;
   background: #2563eb;
   border: 2px solid #ffffff;
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+  margin-top: 0;
 }
 
 .confirm-slider::-webkit-slider-runnable-track{
   -webkit-appearance: none;
-  height: 48px;
+  height: 100%;
   border-radius: 9999px;
   background: transparent;
   border: none;
@@ -166,21 +170,21 @@
 }
 
 .confirm-slider::-moz-range-track{
-  height: 48px;
+  height: 100%;
   border-radius: 9999px;
   background: transparent;
   border: none;
 }
 
 .confirm-slider::-ms-track{
-  height: 48px;
+  height: 100%;
   background: transparent;
   border-color: transparent;
   color: transparent;
 }
 
 .confirm-slider::-moz-range-progress{
-  height: 48px;
+  height: 100%;
   border-radius: 9999px;
   background: transparent;
 }
