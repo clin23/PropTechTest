@@ -628,10 +628,24 @@ export default function TaskEditModal({
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
+              className="peer sr-only"
               checked={completed}
               onChange={handleCompletionChange}
             />
+            <span
+              className="flex h-4 w-4 items-center justify-center rounded border border-gray-300 bg-white transition-colors duration-150 peer-checked:border-green-600 peer-checked:bg-green-600 peer-focus:ring-2 peer-focus:ring-green-500 peer-focus:ring-offset-2 peer-focus:ring-offset-white peer-focus-visible:ring-2 peer-focus-visible:ring-green-500 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-offset-gray-900 dark:peer-focus-visible:ring-offset-gray-900"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                className="h-3 w-3 text-white opacity-0 transition-opacity duration-150 peer-checked:opacity-100"
+              >
+                <path
+                  fill="currentColor"
+                  d="M6.35 11.28a.75.75 0 0 1-1.06 0l-2.47-2.47a.75.75 0 0 1 1.06-1.06l1.94 1.94 5.29-5.29a.75.75 0 1 1 1.06 1.06z"
+                />
+              </svg>
+            </span>
             <span>{completionLabel}</span>
           </label>
           <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start">
