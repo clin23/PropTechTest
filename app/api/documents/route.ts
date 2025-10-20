@@ -38,11 +38,20 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { url, title, tag, propertyId } = body || {};
+    const { url, title, tag, propertyId, notes, links, uploadedAt } = body || {};
     if (!url || !title) {
       return NextResponse.json({ error: 'url and title required' }, { status: 400 });
     }
-    const doc = { id: randomUUID(), url, title, tag: tag || 'Other', propertyId };
+    const doc = {
+      id: randomUUID(),
+      url,
+      title,
+      tag: tag || 'Other',
+      propertyId,
+      notes,
+      links,
+      uploadedAt: uploadedAt || new Date().toISOString(),
+    };
     if (process.env.MOCK_MODE === 'true') {
       documents.push(doc as any);
     } else {

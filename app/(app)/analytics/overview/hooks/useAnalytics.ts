@@ -11,6 +11,7 @@ type KpiResponse = {
   grossYield: number | null;
   occupancyRate: number | null;
   onTimeCollection: number | null;
+  portfolioRoi?: number | null;
 };
 
 type CashflowBucket = {

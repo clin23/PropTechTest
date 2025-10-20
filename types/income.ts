@@ -10,3 +10,5 @@ export interface IncomeRow {
   evidenceUrl?: string;
   evidenceName?: string;
 }
+
+export type IncomeListType = "rentLedger" | "otherIncome";

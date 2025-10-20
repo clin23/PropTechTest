@@ -16,6 +16,9 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
           <li>
             <Link href="/settings/notifications">Notification Preferences</Link>
           </li>
+          <li>
+            <Link href="/settings/tasks">Task completion</Link>
+          </li>
         </ul>
       </aside>
       <div className="flex-1 p-6">{children}</div>

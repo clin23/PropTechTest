@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import type { KeyboardEvent } from "react";
+import { type KeyboardEvent } from "react";
 import type { PropertySummary } from "../../../../../types/property";
-import { Button } from "../../../../../components/ui/button";
 import { type PropertyTabId } from "../tabs";
 import { sortPropertyEvents } from "../lib/sortEvents";
 import ActionButtons from "./ActionButtons";
@@ -11,11 +10,11 @@ import NextKeyDates from "./NextKeyDates";
 
 interface PropertyHeroProps {
   property: PropertySummary;
-  onEdit: () => void;
   onAddIncome: () => void;
   onAddExpense: () => void;
   onUploadDocument: () => void;
   onNavigateToTab: (tabId: PropertyTabId) => void;
+  onEditProperty: () => void;
 }
 
 const rentFormatter = new Intl.NumberFormat(undefined, {
@@ -49,11 +48,11 @@ function formatDate(value?: string) {
 
 export default function PropertyHero({
   property,
-  onEdit,
   onAddIncome,
   onAddExpense,
   onUploadDocument,
   onNavigateToTab,
+  onEditProperty: _onEditProperty,
 }: PropertyHeroProps) {
   const imageSrc = property.imageUrl || "/default-house.svg";
   const sortedEvents = sortPropertyEvents(property.events);
@@ -70,7 +69,6 @@ export default function PropertyHero({
       value: rentDisplay === "—" ? rentDisplay : `${rentDisplay}/week`,
       tabId: "rent-ledger",
     },
-    { label: "Lease start", value: formatDate(property.leaseStart), tabId: "documents" },
     { label: "Lease end", value: formatDate(property.leaseEnd), tabId: "documents" },
   ];
 
@@ -94,16 +92,13 @@ export default function PropertyHero({
         <img
           src={imageSrc}
           alt={`Photo of ${property.address}`}
-          className="pointer-events-none h-full w-full object-cover"
+          className="h-full w-full select-none object-cover pointer-events-none"
+          draggable={false}
         />
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onEdit}
-          className="absolute right-4 top-4 z-10 bg-white/90 text-sm font-semibold text-gray-900 hover:bg-white"
-        >
-          Edit Property
-        </Button>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/5 to-black/0"
+        />
       </div>
       <div className="space-y-6 p-6">
         <div>
