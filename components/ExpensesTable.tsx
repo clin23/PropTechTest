@@ -15,7 +15,8 @@ import type { ExpenseRow } from "../types/expense";
 import type { PropertySummary } from "../types/property";
 import EmptyState from "./EmptyState";
 import ExpenseForm from "./ExpenseForm";
-import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
+import ModalPortal from "./ModalPortal";
+import NotePreview from "./NotePreview";
 
 function ReceiptLink({ url }: { url?: string | null }) {
   if (!url) {
@@ -397,12 +398,7 @@ export default function ExpensesTable({
                   <td className="p-2">{r.gst}</td>
                   <td className="p-2">
                     {r.notes ? (
-                      <span
-                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
-                        title={r.notes}
-                      >
-                        {r.notes}
-                      </span>
+                      <NotePreview note={r.notes} />
                     ) : (
                       <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                     )}

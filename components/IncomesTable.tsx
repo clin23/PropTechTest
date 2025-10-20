@@ -13,6 +13,7 @@ import { formatShortDate } from "../lib/format";
 import type { IncomeRow } from "../types/income";
 import EmptyState from "./EmptyState";
 import EvidenceLink from "./EvidenceLink";
+import NotePreview from "./NotePreview";
 import IncomeForm from "./IncomeForm";
 import { useScrollLockOnHover } from "../hooks/useScrollLockOnHover";
 
@@ -330,12 +331,7 @@ export default function IncomesTable({
                 <td className="p-2">{r.amount}</td>
                 <td className="p-2">
                   {r.notes ? (
-                    <span
-                      className="block max-w-[10rem] truncate sm:max-w-[12rem]"
-                      title={r.notes}
-                    >
-                      {r.notes}
-                    </span>
+                    <NotePreview note={r.notes} />
                   ) : (
                     <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                   )}
