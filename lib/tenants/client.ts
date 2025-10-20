@@ -8,6 +8,7 @@ import type {
   TenantWorkspace,
   TimelineEventBase,
   TenantTag,
+  TenantStage,
 } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -34,6 +35,13 @@ export interface TenantListParams {
   q?: string;
   tags?: TenantTag[];
   arrearsOnly?: boolean;
+  stages?: TenantStage[];
+  health?: { min?: number; max?: number };
+  arrearsTiers?: Array<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>;
+  lastContactWithinDays?: number | null;
+  inspectionWindowDays?: number | null;
+  watchlistOnly?: boolean;
+  customTags?: string[];
 }
 
 export function useTenantList(params: TenantListParams) {
@@ -84,6 +92,14 @@ export async function fetchTenantSummaries(params: TenantListParams): Promise<Te
   if (params.q) search.set('q', params.q);
   if (params.tags?.length) search.set('tags', params.tags.join(','));
   if (params.arrearsOnly) search.set('arrearsOnly', 'true');
+  if (params.stages?.length) search.set('stages', params.stages.join(','));
+  if (params.health?.min !== undefined) search.set('healthMin', String(params.health.min));
+  if (params.health?.max !== undefined) search.set('healthMax', String(params.health.max));
+  if (params.arrearsTiers?.length) search.set('arrearsTiers', params.arrearsTiers.join(','));
+  if (params.lastContactWithinDays != null) search.set('lastContactWithinDays', String(params.lastContactWithinDays));
+  if (params.inspectionWindowDays != null) search.set('inspectionWindowDays', String(params.inspectionWindowDays));
+  if (params.watchlistOnly) search.set('watchlistOnly', 'true');
+  if (params.customTags?.length) search.set('customTags', params.customTags.join(','));
   const data = await apiFetch<{ items: TenantSummary[] }>(`/api/tenants?${search.toString()}`);
   return data.items;
 }

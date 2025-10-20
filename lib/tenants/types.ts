@@ -1,3 +1,5 @@
+export type TenantStage = 'PROSPECT' | 'ACTIVE' | 'ENDING' | 'VACATING';
+
 export type TenantTag =
   | 'A-GRADE'
   | 'WATCHLIST'
@@ -7,12 +9,23 @@ export type TenantTag =
   | 'VACATING'
   | 'NEW';
 
+export interface TenantIndicators {
+  unreadComms?: number;
+  openTasks?: number;
+  overdueCompliance?: boolean;
+}
+
 export interface TenantSummary {
   id: string;
   name: string;
   email?: string;
   phone?: string;
   tags: TenantTag[];
+  stage?: TenantStage;
+  updatedAgo?: string;
+  healthScore?: number;
+  watchlist?: boolean;
+  indicators?: TenantIndicators;
   lastTouchpointAt?: string;
   arrears?: { amountCents: number; daysLate: number } | null;
   currentTenancy?: {
@@ -152,6 +165,12 @@ export interface TenantWorkspace {
     avatarInitials: string;
     healthScore: number;
     watchlist?: boolean;
+    healthBreakdown?: {
+      paymentTimeliness: number;
+      responseLatency: number;
+      openJobs: number;
+      compliance: number;
+    };
   };
   arrearsCard: {
     balanceCents: number;
