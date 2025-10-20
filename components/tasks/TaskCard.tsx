@@ -123,6 +123,17 @@ export default function TaskCard({
     completed: task.completed,
   });
   const statusInfo = getIndicatorPresentation(indicatorValue);
+  const pillLabel = statusInfo?.label ?? "";
+  const pillBackground = statusInfo?.color ?? "";
+  const [pillTextColor, setPillTextColor] = useState<string>(() =>
+    getStatusPillForeground(pillBackground)
+  );
+
+  useEffect(() => {
+    setPillTextColor(getStatusPillForeground(pillBackground));
+  }, [pillBackground]);
+
+  const contentRightPaddingClass = statusInfo ? "pr-8" : "";
 
   const completionButtonLabel = isCompleting
     ? completed
