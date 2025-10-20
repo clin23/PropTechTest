@@ -22,13 +22,6 @@ export default function PropertiesPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [selectedPropertySnapshot, setSelectedPropertySnapshot] = useState<PropertySummary | null>(null);
 
-  const selectedPropertyFromList = useMemo(() => {
-    if (!selectedPropertyId) return null;
-    return (
-      data.find((property) => property.id === selectedPropertyId) ?? selectedPropertySnapshot
-    );
-  }, [data, selectedPropertyId, selectedPropertySnapshot]);
-
   const {
     data: selectedPropertyDetail,
     isFetching: isFetchingSelectedProperty,
@@ -38,13 +31,25 @@ export default function PropertiesPage() {
     enabled: !!selectedPropertyId,
   });
 
-  const modalProperty =
-    selectedPropertyDetail ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+  const modalProperty = useMemo(() => {
+    if (!selectedPropertyId) {
+      return selectedPropertySnapshot;
+    }
+
+    const propertyFromList = data.find((property) => property.id === selectedPropertyId);
+
+    return selectedPropertyDetail ?? propertyFromList ?? selectedPropertySnapshot;
+  }, [
+    data,
+    selectedPropertyDetail,
+    selectedPropertyId,
+    selectedPropertySnapshot,
+  ]);
 
   useEffect(() => {
-    if (!selectedPropertyDetail) return;
+    if (!selectedPropertyId || !selectedPropertyDetail) return;
     setSelectedPropertySnapshot(selectedPropertyDetail);
-  }, [selectedPropertyDetail]);
+  }, [selectedPropertyDetail, selectedPropertyId]);
 
   useEffect(() => {
     if (!isEditMode) {
