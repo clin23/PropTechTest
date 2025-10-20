@@ -19,13 +19,8 @@ export default function PropertiesPage() {
   });
 
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedPropertyState, setSelectedPropertyState] = useState<{
-    id: string;
-    snapshot: PropertySummary;
-  } | null>(null);
-
-  const selectedPropertyId = selectedPropertyState?.id ?? null;
-  const selectedPropertySnapshot = selectedPropertyState?.snapshot ?? null;
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedPropertySnapshot, setSelectedPropertySnapshot] = useState<PropertySummary | null>(null);
 
   const selectedPropertyFromList = useMemo(() => {
     if (!selectedPropertyId) return null;
@@ -68,22 +63,127 @@ export default function PropertiesPage() {
     });
   }, [selectedPropertyDetailData]);
 
+  const {
+    data: selectedPropertyDetail,
+    isFetching: isFetchingSelectedProperty,
+  } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty =
+    selectedPropertyDetail ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetail) return;
+    setSelectedPropertySnapshot(selectedPropertyDetail);
+  }, [selectedPropertyDetail]);
+
+  const {
+    data: selectedPropertyDetailData,
+    isFetching: isFetchingSelectedProperty,
+  } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const { data: selectedPropertyDetailData, isFetching: isFetchingSelectedProperty } =
+    selectedPropertyDetailQuery;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const selectedPropertyDetailData = selectedPropertyDetailQuery.data;
+  const isFetchingSelectedProperty = selectedPropertyDetailQuery.isFetching;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const selectedPropertyDetailData = selectedPropertyDetailQuery.data;
+  const isFetchingSelectedProperty = selectedPropertyDetailQuery.isFetching;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const selectedPropertyDetailData = selectedPropertyDetailQuery.data;
+  const isFetchingSelectedProperty = selectedPropertyDetailQuery.isFetching;
+
+  const modalProperty = useMemo(() => {
+    if (selectedPropertyDetailData) return selectedPropertyDetailData;
+    if (selectedPropertyFromList) return selectedPropertyFromList;
+    return selectedPropertySnapshot;
+  }, [selectedPropertyDetailData, selectedPropertyFromList, selectedPropertySnapshot]);
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
   useEffect(() => {
     if (!isEditMode) {
-      setSelectedPropertyState(null);
+      setSelectedPropertyId(null);
+      setSelectedPropertySnapshot(null);
     }
   }, [isEditMode]);
 
   const handleSelectProperty = (property: PropertySummary) => {
     if (!isEditMode) return;
-    setSelectedPropertyState({
-      id: property.id,
-      snapshot: property,
-    });
+    setSelectedPropertyId(property.id);
+    setSelectedPropertySnapshot(property);
   };
 
   const closeEditModal = () => {
-    setSelectedPropertyState(null);
+    setSelectedPropertyId(null);
+    setSelectedPropertySnapshot(null);
   };
 
   return (
