@@ -2026,6 +2026,12 @@ export const deleteReminder = (id: string): Reminder | null => {
   return removed ?? null;
 };
 
+const statusIndicatesCompletion = (status?: TaskDto['status']) => {
+  if (!status) return false;
+  const normalized = status.trim().toLowerCase();
+  return normalized === 'done' || normalized === 'completed' || normalized === 'complete';
+};
+
 export const createTask = (
   data: Omit<TaskDto, 'id' | 'createdAt' | 'updatedAt'> &
     Partial<Pick<TaskDto, 'id' | 'createdAt' | 'updatedAt'>>
@@ -2036,7 +2042,7 @@ export const createTask = (
     id: data.id ?? crypto.randomUUID(),
     createdAt: data.createdAt ?? now,
     updatedAt: data.updatedAt ?? now,
-    completed: data.completed ?? false,
+    completed: data.completed ?? statusIndicatesCompletion(data.status),
     archived: data.archived ?? false,
   } as TaskDto;
   tasks.push(task);

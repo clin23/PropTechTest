@@ -254,6 +254,8 @@ export default function ExpenseForm({
     setFileInputKey((key) => key + 1);
   };
 
+  const amountHasValue = form.amount.trim() !== "";
+
   return (
     <div>
       {showTrigger && (
@@ -470,13 +472,18 @@ export default function ExpenseForm({
                     value={form.amount}
                     onChange={(e) => {
                       const nextAmount = e.target.value;
-                      setForm((prev) => ({
-                        ...prev,
-                        amount: nextAmount,
-                        gst: prev.applyGST
-                          ? calculateGSTFromAmount(nextAmount)
-                          : "",
-                      }));
+                      const hasAmount = nextAmount.trim() !== "";
+                      setForm((prev) => {
+                        const nextApplyGST = hasAmount ? prev.applyGST : false;
+                        return {
+                          ...prev,
+                          amount: nextAmount,
+                          applyGST: nextApplyGST,
+                          gst: nextApplyGST
+                            ? calculateGSTFromAmount(nextAmount)
+                            : "",
+                        };
+                      });
                     }}
                   />
                 </label>
@@ -487,16 +494,23 @@ export default function ExpenseForm({
                   >
                     GST
                   </label>
-                  <div className="mt-1 flex h-10 items-center justify-between gap-3 rounded border border-gray-300 bg-white px-3 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                  <div
+                    className={`mt-1 flex h-10 items-center justify-between gap-3 rounded border border-gray-300 bg-white px-3 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 ${
+                      amountHasValue ? "" : "opacity-70"
+                    }`}
+                  >
                     <label
                       htmlFor="gst-toggle"
-                      className="flex items-center gap-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200"
+                      className={`flex items-center gap-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200 ${
+                        amountHasValue ? "" : "cursor-not-allowed text-gray-400 dark:text-gray-500"
+                      }`}
                     >
                       <input
                         id="gst-toggle"
                         type="checkbox"
-                        className="h-4 w-4 rounded border border-gray-500 bg-white text-gray-900 accent-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 dark:border-gray-400 dark:bg-gray-900 dark:text-gray-100 dark:accent-gray-800 dark:focus-visible:ring-gray-400"
+                        className="h-4 w-4 rounded border border-gray-500 bg-white text-gray-900 accent-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100 dark:border-gray-400 dark:bg-gray-900 dark:text-gray-100 dark:accent-gray-800 dark:focus-visible:ring-gray-400 disabled:dark:border-gray-600 disabled:dark:bg-gray-800"
                         checked={form.applyGST}
+                        disabled={!amountHasValue}
                         onChange={(e) => {
                           const shouldApply = e.target.checked;
                           setForm((prev) => ({
