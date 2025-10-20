@@ -6,7 +6,7 @@ import Link from 'next/link';
 import PropertyOverviewCard from '../../components/PropertyOverviewCard';
 import PropertiesGridSkeleton from '../../components/skeletons/PropertiesGridSkeleton';
 import PropertyEditModal from '../../components/PropertyEditModal';
-import { listProperties } from '../../lib/api';
+import { getProperty, listProperties } from '../../lib/api';
 import type { PropertySummary } from '../../types/property';
 
 export default function PropertiesPage() {
@@ -20,25 +20,141 @@ export default function PropertiesPage() {
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedPropertySnapshot, setSelectedPropertySnapshot] = useState<PropertySummary | null>(null);
 
-  const selectedProperty = useMemo(() => {
-    if (!selectedPropertyId) return null;
-    return data.find((property) => property.id === selectedPropertyId) ?? null;
-  }, [data, selectedPropertyId]);
+  const {
+    data: selectedPropertyDetail,
+    isFetching: isFetchingSelectedProperty,
+  } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty = useMemo(() => {
+    if (!selectedPropertyId) {
+      return selectedPropertySnapshot;
+    }
+
+    const propertyFromList = data.find((property) => property.id === selectedPropertyId);
+
+    return selectedPropertyDetail ?? propertyFromList ?? selectedPropertySnapshot;
+  }, [
+    data,
+    selectedPropertyDetail,
+    selectedPropertyId,
+    selectedPropertySnapshot,
+  ]);
+
+  useEffect(() => {
+    if (!selectedPropertyId || !selectedPropertyDetail) return;
+    setSelectedPropertySnapshot(selectedPropertyDetail);
+  }, [selectedPropertyDetail, selectedPropertyId]);
+
+  const {
+    data: selectedPropertyDetailData,
+    isFetching: isFetchingSelectedProperty,
+  } = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const { data: selectedPropertyDetailData, isFetching: isFetchingSelectedProperty } =
+    selectedPropertyDetailQuery;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const selectedPropertyDetailData = selectedPropertyDetailQuery.data;
+  const isFetchingSelectedProperty = selectedPropertyDetailQuery.isFetching;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const selectedPropertyDetailData = selectedPropertyDetailQuery.data;
+  const isFetchingSelectedProperty = selectedPropertyDetailQuery.isFetching;
+
+  const modalProperty =
+    selectedPropertyDetailData ?? selectedPropertyFromList ?? selectedPropertySnapshot;
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
+
+  const selectedPropertyDetailQuery = useQuery<PropertySummary>({
+    queryKey: ['property', selectedPropertyId],
+    queryFn: () => getProperty(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const selectedPropertyDetailData = selectedPropertyDetailQuery.data;
+  const isFetchingSelectedProperty = selectedPropertyDetailQuery.isFetching;
+
+  const modalProperty = useMemo(() => {
+    if (selectedPropertyDetailData) return selectedPropertyDetailData;
+    if (selectedPropertyFromList) return selectedPropertyFromList;
+    return selectedPropertySnapshot;
+  }, [selectedPropertyDetailData, selectedPropertyFromList, selectedPropertySnapshot]);
+
+  useEffect(() => {
+    if (!selectedPropertyDetailData) return;
+    setSelectedPropertySnapshot(selectedPropertyDetailData);
+  }, [selectedPropertyDetailData]);
 
   useEffect(() => {
     if (!isEditMode) {
       setSelectedPropertyId(null);
+      setSelectedPropertySnapshot(null);
     }
   }, [isEditMode]);
 
   const handleSelectProperty = (property: PropertySummary) => {
     if (!isEditMode) return;
     setSelectedPropertyId(property.id);
+    setSelectedPropertySnapshot(property);
   };
 
   const closeEditModal = () => {
     setSelectedPropertyId(null);
+    setSelectedPropertySnapshot(null);
   };
 
   return (
@@ -115,11 +231,12 @@ export default function PropertiesPage() {
           ))}
         </div>
       </div>
-      {selectedProperty && (
+      {modalProperty && (
         <PropertyEditModal
-          open={isEditMode && !!selectedProperty}
-          property={selectedProperty}
+          open={isEditMode && !!modalProperty}
+          property={modalProperty}
           onClose={closeEditModal}
+          isLoading={isFetchingSelectedProperty}
         />
       )}
     </div>
