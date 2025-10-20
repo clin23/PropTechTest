@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -46,13 +46,13 @@ export default function PropertyForm({
   requireSlideConfirmation = false,
 }: Props) {
   const isEdit = !!property;
-  const [form, setForm] = useState<FormState>(() => createFormState(property));
+  const baseSnapshotRef = useRef<FormState>(createFormState(property));
+  const [form, setForm] = useState<FormState>(() => baseSnapshotRef.current);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAddressInput, setDeleteAddressInput] = useState("");
   const [isDownloadingData, setIsDownloadingData] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const [confirmationProgress, setConfirmationProgress] = useState(0);
-  const [isDirty, setIsDirty] = useState(false);
   const lastPropertyIdRef = useRef<string | null>(property?.id ?? null);
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -72,13 +72,21 @@ export default function PropertyForm({
     const nextPropertyId = property?.id ?? null;
     const propertyIdChanged = nextPropertyId !== lastPropertyIdRef.current;
 
-    if (propertyIdChanged || !isDirty) {
-      setForm(createFormState(property));
+    if (propertyIdChanged) {
+      const nextSnapshot = createFormState(property);
+      baseSnapshotRef.current = nextSnapshot;
+      setForm(nextSnapshot);
       setDeleteAddressInput("");
       setDeleteModalOpen(false);
       setConfirmationProgress(0);
-      setIsDirty(false);
       lastPropertyIdRef.current = nextPropertyId;
+      return;
+    }
+
+    if (!isDirty) {
+      const nextSnapshot = createFormState(property);
+      baseSnapshotRef.current = nextSnapshot;
+      setForm(nextSnapshot);
     }
   }, [property, isDirty]);
 
@@ -96,7 +104,6 @@ export default function PropertyForm({
       if (prev[field] === value) {
         return prev;
       }
-      setIsDirty(true);
       return { ...prev, [field]: value };
     });
   };
@@ -130,8 +137,10 @@ export default function PropertyForm({
       } else {
         router.push(`/properties/${p.id}`);
       }
+      const nextSnapshot = createFormState(p);
+      baseSnapshotRef.current = nextSnapshot;
+      setForm(nextSnapshot);
       setConfirmationProgress(0);
-      setIsDirty(false);
     },
     onError: (e: any) =>
       toast({ title: "Failed to save property", description: e.message }),
