@@ -2049,29 +2049,33 @@ export const createTask = (
   return task;
 };
 
+const normalizeStatusValue = (value?: string | null) =>
+  (value ?? "").trim().toLowerCase();
+
+const isDoneStatus = (status?: string | null) => {
+  const normalized = normalizeStatusValue(status);
+  return (
+    normalized === "done" ||
+    normalized === "complete" ||
+    normalized === "completed"
+  );
+};
+
 export const updateTask = (id: string, data: Partial<TaskDto>): TaskDto | null => {
   const idx = tasks.findIndex((t) => t.id === id);
   if (idx === -1) return null;
   const current = tasks[idx];
   const statusChanged =
     data.status !== undefined && data.status !== current.status;
-  const currentCompleted =
-    current.completed ?? statusIndicatesCompletion(current.status);
-  let nextCompleted: boolean;
-
-  if (data.completed !== undefined) {
-    nextCompleted = data.completed;
-  } else if (statusChanged) {
-    if (statusIndicatesCompletion(data.status)) {
-      nextCompleted = true;
-    } else if (statusIndicatesCompletion(current.status)) {
-      nextCompleted = false;
-    } else {
-      nextCompleted = currentCompleted;
-    }
-  } else {
-    nextCompleted = currentCompleted;
-  }
+  const nextStatus = data.status ?? current.status;
+  const nextCompleted =
+    data.completed !== undefined
+      ? data.completed
+      : isDoneStatus(nextStatus)
+        ? true
+        : statusChanged
+          ? false
+          : current.completed ?? false;
 
   const updated = {
     ...current,
