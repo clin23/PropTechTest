@@ -56,7 +56,7 @@ export default function RentLedgerTable({
     <>
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex-1 overflow-y-auto">
-          <div className="card mx-4 overflow-hidden rounded-xl">
+          <div className="card mx-4 overflow-visible rounded-xl">
             <table className="min-w-full">
               <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800">
                 <tr>
