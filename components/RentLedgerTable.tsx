@@ -57,7 +57,7 @@ export default function RentLedgerTable({
   return (
     <>
       <div className="flex h-full min-h-0 flex-col">
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" ref={scrollRef}>
           <div className="card mx-4 overflow-visible rounded-xl">
             <table className="min-w-full">
               <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800">
@@ -94,36 +94,9 @@ export default function RentLedgerTable({
                     </td>
                     <td className="p-2">{e.balance}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {entries.map((e) => (
-                    <tr
-                      key={e.id}
-                      className="cursor-pointer border-t border-gray-200 transition hover:bg-gray-50 focus-within:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/60 dark:focus-within:bg-gray-700/60"
-                      onClick={() => setSelected(e)}
-                    >
-                      <td className="px-4 py-3">{formatShortDate(e.date)}</td>
-                      <td className="px-4 py-3">
-                        <StatusDot status={e.status} />
-                      </td>
-                      <td className="px-4 py-3">{e.amount}</td>
-                      <td className="px-4 py-3 text-center">
-                        {e.evidenceUrl ? (
-                          <EvidenceLink
-                            href={e.evidenceUrl}
-                            fileName={e.evidenceName}
-                            className="mx-auto"
-                          />
-                        ) : (
-                          <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">{e.balance}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
