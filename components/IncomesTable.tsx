@@ -297,6 +297,7 @@ export default function IncomesTable({
               <th className="px-4 py-3 text-center">Evidence</th>
               <th className="px-4 py-3 text-left">Amount</th>
               <th className="px-4 py-3 text-left">Notes</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -336,29 +337,49 @@ export default function IncomesTable({
                     <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                   )}
                 </td>
-                <td className="p-2">
-                  <div className="flex items-center gap-2">
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
                     <button
                       type="button"
-                      className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-                      onClick={() => setEditingIncome(r)}
+                      className="rounded-full p-2 text-gray-600 transition hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-300 dark:hover:bg-gray-700/60 dark:hover:text-blue-400"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openDetail(r);
+                      }}
+                      aria-label={`View income entry for ${formatShortDate(r.date)}`}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path d="M2.458 10.042c1.3-2.274 3.81-3.792 6.542-3.792s5.242 1.518 6.542 3.792a1 1 0 0 1 0 .916c-1.3 2.274-3.81 3.792-6.542 3.792s-5.242-1.518-6.542-3.792a1 1 0 0 1 0-.916Z" />
+                        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-full p-2 text-gray-600 transition hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-300 dark:hover:bg-gray-700/60 dark:hover:text-blue-400"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleEdit(r);
+                      }}
                       aria-label="Edit income"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="currentColor"
-                        className="h-5 w-5"
+                        className="h-4 w-4"
                         aria-hidden="true"
                       >
                         <path d="M4 4a2 2 0 0 1 2-2h4.586A2 2 0 0 1 12 2.586L15.414 6A2 2 0 0 1 16 7.414V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
                         <path d="M8 7a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H8Zm0 4a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H8Z" />
                       </svg>
-                      <span className="sr-only">Note available</span>
-                    </span>
-                  ) : (
-                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
-                  )}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
